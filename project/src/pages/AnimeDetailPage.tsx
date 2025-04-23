@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Play, Star, Calendar, Clock, Users, MessageSquare, Heart, Share2, Plus, Info } from 'lucide-react';
+import { Play, Star, Calendar, Clock, Users, MessageSquare, Heart, Share2, Plus, Info,ThumbsUp } from 'lucide-react';
 import { Anime, Episode } from '../types';
 
 // Sample anime details
@@ -418,7 +418,7 @@ const AnimeDetailPage: React.FC = () => {
               </h3>
               <div className="space-y-4">
                 {[2, 5, 7].map(relatedId => {
-                  const relatedAnime = animeDetails[relatedId.toString()] || animeList.find(a => a.id === relatedId);
+                  const relatedAnime = animeDetails[relatedId.toString()] ||animeList.find(a => a.id === relatedId);
                   if (!relatedAnime) return null;
                   
                   return (
