@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white font-poppins;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-orbitron font-bold;
+  }
+}
+
+@layer components {
+  .neon-border {
+    @apply relative border border-transparent;
+  }
+  
+  .neon-border::before {
+    @apply content-[''] absolute inset-0 rounded-lg;
+    background: linear-gradient(45deg, #9900FF, #00FFFF, #FF00FF);
+    z-index: -1;
+    margin: -2px;
+    animation: border-glow 3s linear infinite;
+  }
+  
+  .card {
+    @apply bg-surface rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-accent/20 hover:-translate-y-1;
+    background: linear-gradient(to bottom, rgba(27, 13, 62, 0.8), rgba(17, 7, 38, 0.9));
+    backdrop-filter: blur(10px);
+  }
+  
+  .glass-effect {
+    @apply bg-surface/80 backdrop-blur-md;
+  }
+  
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-300 transform;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary hover:bg-primary-dark text-white;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-secondary hover:bg-secondary-dark text-background;
+  }
+  
+  .btn-accent {
+    @apply btn bg-accent hover:bg-accent-dark text-white;
+  }
+  
+  .btn-ghost {
+    @apply btn bg-transparent hover:bg-white/10 text-white border border-white/20;
+  }
+  
+  .nav-link {
+    @apply relative px-3 py-2 text-gray-300 hover:text-white transition-colors duration-300 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full;
+  }
+  
+  .nav-link.active {
+    @apply text-white after:w-full;
+  }
+  
+  .gradient-text {
+    @apply font-orbitron font-bold text-transparent bg-clip-text;
+    background-image: linear-gradient(45deg, #9900FF, #00FFFF);
+  }
+  
+  .accent-gradient-text {
+    @apply font-orbitron font-bold text-transparent bg-clip-text;
+    background-image: linear-gradient(45deg, #FF00FF, #9900FF);
+  }
+}
+
+@keyframes border-glow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
