@@ -20,24 +20,26 @@ const AuthPage: React.FC = () => {
 
     try {
       if (isLogin) {
-        // Sign in
         await signInWithEmailAndPassword(auth, email, password);
         alert('Signed in successfully!');
       } else {
-        // Sign up
         await createUserWithEmailAndPassword(auth, email, password);
 
-        // Kullanıcı bilgilerini kaydet
+        // Yeni kullanıcı bilgileri
         const userData = {
           username,
+          email,
           level: 0,
           joinDate: new Date().toISOString(),
+          avatar: "https://i.pravatar.cc/150?img=33", // Varsayılan avatar
+          badges: [], // Boş badges array'i
+          watchlist: [] // Boş watchlist array'i
         };
-        localStorage.setItem('userData', JSON.stringify(userData));
 
+        localStorage.setItem('userData', JSON.stringify(userData));
         alert('Account created successfully!');
       }
-      navigate('/'); // Redirect to the home page
+      navigate('/');
     } catch (err: any) {
       setError(err.message);
     }

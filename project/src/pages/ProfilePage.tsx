@@ -1,22 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, Settings, Shield, Heart, BookOpen, MessageSquare, 
   Clock, Award, ChevronRight, Edit, Eye, EyeOff 
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime, User as UserType } from '../types';
-
-// Sample user data
-const userData: UserType = {
-  id: 1,
-  username: "AnimeExplorer",
-  email: "anime.explorer@example.com",
-  avatar: "https://i.pravatar.cc/150?img=33",
-  joinDate: "2023-11-15",
-  watchlist: [1, 5, 7],
-  level: 24,
-  badges: ["Alpha Tester", "Forum Veteran", "Content Creator"]
-};
 
 // Sample data for watchlist
 const watchlistAnime: Anime[] = [
@@ -88,7 +76,28 @@ const recentActivity = [
 
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
-  
+  const [userData, setUserData] = useState<UserType | null>(null);
+
+  useEffect(() => {
+    // Load user data from localStorage
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
+
+  if (!userData) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-400">Please sign in to view your profile</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
