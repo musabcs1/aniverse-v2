@@ -26,6 +26,15 @@ const AuthPage: React.FC = () => {
       } else {
         // Sign up
         await createUserWithEmailAndPassword(auth, email, password);
+
+        // Kullanıcı bilgilerini kaydet
+        const userData = {
+          username,
+          level: 0,
+          joinDate: new Date().toISOString(),
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+
         alert('Account created successfully!');
       }
       navigate('/'); // Redirect to the home page
