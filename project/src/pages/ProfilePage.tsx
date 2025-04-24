@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   User, Settings, Shield, Heart, BookOpen, MessageSquare, 
-  Clock, Award, ChevronRight, Edit, Eye, EyeOff 
+  Clock, Award, ChevronRight, Edit, Eye, EyeOff, UserCircle 
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime, User as UserType } from '../types';
@@ -88,6 +88,11 @@ const ProfilePage: React.FC = () => {
         {/* Giriş yapılmışsa profil sayfası */}
         {isLoggedIn && (
           <>
+            {/* Profil Simgesi */}
+            <div className="flex justify-end mb-4">
+              <UserCircle className="h-8 w-8 text-primary" />
+            </div>
+
             {/* Profile Header */}
             <div className="bg-surface rounded-xl overflow-hidden mb-8">
               <div className="h-40 bg-gradient-to-r from-primary/30 to-accent/30 relative">
