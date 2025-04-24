@@ -58,87 +58,77 @@ const watchlistAnime: Anime[] = [
   }
 ];
 
-// Sample recent activity
-const recentActivity = [
-  {
-    id: 1,
-    type: "comment",
-    content: "Commented on 'Celestial Legends Episode 10 Discussion'",
-    timestamp: "2025-04-16T15:32:00"
-  },
-  {
-    id: 2,
-    type: "rating",
-    content: "Rated 'Cyber Nexus 2099' 9/10",
-    timestamp: "2025-04-15T09:17:00"
-  },
-  {
-    id: 3,
-    type: "watchlist",
-    content: "Added 'Astral Knights' to watchlist",
-    timestamp: "2025-04-14T23:05:00"
-  },
-  {
-    id: 4,
-    type: "forum",
-    content: "Created forum thread 'Top 10 Underrated Anime of 2024'",
-    timestamp: "2025-04-13T14:28:00"
-  }
-];
-
 const ProfilePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("watchlist");
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Varsayılan olarak giriş yapılmış
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Varsayılan olarak giriş yapılmamış
 
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <h1 className="text-2xl font-bold text-gray-400">Please Sign In to View Your Profile</h1>
-      </div>
-    );
-  }
+  const handleLogin = () => {
+    setIsLoggedIn(true); // Giriş yapıldığında oturum durumu güncellenir
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false); // Çıkış yapıldığında oturum durumu güncellenir
+  };
 
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
-        {/* Profile Header */}
-        <div className="bg-surface rounded-xl overflow-hidden mb-8">
-          <div className="h-40 bg-gradient-to-r from-primary/30 to-accent/30 relative">
-            <button className="absolute top-4 right-4 bg-surface/30 backdrop-blur-sm p-2 rounded-lg text-white hover:bg-surface/50 transition-colors">
-              <Edit className="h-5 w-5" />
+        {/* Giriş yapılmamışsa oturum açma yazısı */}
+        {!isLoggedIn && (
+          <div className="min-h-screen flex items-center justify-center">
+            <h1 className="text-2xl font-bold text-gray-400">Please Sign In to View Your Profile</h1>
+            <button 
+              onClick={handleLogin} 
+              className="ml-4 btn-primary py-2 px-4"
+            >
+              Sign In
             </button>
           </div>
-          
-          <div className="px-6 py-5 flex flex-col md:flex-row items-start md:items-center relative">
-            <div className="absolute -top-16 left-6 h-24 w-24 rounded-full border-4 border-surface overflow-hidden">
-              <img 
-                src={userData.avatar} 
-                alt={userData.username} 
-                className="h-full w-full object-cover"
-              />
-            </div>
-            
-            <div className="mt-10 md:mt-0 md:ml-28">
-              <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
-              <div className="flex items-center text-gray-400 text-sm mt-1">
-                <Clock className="h-4 w-4 mr-1" />
-                <span>Member since {new Date(userData.joinDate).toLocaleDateString()}</span>
+        )}
+
+        {/* Giriş yapılmışsa profil sayfası */}
+        {isLoggedIn && (
+          <>
+            {/* Profile Header */}
+            <div className="bg-surface rounded-xl overflow-hidden mb-8">
+              <div className="h-40 bg-gradient-to-r from-primary/30 to-accent/30 relative">
+                <button className="absolute top-4 right-4 bg-surface/30 backdrop-blur-sm p-2 rounded-lg text-white hover:bg-surface/50 transition-colors">
+                  <Edit className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="px-6 py-5 flex flex-col md:flex-row items-start md:items-center relative">
+                <div className="absolute -top-16 left-6 h-24 w-24 rounded-full border-4 border-surface overflow-hidden">
+                  <img 
+                    src={userData.avatar} 
+                    alt={userData.username} 
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                
+                <div className="mt-10 md:mt-0 md:ml-28">
+                  <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
+                  <div className="flex items-center text-gray-400 text-sm mt-1">
+                    <Clock className="h-4 w-4 mr-1" />
+                    <span>Member since {new Date(userData.joinDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                
+                <div className="flex mt-4 md:mt-0 md:ml-auto space-x-3">
+                  <button className="btn-ghost py-2 px-4 flex items-center space-x-2">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </button>
+                  <button 
+                    onClick={handleLogout} 
+                    className="btn-primary py-2 px-4"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div className="flex mt-4 md:mt-0 md:ml-auto space-x-3">
-              <button className="btn-ghost py-2 px-4 flex items-center space-x-2">
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </button>
-              <button className="btn-primary py-2 px-4">
-                Upgrade to Premium
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Rest of the Profile Page */}
+          </>
+        )}
       </div>
     </div>
   );
