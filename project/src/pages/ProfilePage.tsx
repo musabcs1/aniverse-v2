@@ -88,7 +88,16 @@ const recentActivity = [
 
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
-  
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Kullanıcı oturum durumu
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="text-2xl font-bold text-gray-400">Please Sign In to View Your Profile</h1>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
