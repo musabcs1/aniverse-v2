@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
+import { Menu, X, Search, Bell, LogOut, User } from 'lucide-react';
 import Logo from '../ui/Logo';
-import { useUserContext } from '../../contexts/UserContext';
 
 interface HeaderProps {
   scrolled: boolean;
@@ -13,22 +12,48 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userData, clearUserData } = useUserContext();
+  const [userData, setUserData] = useState<any | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  useEffect(() => {
+    // Check for user data when component mounts and when localStorage changes
+    const checkAuth = () => {
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        try {
+          const parsedData = JSON.parse(storedUserData);
+          setUserData(parsedData);
+        } catch {
+          // If data is invalid, clear it
+          localStorage.removeItem('userData');
+          setUserData(null);
+        }
+      } else {
+        setUserData(null);
+      }
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   const handleLogout = () => {
-    clearUserData();
+    localStorage.removeItem('userData');
+    setUserData(null);
     setShowProfileMenu(false);
     navigate('/');
   };
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md shadow-lg' : 'bg-transparent'}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'bg-background/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
+      }`}
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">

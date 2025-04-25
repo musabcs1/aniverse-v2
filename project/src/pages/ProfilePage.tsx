@@ -183,12 +183,12 @@ const ProfilePage: React.FC = () => {
                     <Shield className="h-5 w-5 mr-2 text-primary" />
                     <span className="text-gray-300">Level {userData.level}</span>
                   </div>
-                  <span className="text-xs text-gray-400">1337 XP</span>
+                  <span className="text-xs text-gray-400">0 XP</span>
                 </div>
                 <div className="h-2 bg-surface-light rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-primary to-accent w-3/4"></div>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">463 XP until next level</p>
+                <p className="text-xs text-gray-400 mt-1">500 XP until next level</p>
               </div>
             </div>
             

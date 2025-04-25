@@ -8,25 +8,22 @@ import ForumPage from './pages/ForumPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthPage from './pages/AuthPage';
-import { UserProvider } from './contexts/UserContext'; // UserContext dosyasını bir kez import edin
 
 function App() {
   return (
-    <UserProvider> {/* Kullanıcı sağlayıcısını burada kullanıyoruz */}
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/anime" element={<AnimeDirectoryPage />} />
-            <Route path="/anime/:id" element={<AnimeDetailPage />} />
-            <Route path="/forum" element={<ForumPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/auth" element={<AuthPage />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </UserProvider>
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/anime" element={<AnimeDirectoryPage />} />
+          <Route path="/anime/:id" element={<AnimeDetailPage />} />
+          <Route path="/forum" element={<ForumPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/auth" element={<AuthPage />} />
+        </Routes>
+      </Layout>
+    </Router>
   );
 }
 
