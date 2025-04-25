@@ -38,7 +38,7 @@ const AdminLoginPage = () => {
       navigate('/admin');
     } catch (err) {
       console.error("Error during admin login:", err);
-      setError(err.message || 'An error occurred. Please try again.');
+      setError((err as Error).message || 'An error occurred. Please try again.');
     }
   };
 

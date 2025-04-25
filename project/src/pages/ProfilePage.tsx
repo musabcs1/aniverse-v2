@@ -7,6 +7,8 @@ import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
 import { doc, getDoc } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 // Sample data for watchlist
 const watchlistAnime: Anime[] = [
@@ -79,27 +81,29 @@ const recentActivity = [
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
   const [userData, setUserData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true); // Add a loading state
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (auth.currentUser) {
-        const userDocRef = doc(db, "users", auth.currentUser.uid); // Reference to Firestore document
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
           setUserData(userDoc.data());
         } else {
-          console.error("User data not found in Firestore.");
+          console.error('User data not found in Firestore.');
         }
+      } else {
+        navigate('/auth'); // Redirect to login page if no user is authenticated
       }
-      setLoading(false); // Set loading to false after fetching user data
-    };
+      setLoading(false);
+    });
 
-    fetchUserData();
-  }, []);
+    return () => unsubscribe(); // Cleanup the listener on component unmount
+  }, [navigate]);
 
-  // Show a loading spinner or placeholder while Firebase reinitializes
   if (loading) {
     return (
       <div className="pt-24 pb-16">
@@ -112,7 +116,6 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  // If no user data is found, redirect to the login page or show a message
   if (!userData) {
     return (
       <div className="pt-24 pb-16">

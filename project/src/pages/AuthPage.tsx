@@ -59,7 +59,7 @@ const AuthPage = () => {
       }
     } catch (error) {
       console.error('Error during user authentication:', error);
-      alert(error.message || 'Authentication failed.');
+      alert((error as any).message || 'Authentication failed.');
     }
   };
 
