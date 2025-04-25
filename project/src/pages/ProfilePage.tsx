@@ -107,7 +107,10 @@ const ProfilePage: React.FC = () => {
   }, [navigate]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+    if (!e.target.files || e.target.files.length === 0) {
+      console.error('No file selected.');
+      return;
+    }
 
     const file = e.target.files[0];
     const storage = getStorage();
@@ -115,15 +118,20 @@ const ProfilePage: React.FC = () => {
 
     try {
       setUploading(true); // Set uploading state to true
+      console.log('Uploading file:', file.name);
+
       // Upload the file to Firebase Storage
-      await uploadBytes(storageRef, file);
+      const uploadResult = await uploadBytes(storageRef, file);
+      console.log('Upload successful:', uploadResult);
 
       // Get the download URL of the uploaded file
       const downloadURL = await getDownloadURL(storageRef);
+      console.log('Download URL:', downloadURL);
 
       // Update the user's avatar in Firestore
       const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
       await updateDoc(userDocRef, { avatar: downloadURL });
+      console.log('Firestore updated successfully.');
 
       // Update the local state with the new avatar URL
       setUserData((prev: any) => ({ ...prev, avatar: downloadURL }));
