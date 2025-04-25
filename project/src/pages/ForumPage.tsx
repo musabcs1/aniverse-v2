@@ -1,91 +1,77 @@
-import React from 'react';
-import { Search, Filter, MessageSquare, TrendingUp, Users, BarChart2, Plus } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, MessageSquare, TrendingUp, Users, Plus } from 'lucide-react';
 import ForumThreadCard from '../components/ui/ForumThreadCard';
 import { ForumThread } from '../types';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import { Link } from 'react-router-dom';
 
-// Sample data
-const forumThreads: ForumThread[] = [
-  {
-    id: 1,
-    title: "Celestial Legends Episode 10 Discussion [SPOILERS]",
-    content: "That plot twist at the end was incredible! I never saw it coming. What do you think about the reveal of Kaito's true identity?",
-    authorId: 1,
-    authorName: "AnimeExplorer",
-    authorAvatar: "https://i.pravatar.cc/150?img=33",
-    category: "Anime",
-    createdAt: "2025-04-16T15:32:00",
-    updatedAt: "2025-04-16T15:32:00",
-    replies: 47,
-    upvotes: 89,
-    downvotes: 2,
-    tags: ["celestial-legends", "discussion", "theories"]
-  },
-  {
-    id: 2,
-    title: "Top 10 Underrated Anime of 2024 That Deserve More Attention",
-    content: "We all know the big hitters, but let's talk about some hidden gems that flew under the radar last year. Here's my list of underappreciated anime...",
-    authorId: 2,
-    authorName: "OtakuSensei",
-    authorAvatar: "https://i.pravatar.cc/150?img=11",
-    category: "General",
-    createdAt: "2025-04-15T09:17:00",
-    updatedAt: "2025-04-15T12:45:00",
-    replies: 23,
-    upvotes: 56,
-    downvotes: 3,
-    tags: ["underrated", "recommendations", "2024"]
-  },
-  {
-    id: 3,
-    title: "Character Analysis: The Psychological Depth of Villains in Modern Anime",
-    content: "Modern anime has evolved to feature complex, morally gray antagonists. Let's discuss how recent villains differ from the one-dimensional bad guys of the past...",
-    authorId: 3,
-    authorName: "PsychAnime",
-    authorAvatar: "https://i.pravatar.cc/150?img=68",
-    category: "Theory",
-    createdAt: "2025-04-14T23:05:00",
-    updatedAt: "2025-04-15T08:12:00",
-    replies: 34,
-    upvotes: 72,
-    downvotes: 5,
-    tags: ["character-analysis", "villains", "psychology"]
-  },
-  {
-    id: 4,
-    title: "When did you first fall in love with anime? Share your story!",
-    content: "For me, it was watching Studio Ghibli's Spirited Away as a kid. I was completely entranced by the animation, story, and world-building. What about you all?",
-    authorId: 4,
-    authorName: "NostalgiaChan",
-    authorAvatar: "https://i.pravatar.cc/150?img=47",
-    category: "General",
-    createdAt: "2025-04-13T14:28:00",
-    updatedAt: "2025-04-13T14:28:00",
-    replies: 89,
-    upvotes: 103,
-    downvotes: 1,
-    tags: ["personal", "stories", "introduction"]
-  },
-  {
-    id: 5,
-    title: "Music Appreciation: Best Anime Soundtracks of All Time",
-    content: "A great soundtrack can elevate an anime to legendary status. Let's discuss the composers and soundtracks that have left the biggest impact on the medium...",
-    authorId: 5,
-    authorName: "MelodyMaster",
-    authorAvatar: "https://i.pravatar.cc/150?img=29",
-    category: "General",
-    createdAt: "2025-04-12T18:41:00",
-    updatedAt: "2025-04-12T20:13:00",
-    replies: 56,
-    upvotes: 68,
-    downvotes: 4,
-    tags: ["music", "soundtrack", "composers"]
-  }
-];
+interface ForumStats {
+  totalThreads: number;
+  totalReplies: number;
+  totalUpvotes: number;
+}
 
-const categories = ["All", "Anime", "General", "Theory", "Memes", "Reviews", "News"];
-const sortOptions = ["Newest", "Most Popular", "Most Replies", "Top Rated"];
+interface TrendingTopic {
+  title: string;
+  id: string;
+}
 
 const ForumPage: React.FC = () => {
+  const [forumThreads, setForumThreads] = useState<ForumThread[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
+  const [forumStats, setForumStats] = useState<ForumStats>({
+    totalThreads: 0,
+    totalReplies: 0,
+    totalUpvotes: 0,
+  });
+
+  useEffect(() => {
+    const threadsCollection = collection(db, 'forumThreads');
+    const threadsQuery = query(threadsCollection, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(threadsQuery, (snapshot) => {
+      const threadsData: ForumThread[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title || '',
+          replies: data.replies || 0,
+          upvotes: data.upvotes || 0,
+          createdAt: data.createdAt,
+        };
+      });
+
+      setForumThreads(threadsData);
+
+      const totalThreads = threadsData.length;
+      const totalReplies = threadsData.reduce((sum, thread) => sum + thread.replies, 0);
+      const totalUpvotes = threadsData.reduce((sum, thread) => sum + thread.upvotes, 0);
+
+      setForumStats({ totalThreads, totalReplies, totalUpvotes });
+
+      const trending = [...threadsData]
+        .sort((a, b) => b.replies - a.replies)
+        .slice(0, 5)
+        .map((thread) => ({ title: thread.title, id: thread.id }));
+
+      setTrendingTopics(trending);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const filteredThreads = useMemo(() => {
+    return forumThreads.filter((thread) =>
+      thread.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
+    );
+  }, [forumThreads, searchTerm]);
+
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
@@ -96,56 +82,47 @@ const ForumPage: React.FC = () => {
             </h1>
             <p className="text-gray-400 mt-2">Join discussions with fellow anime enthusiasts</p>
           </div>
-          
-          <button className="btn-primary flex items-center space-x-2 mt-4 md:mt-0">
+          <Link
+            to="/create-thread"
+            className="btn-primary flex items-center space-x-2 mt-4 md:mt-0"
+            aria-label="Create a new thread"
+          >
             <Plus className="h-5 w-5" />
             <span>Create Thread</span>
-          </button>
+          </Link>
         </div>
-        
-        {/* Search and Filters Bar */}
+
+        {/* Search Bar */}
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-            <div className="relative flex-grow">
-              <input 
-                type="text" 
-                placeholder="Search discussions..." 
-                className="w-full bg-surface py-3 pl-10 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              />
-              <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-            </div>
-            
-            <select className="bg-surface py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-            
-            <select className="bg-surface py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
-              {sortOptions.map(option => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              placeholder="Search discussions..."
+              className="w-full bg-surface py-3 pl-10 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+            <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Forum Threads */}
           <div className="lg:col-span-3 space-y-6">
-            {forumThreads.map(thread => (
-              <ForumThreadCard key={thread.id} thread={thread} />
-            ))}
-            
-            <div className="flex justify-center mt-8">
-              <button className="btn-ghost py-2 px-4">
-                Load More
-              </button>
-            </div>
+            {filteredThreads.length > 0 ? (
+              filteredThreads.map((thread) => (
+                <ForumThreadCard key={thread.id} thread={thread} />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-xl text-gray-400">No threads found. Start a discussion!</p>
+              </div>
+            )}
           </div>
-          
+
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Community Stats */}
+            {/* Forum Stats */}
             <div className="card p-5">
               <h3 className="text-xl font-semibold mb-4">Forum Stats</h3>
               <div className="space-y-4">
@@ -154,48 +131,33 @@ const ForumPage: React.FC = () => {
                     <MessageSquare className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold">8,427</div>
+                    <div className="text-lg font-bold">{forumStats.totalThreads}</div>
                     <div className="text-sm text-gray-400">Total Threads</div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-secondary/20 flex items-center justify-center mr-3">
                     <Users className="h-5 w-5 text-secondary" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold">24,815</div>
-                    <div className="text-sm text-gray-400">Active Members</div>
+                    <div className="text-lg font-bold">{forumStats.totalReplies}</div>
+                    <div className="text-sm text-gray-400">Total Replies</div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center mr-3">
-                    <BarChart2 className="h-5 w-5 text-accent" />
+                    <TrendingUp className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold">156,793</div>
-                    <div className="text-sm text-gray-400">Total Posts</div>
+                    <div className="text-lg font-bold">{forumStats.totalUpvotes}</div>
+                    <div className="text-sm text-gray-400">Total Upvotes</div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            {/* Popular Tags */}
-            <div className="card p-5">
-              <h3 className="text-xl font-semibold mb-4">Popular Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {["discussion", "recommendations", "theories", "artwork", "memes", "reviews", "episode-discussion", "character-analysis", "news", "wallpapers", "fanfiction"].map(tag => (
-                  <span 
-                    key={tag}
-                    className="px-3 py-1 text-sm rounded-full bg-surface-light text-gray-300"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
+
             {/* Trending Topics */}
             <div className="card p-5">
               <h3 className="text-xl font-semibold mb-4">
@@ -205,17 +167,17 @@ const ForumPage: React.FC = () => {
                 </span>
               </h3>
               <div className="space-y-3">
-                {["Celestial Legends Season 2", "Cyber Nexus 2099 Theories", "Spring 2025 Anime", "Top 10 Fight Scenes", "Best Anime Opening Songs"].map((topic, index) => (
-                  <div key={index} className="p-2 rounded hover:bg-surface-light transition-colors">
-                    <a href="#" className="text-sm hover:text-secondary transition-colors">
-                      {topic}
-                    </a>
+                {trendingTopics.map((topic) => (
+                  <div key={topic.id} className="p-2 rounded hover:bg-surface-light transition-colors">
+                    <Link to={`/forum/${topic.id}`} className="text-sm hover:text-secondary transition-colors">
+                      {topic.title}
+                    </Link>
                   </div>
                 ))}
               </div>
             </div>
-            
-            {/* Forum Rules */}
+
+            {/* Community Guidelines */}
             <div className="card p-5">
               <h3 className="text-xl font-semibold mb-4">Community Guidelines</h3>
               <ul className="space-y-2 text-sm text-gray-300">
@@ -240,9 +202,6 @@ const ForumPage: React.FC = () => {
                   <span>Follow content guidelines</span>
                 </li>
               </ul>
-              <a href="#" className="text-secondary text-sm block mt-3">
-                View Full Guidelines
-              </a>
             </div>
           </div>
         </div>
