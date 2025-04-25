@@ -35,7 +35,7 @@ const AuthPage = () => {
           }
 
           localStorage.setItem('userData', JSON.stringify(userData));
-          window.dispatchEvent(new Event('storage')); // EKLENDİ
+          window.dispatchEvent(new Event('storage')); // 🔔 event tetiklendi
           navigate('/profile');
         }
       } else {
@@ -50,7 +50,7 @@ const AuthPage = () => {
           watchlist: []
         };
         localStorage.setItem('userData', JSON.stringify(userData));
-        window.dispatchEvent(new Event('storage')); // EKLENDİ
+        window.dispatchEvent(new Event('storage')); // 🔔 event tetiklendi
         alert('Account created successfully!');
         navigate('/profile');
       }
