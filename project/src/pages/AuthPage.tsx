@@ -1,8 +1,11 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Eye, EyeOff, Lock, Mail, User } from 'react-feather';
+import Logo from '../components/ui/Logo';
+// Removed unused showPassword import
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,6 +13,7 @@ const AuthPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Manage showPassword state locally
   const navigate = useNavigate();
   const { setUserData } = useContext(UserContext); // Context'ten setUserData'yı alıyoruz
 
@@ -101,7 +105,7 @@ const AuthPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? "text" : "password"} // showPassword durumuna göre şifreyi göster veya gizle
                   className="w-full bg-surface p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                   placeholder={isLogin ? "Enter your password" : "Create a password"}
                   value={password}
@@ -111,7 +115,7 @@ const AuthPage: React.FC = () => {
                 <button
                   type="button"
                   className="absolute right-3 top-3.5 text-gray-500 hover:text-white"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword(!showPassword)} // showPassword'ı tersine çevir
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -146,4 +150,4 @@ const AuthPage: React.FC = () => {
   );
 };
 
-export default AuthPage; 
+export default AuthPage;
