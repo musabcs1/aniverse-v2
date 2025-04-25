@@ -27,20 +27,17 @@ const AuthPage = () => {
     try {
       if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userDocRef = doc(db, 'users', userCredential.user.uid);
+        const userDoc = await getDoc(userDocRef);
 
-        if (userCredential.user) {
-          const userDocRef = doc(db, "users", userCredential.user.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            localStorage.setItem('userData', JSON.stringify(userData));
-            window.dispatchEvent(new Event('storage'));
-            navigate('/profile');
-          } else {
-            console.error("User data not found in Firestore.");
-          }
+        if (!userDoc.exists()) {
+          alert('User data not found.');
+          return;
         }
+
+        const userData = userDoc.data();
+        localStorage.setItem('userData', JSON.stringify(userData));
+        navigate('/profile');
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const userData = {
@@ -48,23 +45,21 @@ const AuthPage = () => {
           email,
           level: 0,
           joinDate: new Date().toISOString(),
-          avatar: "https://i.pravatar.cc/150?img=33",
+          avatar: 'https://i.pravatar.cc/150?img=33',
           badges: [],
           watchlist: [],
           role: 'user',
         };
 
-        const userDocRef = doc(db, "users", userCredential.user.uid);
+        const userDocRef = doc(db, 'users', userCredential.user.uid);
         await setDoc(userDocRef, userData);
 
         localStorage.setItem('userData', JSON.stringify(userData));
-        window.dispatchEvent(new Event('storage'));
-        alert('Account created successfully!');
         navigate('/profile');
       }
     } catch (error) {
-      console.error("Authentication error:", error);
-      alert(error.message || "Authentication failed.");
+      console.error('Error during user authentication:', error);
+      alert(error.message || 'Authentication failed.');
     }
   };
 
