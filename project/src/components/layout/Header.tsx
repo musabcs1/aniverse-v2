@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
               <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
               <Link to="/anime" className={`nav-link ${isActive('/anime') ? 'active' : ''}`}>Anime</Link>
               <Link to="/forum" className={`nav-link ${isActive('/forum') ? 'active' : ''}`}>Forum</Link>
-              <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>News</Link>
+              <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>News</Link> {/* News menüsüne ekleme */}
             </nav>
           </div>
 

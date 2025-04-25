@@ -8,6 +8,7 @@ import ForumPage from './pages/ForumPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthPage from './pages/AuthPage';
+import { UserProvider } from './contexts/UserContext';
 
 function App() {
   return (
