@@ -1,20 +1,24 @@
-// src/Routes.tsx
-import React from 'react';
-import { Route, Routes as RouterRoutes } from 'react-router-dom'; // React Router import
-import Home from './pages/Home'; // Home sayfası
-import Anime from './pages/Anime'; // Anime sayfası
-import Forum from './pages/Forum'; // Forum sayfası
-import News from './pages/News'; // News sayfası
+import { Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import AnimeDetailPage from './pages/AnimeDetailPage';
+import AnimeDirectoryPage from './pages/AnimeDirectoryPage';
+import ForumPage from './pages/ForumPage';
+import NewsPage from './pages/NewsPage';
+import ProfilePage from './pages/ProfilePage';
+import AuthPage from './pages/AuthPage';
 
-const Routes: React.FC = () => {
+const RoutesComponent = () => {
   return (
-    <RouterRoutes>
-      <Route path="/" element={<Home />} />
-      <Route path="/anime" element={<Anime />} />
-      <Route path="/forum" element={<Forum />} />
-      <Route path="/news" element={<News />} />
-    </RouterRoutes>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/anime/:id" element={<AnimeDetailPage />} />
+      <Route path="/anime" element={<AnimeDirectoryPage />} />
+      <Route path="/forum" element={<ForumPage />} />
+      <Route path="/news" element={<NewsPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/auth" element={<AuthPage />} />
+    </Routes>
   );
 };
 
-export default Routes;
+export default RoutesComponent;
