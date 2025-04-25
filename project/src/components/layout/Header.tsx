@@ -11,25 +11,13 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
-  const [userData, setUserData] = useState<any | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
       setUserData(JSON.parse(storedUserData));
     }
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'userData') {
-        setUserData(event.newValue ? JSON.parse(event.newValue) : null);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
 
   const isActive = (path: string) => {
