@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
@@ -13,6 +13,14 @@ const AuthPage = () => {
   const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  // Redirect to home page if the user is already logged in
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      navigate('/'); // Redirect to home page
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
