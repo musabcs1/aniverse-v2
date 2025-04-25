@@ -115,6 +115,11 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
                       </div>
                     )}
                   </div>
+                  {userData?.role === 'admin' && (
+                    <Link to="/admin" className="btn-secondary">
+                      Admin Panel
+                    </Link>
+                  )}
                 </>
               ) : (
                 <Link to="/auth" className="btn-primary">Sign In</Link>

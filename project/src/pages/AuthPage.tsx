@@ -39,7 +39,8 @@ const AuthPage = () => {
           joinDate: new Date().toISOString(),
           avatar: "https://i.pravatar.cc/150?img=33",
           badges: [],
-          watchlist: []
+          watchlist: [],
+          role: 'user', // Varsayılan olarak 'user' rolü atanır
         };
 
         // Store userData in Firestore
