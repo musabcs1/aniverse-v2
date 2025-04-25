@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { doc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,18 +30,6 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Update user role in Firestore
-  const updateRole = async (userId: string, newRole: string) => {
-    try {
-      const userDocRef = doc(db, 'users', userId);
-      await updateDoc(userDocRef, { role: newRole });
-      alert(`User role updated to ${newRole}`);
-      fetchUsers(); // Refresh the user list after updating the role
-    } catch (error) {
-      console.error('Error updating role:', error);
-    }
-  };
-
   // Fetch users when the component mounts
   useEffect(() => {
     fetchUsers();
@@ -56,25 +44,19 @@ const AdminPage: React.FC = () => {
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8">Admin Panel</h1>
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {users.map(user => (
-            <div key={user.id} className="card p-6">
-              <h2 className="text-xl font-semibold mb-4">{user.username}</h2>
-              <p className="text-gray-400">Email: {user.email}</p>
-              <p className="text-gray-400">Role: {user.role}</p>
-              <div className="mt-4">
-                <button
-                  className="btn-primary mr-2"
-                  onClick={() => updateRole(user.id, 'admin')}
-                >
-                  Make Admin
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => updateRole(user.id, 'user')}
-                >
-                  Make User
-                </button>
+            <div key={user.id} className="card p-6 bg-surface rounded-lg shadow-lg">
+              <div className="flex items-center space-x-4">
+                <img
+                  src={user.avatar || 'https://via.placeholder.com/150'}
+                  alt={user.username}
+                  className="w-16 h-16 rounded-full"
+                />
+                <div>
+                  <h2 className="text-xl font-semibold">{user.username}</h2>
+                  <p className="text-gray-400">{user.email}</p>
+                </div>
               </div>
             </div>
           ))}
