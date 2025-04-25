@@ -86,19 +86,12 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
                   </button>
                   
                   <div className="relative">
-                    <button 
-                      onClick={() => setShowProfileMenu(!showProfileMenu)}
-                      className="flex items-center space-x-2"
-                    >
+                    <Link to="/profile" className="flex items-center space-x-2">
                       <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
-                        <img 
-                          src={userData.avatar} 
-                          alt="Profile"
-                          className="h-full w-full object-cover"
-                        />
+                        <img src={userData.avatar} alt="Profile" className="h-full w-full object-cover" />
                       </div>
                       <span className="text-white">{userData.username}</span>
-                    </button>
+                    </Link>
 
                     {showProfileMenu && (
                       <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">

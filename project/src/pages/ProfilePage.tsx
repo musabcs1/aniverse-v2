@@ -206,7 +206,7 @@ const ProfilePage: React.FC = () => {
             <div className="bg-surface rounded-xl p-5">
               <h3 className="text-xl font-semibold mb-4">Badges</h3>
               <div className="space-y-3">
-                {userData.badges.map((badge, index) => (
+                {userData.badges.map((badge: string, index: number) => (
                   <div key={index} className="flex items-center p-2 bg-surface-light rounded-lg">
                     <div className="h-8 w-8 rounded-full bg-primary/30 flex items-center justify-center mr-3">
                       <Award className="h-4 w-4 text-primary" />

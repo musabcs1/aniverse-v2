@@ -59,7 +59,7 @@ const AuthPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-full max-w-md">
+      <form onSubmit={handleSubmit} className="bg-black p-8 rounded shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6">{isLogin ? 'Login' : 'Register'}</h2>
         {!isLogin && (
           <input
