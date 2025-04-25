@@ -9,20 +9,7 @@ import ForumPage from './pages/ForumPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthPage from './pages/AuthPage';
-
-type MobileMenuProps = {
-  mobileMenuOpen: boolean;
-  toggleMobileMenu: () => void;
-};
-
-const MobileMenu: React.FC<MobileMenuProps> = ({ mobileMenuOpen, toggleMobileMenu }) => {
-  return (
-    <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-      <button onClick={toggleMobileMenu}>Toggle Menu</button>
-      {/* Add additional menu items or content here */}
-    </div>
-  );
-};
+import MobileMenu from './components/layout/MobileMenu';
 
 function App() {
   const [scrolled, setScrolled] = useState(false);
