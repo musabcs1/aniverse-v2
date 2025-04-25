@@ -21,27 +21,24 @@ const AuthPage: React.FC = () => {
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
-        // Retrieve user data (if available) or create a default user object
         const storedUserData = localStorage.getItem('userData');
         let userData;
 
         if (storedUserData) {
-          // If user data exists, parse it from localStorage
           userData = JSON.parse(storedUserData);
         } else {
-          // If user data doesn't exist, create a default user object
           userData = {
-            username: "Default User", // Set a default username
-            email: email, // Set the email
+            username: "Default User",
+            email: email,
             level: 0,
             joinDate: new Date().toISOString(),
-            avatar: "https://i.pravatar.cc/150?img=33", // Varsayılan avatar
-            badges: [], // Boş badges array'i
-            watchlist: [] // Boş watchlist array'i
+            avatar: "https://i.pravatar.cc/150?img=33",
+            badges: [],
+            watchlist: []
           };
         }
         localStorage.setItem('userData', JSON.stringify(userData));
-        alert('Signed in successfully!');
+        navigate('/profile');
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
         // Yeni kullanıcı bilgileri
@@ -58,7 +55,6 @@ const AuthPage: React.FC = () => {
         localStorage.setItem('userData', JSON.stringify(userData));
         alert('Account created successfully!');
       }
-      navigate('/profile');
     } catch (err: any) {
       setError(err.message);
     }
