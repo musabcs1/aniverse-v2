@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import Logo from '../ui/Logo';
-import { useUserContext } from '../../context/UserContext'; // Corrected import path
+import { useUserContext } from '../../contexts/UserContext';
 
 interface HeaderProps {
   scrolled: boolean;
@@ -13,7 +13,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userData, clearUserData } = useUserContext(); // UserContext data
+  const { userData, clearUserData } = useUserContext();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const isActive = (path: string) => {
