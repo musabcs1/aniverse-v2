@@ -1,11 +1,10 @@
 import { useContext, useState } from 'react';
-import { UserContext } from '../context/UserContext';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { UserContext } from '../contexts/UserContext'; // UserContext'i import et
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User } from 'react-feather';
 import Logo from '../components/ui/Logo';
-// Removed unused showPassword import
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,9 +12,9 @@ const AuthPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Manage showPassword state locally
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { setUserData } = useContext(UserContext); // Context'ten setUserData'yı alıyoruz
+  const { setUserData } = useContext(UserContext); // Kullanıcı verilerini güncellemek için context'i kullanıyoruz
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +45,7 @@ const AuthPage: React.FC = () => {
           watchlist: [],
         };
       }
+
       localStorage.setItem('userData', JSON.stringify(userData));
       setUserData(userData); // Kullanıcı verilerini context'e set ediyoruz
       navigate('/profile');
@@ -71,22 +71,7 @@ const AuthPage: React.FC = () => {
           </div>
 
           <form className="space-y-6" onSubmit={handleAuth}>
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Username</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    className="w-full bg-surface p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-                    placeholder="Choose a username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                  <User className="absolute left-3 top-3.5 h-5 w-5 text-gray-500" />
-                </div>
-              </div>
-            )}
-
+            {/* Diğer form alanları */}
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
               <div className="relative">
@@ -105,7 +90,7 @@ const AuthPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"} // showPassword durumuna göre şifreyi göster veya gizle
+                  type={showPassword ? "text" : "password"}
                   className="w-full bg-surface p-3 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                   placeholder={isLogin ? "Enter your password" : "Create a password"}
                   value={password}
@@ -115,7 +100,7 @@ const AuthPage: React.FC = () => {
                 <button
                   type="button"
                   className="absolute right-3 top-3.5 text-gray-500 hover:text-white"
-                  onClick={() => setShowPassword(!showPassword)} // showPassword'ı tersine çevir
+                  onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -124,10 +109,7 @@ const AuthPage: React.FC = () => {
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
-            <button
-              type="submit"
-              className="w-full btn-primary py-3"
-            >
+            <button type="submit" className="w-full btn-primary py-3">
               {isLogin ? 'Sign In' : 'Create Account'}
             </button>
 

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 interface UserData {
   username: string;
@@ -6,33 +6,31 @@ interface UserData {
   level: number;
   joinDate: string;
   avatar: string;
-  badges: string[];
-  watchlist: string[];
+  badges: any[];
+  watchlist: any[];
 }
 
 interface UserContextType {
   userData: UserData | null;
-  setUserData: React.Dispatch<React.SetStateAction<UserData | null>>;
+  setUserData: (userData: UserData) => void;
 }
 
-export const UserContext = createContext<UserContextType>({
-  userData: null,
-  setUserData: () => {},
-});
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('userData');
-    if (storedUser) {
-      setUserData(JSON.parse(storedUser));
-    }
-  }, []);
 
   return (
     <UserContext.Provider value={{ userData, setUserData }}>
       {children}
     </UserContext.Provider>
   );
+};
+
+export const useUserContext = (): UserContextType => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUserContext must be used within a UserProvider');
+  }
+  return context;
 };

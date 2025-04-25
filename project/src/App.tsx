@@ -9,6 +9,10 @@ import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthPage from './pages/AuthPage';
 import { UserProvider } from './context/UserContext';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { UserProvider } from './context/UserContext'; // UserContext dosyasını import edin
+import Header from './components/Header'; // Header bileşeninizi import edin
+import Routes from './Routes'; // Uygulamanızdaki routing kısmını import edin
 
 function App() {
   return (
