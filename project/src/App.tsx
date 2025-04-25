@@ -1,14 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
-import AnimeDirectoryPage from './pages/AnimeDirectoryPage';
-import AnimeDetailPage from './pages/AnimeDetailPage';
+import ProfilePage from './pages/ProfilePage';
 import ForumPage from './pages/ForumPage';
 import NewsPage from './pages/NewsPage';
-import ProfilePage from './pages/ProfilePage';
+import AnimeDirectoryPage from './pages/AnimeDirectoryPage';
+import AnimeDetailPage from './pages/AnimeDetailPage';
 import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
+import Layout from './components/layout/Layout';
 
 function App() {
   return (
@@ -22,9 +22,7 @@ function App() {
           <Route path="/news" element={<NewsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/admin" element={<AdminPage />} /> {/* Admin rotası */}
-
-          {/* Catch-All Route */}
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>
