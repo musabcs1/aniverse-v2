@@ -16,26 +16,12 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
-    // Check for user data when component mounts and when localStorage changes
-    const checkAuth = () => {
-      const storedUserData = localStorage.getItem('userData');
-      if (storedUserData) {
-        try {
-          const parsedData = JSON.parse(storedUserData);
-          setUserData(parsedData);
-        } catch {
-          // If data is invalid, clear it
-          localStorage.removeItem('userData');
-          setUserData(null);
-        }
-      } else {
-        setUserData(null);
-      }
-    };
-
-    checkAuth();
-    window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
+    const storedUser = localStorage.getItem("userData");
+    if (storedUser) {
+      setUserData(JSON.parse(storedUser));
+    } else {
+      setUserData(null);
+    }
   }, []);
 
   const isActive = (path: string) => {
@@ -43,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userData');
+    localStorage.removeItem("userData");
     setUserData(null);
     setShowProfileMenu(false);
     navigate('/');
@@ -92,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
                     >
                       <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
                         <img 
-                          src={userData.avatar} 
+                          src={userData.avatar || "/default-avatar.png"} 
                           alt="Profile"
                           className="h-full w-full object-cover"
                         />
@@ -101,16 +87,15 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
                     </button>
 
                     {showProfileMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
-                        <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded shadow-lg z-10">
+                        <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                           Profile
                         </Link>
                         <button 
                           onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
+                          className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
                         >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Sign Out
+                          Logout
                         </button>
                       </div>
                     )}
