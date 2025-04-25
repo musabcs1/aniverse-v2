@@ -11,7 +11,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<any | null>(null);
 
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
