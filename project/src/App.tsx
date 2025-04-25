@@ -8,6 +8,7 @@ import AnimeDirectoryPage from './pages/AnimeDirectoryPage';
 import AnimeDetailPage from './pages/AnimeDetailPage';
 import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import Layout from './components/layout/Layout';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/news" element={<NewsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

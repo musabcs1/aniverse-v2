@@ -1,52 +1,53 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebaseConfig';
-import { doc, getDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import { doc, collection, getDocs, updateDoc } from 'firebase/firestore';
 
 const AdminPage: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [users, setUsers] = useState<any[]>([]); // State to store user data
 
+  // Check if the user is an admin
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (auth.currentUser) {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists() && userDoc.data().role === 'admin') {
-          setIsAdmin(true);
-        } else {
-          alert('You are not authorized to access this page.');
-          navigate('/');
-        }
-      } else {
-        alert('Please log in to access the admin panel.');
-        navigate('/auth');
-      }
-    };
-
-    checkAdmin();
+    const adminData = localStorage.getItem('adminData');
+    if (adminData) {
+      setIsAdmin(true);
+    } else {
+      navigate('/admin-login'); // Redirect to admin login page if not authenticated
+    }
   }, [navigate]);
 
+  // Fetch users from Firestore
   const fetchUsers = async () => {
-    const usersCollection = collection(db, 'users');
-    const userDocs = await getDocs(usersCollection);
-    const usersData = userDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setUsers(usersData);
+    try {
+      const usersCollection = collection(db, 'users');
+      const userDocs = await getDocs(usersCollection);
+      const usersData = userDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
   };
 
+  // Update user role in Firestore
   const updateRole = async (userId: string, newRole: string) => {
-    const userDocRef = doc(db, 'users', userId);
-    await updateDoc(userDocRef, { role: newRole });
-    alert(`User role updated to ${newRole}`);
-    fetchUsers(); // Refresh the user list
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, { role: newRole });
+      alert(`User role updated to ${newRole}`);
+      fetchUsers(); // Refresh the user list after updating the role
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
   };
 
+  // Fetch users when the component mounts
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // If the user is not an admin, show nothing
   if (!isAdmin) {
     return null;
   }
