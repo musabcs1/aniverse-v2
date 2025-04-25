@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { UserContext } from '../contexts/UserContext';
+import { UserContext } from '../context/UserContext';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
