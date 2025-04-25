@@ -8,7 +8,6 @@ import { Anime } from '../types';
 import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Firebase Storage
 import { useNavigate } from 'react-router-dom';
 
 // Sample data for watchlist
@@ -83,7 +82,8 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false); // State for upload status
+  const [avatarURL, setAvatarURL] = useState(''); // State for avatar URL input
+  const [updating, setUpdating] = useState(false); // State for update status
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,6 +94,7 @@ const ProfilePage: React.FC = () => {
 
         if (userDoc.exists()) {
           setUserData(userDoc.data());
+          setAvatarURL(userDoc.data().avatar || ''); // Pre-fill the avatar URL input
         } else {
           console.error('User data not found in Firestore.');
         }
@@ -106,42 +107,28 @@ const ProfilePage: React.FC = () => {
     return () => unsubscribe(); // Cleanup the listener on component unmount
   }, [navigate]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) {
-      console.error('No file selected.');
+  const handleAvatarUpdate = async () => {
+    if (!avatarURL.trim()) {
+      alert('Please provide a valid avatar URL.');
       return;
     }
 
-    const file = e.target.files[0];
-    const storage = getStorage();
-    const storageRef = ref(storage, `avatars/${auth.currentUser?.uid}`);
-
     try {
-      setUploading(true); // Set uploading state to true
-      console.log('Uploading file:', file.name);
-
-      // Upload the file to Firebase Storage
-      const uploadResult = await uploadBytes(storageRef, file);
-      console.log('Upload successful:', uploadResult);
-
-      // Get the download URL of the uploaded file
-      const downloadURL = await getDownloadURL(storageRef);
-      console.log('Download URL:', downloadURL);
+      setUpdating(true); // Set updating state to true
+      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
 
       // Update the user's avatar in Firestore
-      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
-      await updateDoc(userDocRef, { avatar: downloadURL });
-      console.log('Firestore updated successfully.');
+      await updateDoc(userDocRef, { avatar: avatarURL });
 
       // Update the local state with the new avatar URL
-      setUserData((prev: any) => ({ ...prev, avatar: downloadURL }));
+      setUserData((prev: any) => ({ ...prev, avatar: avatarURL }));
 
       alert('Avatar updated successfully!');
     } catch (error) {
       console.error('Error updating avatar:', error);
       alert('Failed to update avatar. Please try again.');
     } finally {
-      setUploading(false); // Set uploading state to false
+      setUpdating(false); // Set updating state to false
     }
   };
 
@@ -490,16 +477,22 @@ const ProfilePage: React.FC = () => {
                         alt={userData.username} 
                         className="w-16 h-16 rounded-full mr-4"
                       />
-                      <label className="btn-ghost py-2 px-4 cursor-pointer">
-                        {uploading ? 'Uploading...' : 'Change Avatar'}
+                      <div className="flex flex-col">
                         <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*" 
-                          onChange={handleAvatarChange} 
-                          disabled={uploading}
+                          type="text" 
+                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary mb-2"
+                          value={avatarURL}
+                          onChange={(e) => setAvatarURL(e.target.value)}
+                          placeholder="Enter avatar URL"
                         />
-                      </label>
+                        <button 
+                          className="btn-primary py-2 px-4"
+                          onClick={handleAvatarUpdate}
+                          disabled={updating}
+                        >
+                          {updating ? 'Updating...' : 'Update Avatar'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                   
