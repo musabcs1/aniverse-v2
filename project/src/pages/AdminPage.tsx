@@ -70,6 +70,8 @@ const AdminPage: React.FC = () => {
   );
 };
 
+export default AdminPage;
+
 const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -151,4 +153,4 @@ const AdminLoginPage = () => {
   );
 };
 
-export { AdminPage, AdminLoginPage };
+export { AdminLoginPage };
