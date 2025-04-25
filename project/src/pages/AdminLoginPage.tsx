@@ -37,8 +37,8 @@ const AdminLoginPage = () => {
       localStorage.setItem('adminData', JSON.stringify(adminData));
       navigate('/admin');
     } catch (err) {
-      console.error(err);
-      setError('An error occurred. Please try again.');
+      console.error("Error during admin login:", err);
+      setError(err.message || 'An error occurred. Please try again.');
     }
   };
 

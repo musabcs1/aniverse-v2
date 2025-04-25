@@ -63,8 +63,8 @@ const AuthPage = () => {
         navigate('/profile');
       }
     } catch (error) {
-      console.error(error);
-      alert('Authentication failed.');
+      console.error("Authentication error:", error);
+      alert(error.message || "Authentication failed.");
     }
   };
 
