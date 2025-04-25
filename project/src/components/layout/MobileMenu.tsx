@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { X, Home, Film, MessageSquare, Newspaper, User, Bell, Search } from 'lucide-react';
 import Logo from '../ui/Logo';
 
@@ -9,6 +9,23 @@ interface MobileMenuProps {
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
+  const [userData, setUserData] = useState<any | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    setUserData(null);
+    closeMenu();
+    navigate('/');
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -76,13 +93,22 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
       </nav>
       
       <div className="p-4 border-t border-gray-800">
-        <Link 
-          to="/auth" 
-          className="block w-full py-3 text-center font-medium text-white bg-primary rounded-lg"
-          onClick={closeMenu}
-        >
-          Sign In
-        </Link>
+        {userData ? (
+          <button 
+            onClick={handleLogout}
+            className="block w-full py-3 text-center font-medium text-white bg-surface rounded-lg"
+          >
+            Sign Out
+          </button>
+        ) : (
+          <Link 
+            to="/auth" 
+            className="block w-full py-3 text-center font-medium text-white bg-primary rounded-lg"
+            onClick={closeMenu}
+          >
+            Sign In
+          </Link>
+        )}
       </div>
     </div>
   );

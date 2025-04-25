@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search, Bell, User } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, Bell, LogOut, User } from 'lucide-react';
 import Logo from '../ui/Logo';
 
 interface HeaderProps {
@@ -11,7 +11,9 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [userData, setUserData] = useState<any | null>(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     // Check for user data whenever localStorage changes
@@ -34,6 +36,13 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    setUserData(null);
+    setShowProfileMenu(false);
+    navigate('/');
   };
 
   return (
@@ -71,12 +80,32 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
               </button>
 
               {userData ? (
-                <Link to="/profile" className="flex items-center space-x-2">
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                    <img src={userData.avatar} alt={userData.username} className="h-full w-full object-cover rounded-full" />
-                  </div>
-                  <span className="text-white">{userData.username}</span>
-                </Link>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center space-x-2"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                      <img src={userData.avatar} alt={userData.username} className="h-full w-full object-cover rounded-full" />
+                    </div>
+                    <span className="text-white">{userData.username}</span>
+                  </button>
+
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
+                      <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
+                        Profile
+                      </Link>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link to="/auth" className="btn-primary">Sign In</Link>
               )}
