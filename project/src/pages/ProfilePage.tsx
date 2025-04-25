@@ -157,7 +157,10 @@ const ProfilePage: React.FC = () => {
             </div>
             
             <div className="flex mt-4 md:mt-0 md:ml-auto space-x-3">
-              <button className="btn-ghost py-2 px-4 flex items-center space-x-2">
+              <button 
+                className="btn-ghost py-2 px-4 flex items-center space-x-2"
+                onClick={() => setActiveTab("settings")} // Update activeTab to "settings"
+              >
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </button>
