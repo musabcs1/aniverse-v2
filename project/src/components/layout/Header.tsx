@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import Logo from '../ui/Logo';
-import { useUserContext } from '../context/UserContext'; // UserContext'i import edin
+import { useUserContext } from '/contexts/UserContext'; // UserContext'i import edin
 
 interface HeaderProps {
   scrolled: boolean;
