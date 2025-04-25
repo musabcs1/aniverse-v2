@@ -4,7 +4,9 @@ import {
   Clock, Award, ChevronRight, Edit, Eye, EyeOff 
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
-import { Anime, User as UserType } from '../types';
+import { Anime } from '../types';
+import { doc, getDoc } from 'firebase/firestore'; // Firestore functions
+import { auth, db } from '../firebaseConfig';
 
 // Sample data for watchlist
 const watchlistAnime: Anime[] = [
@@ -76,14 +78,23 @@ const recentActivity = [
 
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
-  const [userData, setUserData] = useState<UserType | null>(null);
+  const [userData, setUserData] = useState<any | null>(null);
 
   useEffect(() => {
-    // Load user data from localStorage
-    const storedUserData = localStorage.getItem('userData');
-    if (storedUserData) {
-      setUserData(JSON.parse(storedUserData));
-    }
+    const fetchUserData = async () => {
+      if (auth.currentUser) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid); // Reference to Firestore document
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          setUserData(userDoc.data());
+        } else {
+          console.error("User data not found in Firestore.");
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   if (!userData) {

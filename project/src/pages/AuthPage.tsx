@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { doc, setDoc, getDoc } from 'firebase/firestore'; // Firestore functions
+import { auth, db } from '../firebaseConfig'; // Import Firestore
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = () => {
@@ -17,29 +18,20 @@ const AuthPage = () => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
         if (userCredential.user) {
-          const storedUserData = localStorage.getItem('userData');
-          let userData;
+          const userDocRef = doc(db, "users", userCredential.user.uid); // Reference to Firestore document
+          const userDoc = await getDoc(userDocRef);
 
-          if (storedUserData) {
-            userData = JSON.parse(storedUserData);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            localStorage.setItem('userData', JSON.stringify(userData));
+            window.dispatchEvent(new Event('storage')); // 🔔 event triggered
+            navigate('/profile');
           } else {
-            userData = {
-              username: username,
-              email: email,
-              level: 0,
-              joinDate: new Date().toISOString(),
-              avatar: "https://i.pravatar.cc/150?img=33",
-              badges: [],
-              watchlist: []
-            };
+            console.error("User data not found in Firestore.");
           }
-
-          localStorage.setItem('userData', JSON.stringify(userData));
-          window.dispatchEvent(new Event('storage')); // 🔔 event tetiklendi
-          navigate('/profile');
         }
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const userData = {
           username,
           email,
@@ -49,8 +41,13 @@ const AuthPage = () => {
           badges: [],
           watchlist: []
         };
+
+        // Store userData in Firestore
+        const userDocRef = doc(db, "users", userCredential.user.uid); // Reference to Firestore document
+        await setDoc(userDocRef, userData);
+
         localStorage.setItem('userData', JSON.stringify(userData));
-        window.dispatchEvent(new Event('storage')); // 🔔 event tetiklendi
+        window.dispatchEvent(new Event('storage')); // 🔔 event triggered
         alert('Account created successfully!');
         navigate('/profile');
       }
