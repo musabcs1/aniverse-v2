@@ -20,43 +20,48 @@ const AuthPage: React.FC = () => {
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-        const storedUserData = localStorage.getItem('userData');
-        let userData;
+        // First verify credentials with Firebase
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        if (userCredential.user) {
+          // If login successful, set up user data
+          const storedUserData = localStorage.getItem('userData');
+          let userData;
 
-        if (storedUserData) {
-          userData = JSON.parse(storedUserData);
-        } else {
-          userData = {
-            username: "Default User",
-            email: email,
-            level: 0,
-            joinDate: new Date().toISOString(),
-            avatar: "https://i.pravatar.cc/150?img=33",
-            badges: [],
-            watchlist: []
-          };
+          if (storedUserData) {
+            userData = JSON.parse(storedUserData);
+          } else {
+            userData = {
+              username: "Default User",
+              email: email,
+              level: 0,
+              joinDate: new Date().toISOString(),
+              avatar: "https://i.pravatar.cc/150?img=33",
+              badges: [],
+              watchlist: []
+            };
+          }
+          // Store user data only after successful authentication
+          localStorage.setItem('userData', JSON.stringify(userData));
+          navigate('/profile');
         }
-        localStorage.setItem('userData', JSON.stringify(userData));
-        navigate('/profile');
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
-        // Yeni kullanıcı bilgileri
         const userData = {
           username,
           email,
           level: 0,
           joinDate: new Date().toISOString(),
-          avatar: "https://i.pravatar.cc/150?img=33", // Varsayılan avatar
-          badges: [], // Boş badges array'i
-          watchlist: [] // Boş watchlist array'i
+          avatar: "https://i.pravatar.cc/150?img=33",
+          badges: [],
+          watchlist: []
         };
-
         localStorage.setItem('userData', JSON.stringify(userData));
         alert('Account created successfully!');
+        navigate('/profile');
       }
     } catch (err: any) {
       setError(err.message);
+      localStorage.removeItem('userData'); // Clear any existing data on error
     }
   };
 

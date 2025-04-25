@@ -16,22 +16,26 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
-    // Check for user data whenever localStorage changes
-    const handleStorageChange = () => {
+    // Check for user data when component mounts and when localStorage changes
+    const checkAuth = () => {
       const storedUserData = localStorage.getItem('userData');
       if (storedUserData) {
-        setUserData(JSON.parse(storedUserData));
+        try {
+          const parsedData = JSON.parse(storedUserData);
+          setUserData(parsedData);
+        } catch {
+          // If data is invalid, clear it
+          localStorage.removeItem('userData');
+          setUserData(null);
+        }
       } else {
         setUserData(null);
       }
     };
 
-    // Initial check
-    handleStorageChange();
-
-    // Listen for storage changes
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
   const isActive = (path: string) => {
@@ -74,38 +78,44 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="relative">
-                <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
-                <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
-              </button>
-
               {userData ? (
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center space-x-2"
-                  >
-                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                      <img src={userData.avatar} alt={userData.username} className="h-full w-full object-cover rounded-full" />
-                    </div>
-                    <span className="text-white">{userData.username}</span>
+                <>
+                  <button className="relative">
+                    <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
+                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
                   </button>
+                  
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      className="flex items-center space-x-2"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={userData.avatar} 
+                          alt="Profile"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <span className="text-white">{userData.username}</span>
+                    </button>
 
-                  {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
-                      <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
-                        Profile
-                      </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    {showProfileMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
+                        <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
+                          Profile
+                        </Link>
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <Link to="/auth" className="btn-primary">Sign In</Link>
               )}
