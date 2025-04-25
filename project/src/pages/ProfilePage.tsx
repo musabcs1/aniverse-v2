@@ -5,9 +5,10 @@ import {
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
-import { doc, getDoc } from 'firebase/firestore'; // Firestore functions
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Firebase Storage
 import { useNavigate } from 'react-router-dom';
 
 // Sample data for watchlist
@@ -82,6 +83,7 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false); // State for upload status
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -103,6 +105,37 @@ const ProfilePage: React.FC = () => {
 
     return () => unsubscribe(); // Cleanup the listener on component unmount
   }, [navigate]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    const storage = getStorage();
+    const storageRef = ref(storage, `avatars/${auth.currentUser?.uid}`);
+
+    try {
+      setUploading(true); // Set uploading state to true
+      // Upload the file to Firebase Storage
+      await uploadBytes(storageRef, file);
+
+      // Get the download URL of the uploaded file
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Update the user's avatar in Firestore
+      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+      await updateDoc(userDocRef, { avatar: downloadURL });
+
+      // Update the local state with the new avatar URL
+      setUserData((prev: any) => ({ ...prev, avatar: downloadURL }));
+
+      alert('Avatar updated successfully!');
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      alert('Failed to update avatar. Please try again.');
+    } finally {
+      setUploading(false); // Set uploading state to false
+    }
+  };
 
   if (loading) {
     return (
@@ -449,9 +482,16 @@ const ProfilePage: React.FC = () => {
                         alt={userData.username} 
                         className="w-16 h-16 rounded-full mr-4"
                       />
-                      <button className="btn-ghost py-2 px-4">
-                        Change Avatar
-                      </button>
+                      <label className="btn-ghost py-2 px-4 cursor-pointer">
+                        {uploading ? 'Uploading...' : 'Change Avatar'}
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={handleAvatarChange} 
+                          disabled={uploading}
+                        />
+                      </label>
                     </div>
                   </div>
                   
