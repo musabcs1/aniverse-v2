@@ -79,6 +79,7 @@ const recentActivity = [
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
   const [userData, setUserData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true); // Add a loading state
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -92,11 +93,26 @@ const ProfilePage: React.FC = () => {
           console.error("User data not found in Firestore.");
         }
       }
+      setLoading(false); // Set loading to false after fetching user data
     };
 
     fetchUserData();
   }, []);
 
+  // Show a loading spinner or placeholder while Firebase reinitializes
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-400">Loading...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user data is found, redirect to the login page or show a message
   if (!userData) {
     return (
       <div className="pt-24 pb-16">
