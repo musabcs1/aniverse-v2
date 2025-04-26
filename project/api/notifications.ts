@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { collection, getDocs } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 import { db } from '../src/firebaseConfig'; // Adjusted the path to match the correct location
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,8 +11,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       res.status(200).json(notifications);
     } catch (error) {
-      console.error('Error fetching notifications:', error); // Log the error for debugging
-      res.status(500).json({ error: 'Failed to fetch notifications' });
+      if (error instanceof FirebaseError) {
+        console.error('Firebase error:', error.message);
+        res.status(500).json({ error: 'Firebase error occurred' });
+      } else {
+        console.error('Unexpected error:', error);
+        res.status(500).json({ error: 'Unexpected error occurred' });
+      }
     }
   } else {
     res.setHeader('Allow', ['GET']);
