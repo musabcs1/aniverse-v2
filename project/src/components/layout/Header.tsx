@@ -138,7 +138,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             </button>
 
             {showNotificationsTray && (
-              <div className="absolute right-0 mt-[45px] w-64 bg-surface rounded-lg shadow-lg py-2 notifications-tray">
+              <div className="absolute bg-surface rounded-lg shadow-lg py-2 notifications-tray" style={{ top: '47px', left: '956px', width: '250px' }}>
                 {notifications.length > 0 ? (
                   notifications.map((notification, index) => (
                     <div key={index} className="px-4 py-2 text-white hover:bg-surface-light">
