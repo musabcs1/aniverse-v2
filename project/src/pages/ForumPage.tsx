@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MessageSquare, TrendingUp, Users, Plus } from 'lucide-react';
 import ForumThreadCard from '../components/ui/ForumThreadCard';
-import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, increment, deleteDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { ForumThread, ForumCategory } from '../types';
 
@@ -72,12 +72,18 @@ const ForumPage: React.FC = () => {
     }
 
     try {
+      // Fetch the correct photo URL from the user profile database
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.exists() ? userDoc.data() : {};
+      const authorAvatar = userData.photoURL || 'https://i.pravatar.cc/150?img=33';
+
       const threadsRef = collection(db, 'forumThreads');
       await addDoc(threadsRef, {
         ...newThread,
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.displayName || 'Anonymous',
-        authorAvatar: auth.currentUser.photoURL || 'https://i.pravatar.cc/150?img=33',
+        authorAvatar, // Use the fetched photo URL
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         replies: 0,
@@ -87,7 +93,6 @@ const ForumPage: React.FC = () => {
       });
 
       // Update user's XP in Firestore
-      const userDocRef = doc(db, 'users', auth.currentUser.uid);
       await updateDoc(userDocRef, {
         xp: increment(10), // Increment XP by 10
       });
