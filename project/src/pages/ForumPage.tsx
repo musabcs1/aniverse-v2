@@ -1,80 +1,108 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MessageSquare, TrendingUp, Users, Plus } from 'lucide-react';
 import ForumThreadCard from '../components/ui/ForumThreadCard';
-import { ForumThread } from '../types';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import { Link } from 'react-router-dom';
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
+import { ForumThread, ForumCategory } from '../types';
 
-interface ForumStats {
-  totalThreads: number;
-  totalReplies: number;
-  totalUpvotes: number;
-}
-
-interface TrendingTopic {
-  title: string;
-  id: string;
-}
+const categories: ForumCategory[] = ['General', 'Anime', 'Theory', 'Memes', 'Reviews'];
 
 const ForumPage: React.FC = () => {
   const [forumThreads, setForumThreads] = useState<ForumThread[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
-  const [forumStats, setForumStats] = useState<ForumStats>({
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [newThread, setNewThread] = useState<{
+    title: string;
+    content: string;
+    category: ForumCategory;
+  }>({
+    title: '',
+    content: '',
+    category: 'General'
+  });
+  const [showNewThreadForm, setShowNewThreadForm] = useState(false);
+  const [stats, setStats] = useState({
     totalThreads: 0,
     totalReplies: 0,
-    totalUpvotes: 0,
+    totalUpvotes: 0
   });
+  const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
 
+  // Real-time listener for forum threads
   useEffect(() => {
-    const threadsCollection = collection(db, 'forumThreads');
-    const threadsQuery = query(threadsCollection, orderBy('createdAt', 'desc'));
+    const threadsRef = collection(db, 'forumThreads');
+    const threadsQuery = query(threadsRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(threadsQuery, (snapshot) => {
-      const threadsData: ForumThread[] = snapshot.docs.map((doc) => {
+      const threads = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
-          title: data.title || '',
-          replies: data.replies || 0,
-          upvotes: data.upvotes || 0,
-          createdAt: data.createdAt,
-        };
+          ...data,
+          category: data.category as ForumCategory, // Type assertion here
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as ForumThread;
       });
 
-      setForumThreads(threadsData);
+      setForumThreads(threads);
 
-      const totalThreads = threadsData.length;
-      const totalReplies = threadsData.reduce((sum, thread) => sum + thread.replies, 0);
-      const totalUpvotes = threadsData.reduce((sum, thread) => sum + thread.upvotes, 0);
+      // Update stats
+      const totalThreads = threads.length;
+      const totalReplies = threads.reduce((sum, thread) => sum + thread.replies, 0);
+      const totalUpvotes = threads.reduce((sum, thread) => sum + thread.upvotes, 0);
+      setStats({ totalThreads, totalReplies, totalUpvotes });
 
-      setForumStats({ totalThreads, totalReplies, totalUpvotes });
-
-      const trending = [...threadsData]
-        .sort((a, b) => b.replies - a.replies)
+      // Update trending topics
+      const trending = threads
+        .sort((a, b) => (b.replies + b.upvotes) - (a.replies + a.upvotes))
         .slice(0, 5)
-        .map((thread) => ({ title: thread.title, id: thread.id }));
-
+        .map(thread => thread.title);
       setTrendingTopics(trending);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleCreateThread = async () => {
+    if (!auth.currentUser) {
+      alert('Please sign in to create a thread');
+      return;
+    }
+
+    try {
+      const threadsRef = collection(db, 'forumThreads');
+      await addDoc(threadsRef, {
+        ...newThread,
+        authorId: auth.currentUser.uid,
+        authorName: auth.currentUser.displayName || 'Anonymous',
+        authorAvatar: auth.currentUser.photoURL || 'https://i.pravatar.cc/150?img=33',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        replies: 0,
+        upvotes: 0,
+        downvotes: 0,
+        tags: [],
+      });
+
+      setShowNewThreadForm(false);
+      setNewThread({ title: '', content: '', category: 'General' });
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      alert('Failed to create thread. Please try again.');
+    }
   };
 
-  const filteredThreads = useMemo(() => {
-    return forumThreads.filter((thread) =>
-      thread.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
-    );
-  }, [forumThreads, searchTerm]);
+  const filteredThreads = forumThreads.filter(thread => {
+    const matchesSearch = thread.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || thread.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
             <h1 className="text-4xl font-orbitron font-bold">
@@ -82,42 +110,95 @@ const ForumPage: React.FC = () => {
             </h1>
             <p className="text-gray-400 mt-2">Join discussions with fellow anime enthusiasts</p>
           </div>
-          <Link
-            to="/create-thread"
+          <button
             className="btn-primary flex items-center space-x-2 mt-4 md:mt-0"
-            aria-label="Create a new thread"
+            onClick={() => setShowNewThreadForm(!showNewThreadForm)}
           >
             <Plus className="h-5 w-5" />
             <span>Create Thread</span>
-          </Link>
+          </button>
         </div>
 
-        {/* Search Bar */}
+        {/* New Thread Form */}
+        {showNewThreadForm && (
+          <div className="mb-8 p-6 bg-surface rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4">Create New Thread</h2>
+            <div className="space-y-4">
+              <input
+                type="text"
+                name="title"
+                placeholder="Thread Title"
+                className="w-full bg-surface-light py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                value={newThread.title}
+                onChange={(e) => setNewThread(prev => ({ ...prev, title: e.target.value }))}
+              />
+              <textarea
+                name="content"
+                placeholder="Thread Content"
+                className="w-full bg-surface-light py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                rows={5}
+                value={newThread.content}
+                onChange={(e) => setNewThread(prev => ({ ...prev, content: e.target.value }))}
+              />
+              <select
+                name="category"
+                className="w-full bg-surface-light py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                value={newThread.category}
+                onChange={(e) => setNewThread(prev => ({ 
+                  ...prev, 
+                  category: e.target.value as ForumCategory 
+                }))}
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              <button 
+                className="btn-primary py-2 px-4"
+                onClick={handleCreateThread}
+              >
+                Post Thread
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Search and Filters */}
         <div className="mb-8">
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              placeholder="Search discussions..."
-              className="w-full bg-surface py-3 pl-10 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-            <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                placeholder="Search discussions..."
+                className="w-full bg-surface py-3 pl-10 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            </div>
+            <select
+              className="bg-surface py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="All">All</option>
+              <option value="Anime">Anime</option>
+              <option value="General">General</option>
+              <option value="Theory">Theory</option>
+              <option value="Memes">Memes</option>
+              <option value="Reviews">Reviews</option>
+            </select>
           </div>
         </div>
 
+        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Forum Threads */}
           <div className="lg:col-span-3 space-y-6">
-            {filteredThreads.length > 0 ? (
-              filteredThreads.map((thread) => (
-                <ForumThreadCard key={thread.id} thread={thread} />
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-xl text-gray-400">No threads found. Start a discussion!</p>
-              </div>
-            )}
+            {filteredThreads.map(thread => (
+              <ForumThreadCard key={thread.id} thread={thread} />
+            ))}
           </div>
 
           {/* Sidebar */}
@@ -131,7 +212,7 @@ const ForumPage: React.FC = () => {
                     <MessageSquare className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold">{forumStats.totalThreads}</div>
+                    <div className="text-lg font-bold">{stats.totalThreads}</div>
                     <div className="text-sm text-gray-400">Total Threads</div>
                   </div>
                 </div>
@@ -141,7 +222,7 @@ const ForumPage: React.FC = () => {
                     <Users className="h-5 w-5 text-secondary" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold">{forumStats.totalReplies}</div>
+                    <div className="text-lg font-bold">{stats.totalReplies}</div>
                     <div className="text-sm text-gray-400">Total Replies</div>
                   </div>
                 </div>
@@ -151,7 +232,7 @@ const ForumPage: React.FC = () => {
                     <TrendingUp className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold">{forumStats.totalUpvotes}</div>
+                    <div className="text-lg font-bold">{stats.totalUpvotes}</div>
                     <div className="text-sm text-gray-400">Total Upvotes</div>
                   </div>
                 </div>
@@ -167,11 +248,9 @@ const ForumPage: React.FC = () => {
                 </span>
               </h3>
               <div className="space-y-3">
-                {trendingTopics.map((topic) => (
-                  <div key={topic.id} className="p-2 rounded hover:bg-surface-light transition-colors">
-                    <Link to={`/forum/${topic.id}`} className="text-sm hover:text-secondary transition-colors">
-                      {topic.title}
-                    </Link>
+                {trendingTopics.map((topic, index) => (
+                  <div key={index} className="p-2 rounded hover:bg-surface-light transition-colors">
+                    <span className="text-sm text-gray-300">{topic}</span>
                   </div>
                 ))}
               </div>

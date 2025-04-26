@@ -41,16 +41,18 @@ export interface User {
   badges: string[];
 }
 
+export type ForumCategory = 'General' | 'Anime' | 'Theory' | 'Memes' | 'Reviews';
+
 export interface ForumThread {
-  id: number;
+  id: string;
   title: string;
   content: string;
-  authorId: number;
+  authorId: string;
   authorName: string;
   authorAvatar: string;
-  category: 'Anime' | 'Theory' | 'Memes' | 'Reviews' | 'General';
-  createdAt: string;
-  updatedAt: string;
+  category: ForumCategory;
+  createdAt: Date;
+  updatedAt: Date;
   replies: number;
   upvotes: number;
   downvotes: number;
