@@ -142,6 +142,11 @@ const ForumPage: React.FC = () => {
   };
 
   const handleReportThread = async (threadId: string) => {
+    if (!auth.currentUser) {
+      alert('You must be logged in to report a thread.');
+      return;
+    }
+
     try {
       const threadRef = doc(db, 'forumThreads', threadId);
       await updateDoc(threadRef, { reported: true });
