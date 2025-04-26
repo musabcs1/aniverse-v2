@@ -72,18 +72,18 @@ const ForumPage: React.FC = () => {
     }
 
     try {
-      // Fetch the correct photo URL from the user profile database
+      // Fetch the correct avatar URL from the user profile database
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.exists() ? userDoc.data() : {};
-      const authorAvatar = userData.photoURL || 'https://i.pravatar.cc/150?img=33';
+      const authorAvatar = userData.avatar || 'https://i.pravatar.cc/150?img=33';
 
       const threadsRef = collection(db, 'forumThreads');
       await addDoc(threadsRef, {
         ...newThread,
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.displayName || 'Anonymous',
-        authorAvatar, // Use the fetched photo URL
+        authorAvatar, // Use the fetched avatar URL
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         replies: 0,
