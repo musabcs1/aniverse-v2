@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "title": "Attack on Titan",
+    "coverImage": "https://example.com/attack-on-titan.jpg",
+    "description": "Humanity's fight against Titans.",
+    "episodes": 75,
+    "genres": ["Action", "Drama", "Fantasy"],
+    "rating": 9.1,
+    "releaseYear": 2013,
+    "status": "Completed",
+    "studio": "Wit Studio"
+  },
+  {
+    "id": 2,
+    "title": "Naruto",
+    "coverImage": "https://example.com/naruto.jpg",
+    "description": "A young ninja's journey to become Hokage.",
+    "episodes": 220,
+    "genres": ["Action", "Adventure", "Fantasy"],
+    "rating": 8.3,
+    "releaseYear": 2002,
+    "status": "Completed",
+    "studio": "Pierrot"
+  },
+  {
+    "id": 3,
+    "title": "One Piece",
+    "coverImage": "https://example.com/one-piece.jpg",
+    "description": "Pirates searching for the ultimate treasure.",
+    "episodes": 1000,
+    "genres": ["Action", "Adventure", "Comedy"],
+    "rating": 8.9,
+    "releaseYear": 1999,
+    "status": "Ongoing",
+    "studio": "Toei Animation"
+  },
+  {
+    "id": 4,
+    "title": "Demon Slayer",
+    "coverImage": "https://example.com/demon-slayer.jpg",
+    "description": "A boy fights demons to save his sister.",
+    "episodes": 26,
+    "genres": ["Action", "Adventure", "Supernatural"],
+    "rating": 8.7,
+    "releaseYear": 2019,
+    "status": "Ongoing",
+    "studio": "ufotable"
+  },
+  {
+    "id": 5,
+    "title": "My Hero Academia",
+    "coverImage": "https://example.com/my-hero-academia.jpg",
+    "description": "Superheroes in training.",
+    "episodes": 113,
+    "genres": ["Action", "Comedy", "Superhero"],
+    "rating": 8.5,
+    "releaseYear": 2016,
+    "status": "Ongoing",
+    "studio": "Bones"
+  }
+]

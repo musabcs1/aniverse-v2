@@ -1,155 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
-
-// Sample data - expanded list
-const animeList: Anime[] = [
-  {
-    id: 1,
-    title: "Celestial Legends: The Awakening",
-    coverImage: "https://www.asialogy.com/wp-content/uploads/anime-nedir-nasil-yapilir.webp",
-    description: "A forgotten prophecy. A reluctant hero. As ancient powers reawaken, Hiro must embrace his hidden destiny.",
-    episodes: 24,
-    genres: ["Fantasy", "Action"],
-    rating: 9.2,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Aniverse Studios"
-  },
-  {
-    id: 2,
-    title: "Cyber Nexus 2099",
-    coverImage: "https://images.pexels.com/photos/3052361/pexels-photo-3052361.jpeg",
-    description: "In a dystopian future where humanity and technology have merged, a rogue AI threatens to enslave mankind.",
-    episodes: 12,
-    genres: ["Sci-Fi", "Cyberpunk"],
-    rating: 8.9,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "NeoCyber Productions"
-  },
-  {
-    id: 3,
-    title: "Samurai's Honor",
-    coverImage: "https://images.pexels.com/photos/5486845/pexels-photo-5486845.jpeg",
-    description: "In feudal Japan, a masterless samurai seeks redemption by protecting a village from ruthless bandits.",
-    episodes: 18,
-    genres: ["Historical", "Martial Arts"],
-    rating: 8.7,
-    releaseYear: 2023,
-    status: "Completed",
-    studio: "Shogun Animation"
-  },
-  {
-    id: 4,
-    title: "Spirit Hunters Academy",
-    coverImage: "https://images.pexels.com/photos/592077/pexels-photo-592077.jpeg",
-    description: "At an elite academy, students with supernatural abilities train to combat malevolent spirits threatening humanity.",
-    episodes: 16,
-    genres: ["Supernatural", "Drama"],
-    rating: 9.0,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "Phantom Works"
-  },
-  {
-    id: 5,
-    title: "Infinite Dreamscape",
-    coverImage: "https://images.pexels.com/photos/3617457/pexels-photo-3617457.jpeg",
-    description: "A groundbreaking virtual reality MMORPG becomes a battlefield when players discover they cannot log out.",
-    episodes: 24,
-    genres: ["Adventure", "Fantasy"],
-    rating: 8.8,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Digital Frontier"
-  },
-  {
-    id: 6,
-    title: "Echoes of Destiny",
-    coverImage: "https://images.pexels.com/photos/1493226/pexels-photo-1493226.jpeg",
-    description: "An amnesiac girl discovers she can see glimpses of the future, becoming the key to preventing a global catastrophe.",
-    episodes: 22,
-    genres: ["Mystery", "Thriller"],
-    rating: 9.1,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "Chrono Visuals"
-  },
-  {
-    id: 7,
-    title: "Astral Knights",
-    coverImage: "https://images.pexels.com/photos/6771600/pexels-photo-6771600.jpeg",
-    description: "Seven legendary warriors from across the galaxy unite to battle an ancient cosmic entity threatening to consume all of creation.",
-    episodes: 13,
-    genres: ["Space Opera", "Action"],
-    rating: 9.5,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Galactic Studios"
-  },
-  {
-    id: 8,
-    title: "Garden of Memories",
-    coverImage: "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg",
-    description: "A beautiful, emotional journey about a girl who can see people's memories by touching the flowers they've grown.",
-    episodes: 12,
-    genres: ["Drama", "Slice of Life"],
-    rating: 9.3,
-    releaseYear: 2024,
-    status: "Completed",
-    studio: "Bloom Animation"
-  },
-  {
-    id: 9,
-    title: "Midnight Protocol",
-    coverImage: "https://images.pexels.com/photos/2694037/pexels-photo-2694037.jpeg",
-    description: "In a world where hackers fight for digital freedom, one brilliant coder discovers a conspiracy that threatens global security.",
-    episodes: 24,
-    genres: ["Techno-Thriller", "Mystery"],
-    rating: 9.0,
-    releaseYear: 2023,
-    status: "Completed",
-    studio: "Dark Code Productions"
-  },
-  {
-    id: 10,
-    title: "Academy of Elemental Magic",
-    coverImage: "https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg",
-    description: "Students with affinities for different elements navigate friendships, rivalries, and the dangers of powerful magic.",
-    episodes: 26,
-    genres: ["Fantasy", "School"],
-    rating: 8.6,
-    releaseYear: 2023,
-    status: "Completed",
-    studio: "Arcane Studios"
-  },
-  {
-    id: 11,
-    title: "Last Stand of the Ronin",
-    coverImage: "https://images.pexels.com/photos/6898854/pexels-photo-6898854.jpeg",
-    description: "A tale of honor and vengeance as the last surviving member of a samurai clan seeks to restore his family's name.",
-    episodes: 12,
-    genres: ["Historical", "Action"],
-    rating: 9.2,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Blade Animation"
-  },
-  {
-    id: 12,
-    title: "Neon Alley Drifters",
-    coverImage: "https://images.pexels.com/photos/3156381/pexels-photo-3156381.jpeg",
-    description: "Street racers with modified hover cars compete in dangerous underground races through a futuristic Tokyo.",
-    episodes: 16,
-    genres: ["Racing", "Sci-Fi"],
-    rating: 8.5,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "Velocity Animation"
-  }
-];
 
 const genres = [
   "Action", "Adventure", "Comedy", "Drama", "Fantasy", "Historical", 
@@ -162,6 +16,7 @@ const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Sho
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
 
 const AnimeDirectoryPage: React.FC = () => {
+  const [animeList, setAnimeList] = useState<Anime[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -169,6 +24,34 @@ const AnimeDirectoryPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedStudio, setSelectedStudio] = useState("All Studios");
   const [sortBy, setSortBy] = useState("newest");
+
+  useEffect(() => {
+    const fetchAnimeList = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'anime'));
+        const fetchedAnime = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || '',
+            coverImage: data.coverImage || '',
+            description: data.description || '',
+            episodes: data.episodes || 0,
+            genres: data.genres || [],
+            rating: data.rating || 0,
+            releaseYear: data.releaseYear || 0,
+            status: data.status || '',
+            studio: data.studio || ''
+          } as Anime;
+        });
+        setAnimeList(fetchedAnime);
+      } catch (error) {
+        console.error('Error fetching anime list:', error);
+      }
+    };
+
+    fetchAnimeList();
+  }, []);
 
   const toggleGenre = (genre: string) => {
     if (selectedGenres.includes(genre)) {

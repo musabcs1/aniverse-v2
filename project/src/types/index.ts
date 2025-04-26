@@ -1,5 +1,5 @@
 export interface Anime {
-  id: number;
+  id: string; // Updated to string to match Firestore's document ID type
   title: string;
   coverImage: string;
   bannerImage?: string;

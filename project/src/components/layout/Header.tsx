@@ -19,6 +19,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const [isScrolled, setIsScrolled] = useState(false);
   const [showNotificationsTray, setShowNotificationsTray] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const checkAuth = () => {
@@ -129,6 +130,13 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
     }
   };
 
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
@@ -151,12 +159,16 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
 
           <div className="hidden md:flex items-center space-x-4" style={{ position: 'absolute', top: '19px', left: '697px', height: '40px' }}>
             <div className="relative" style={{ width: '225px' }}>
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="bg-surface/60 py-2 pl-10 pr-4 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
-              />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <form onSubmit={handleSearch}>
+                <input 
+                  type="text" 
+                  placeholder="Search..." 
+                  className="bg-surface/60 py-2 pl-10 pr-4 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              </form>
             </div>
 
             <button className="relative" onClick={handleNotificationsClick}>

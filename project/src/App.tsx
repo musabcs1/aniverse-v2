@@ -10,6 +10,7 @@ import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import NotificationsPage from './pages/NotificationsPage';
+import SearchPage from './pages/SearchPage';
 import Layout from './components/layout/Layout';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>
