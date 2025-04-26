@@ -7,7 +7,6 @@ import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
 import { doc, getDoc, updateDoc, collection, query, where, onSnapshot, getDocs } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 interface UserStats {
@@ -38,6 +37,13 @@ const ProfilePage: React.FC = () => {
   });
 
   useEffect(() => {
+    // Check if user data exists in localStorage first
+    const storedUserData = localStorage.getItem('userData');
+    if (!storedUserData) {
+      navigate('/auth');
+      return;
+    }
+
     const fetchUserDataAndStats = async (uid: string) => {
       try {
         // Fetch user data
@@ -46,7 +52,7 @@ const ProfilePage: React.FC = () => {
 
         if (!userSnapshot.exists()) {
           console.error('User document not found');
-          setLoading(false);
+          navigate('/auth');
           return;
         }
 
@@ -88,21 +94,24 @@ const ProfilePage: React.FC = () => {
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
+        navigate('/auth');
       } finally {
         setLoading(false);
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchUserDataAndStats(user.uid);
+    // Get user data from localStorage
+    try {
+      const parsedUserData = JSON.parse(storedUserData);
+      if (parsedUserData && parsedUserData.uid) {
+        fetchUserDataAndStats(parsedUserData.uid);
       } else {
-        navigate('/auth'); // Redirect to /auth if not authenticated
-        setLoading(false);
+        navigate('/auth');
       }
-    });
-
-    return () => unsubscribe();
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      navigate('/auth');
+    }
   }, [navigate]);
 
   useEffect(() => {
