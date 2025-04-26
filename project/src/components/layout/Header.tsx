@@ -68,6 +68,25 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
     fetchNotifications();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const trayElement = document.querySelector('.notifications-tray');
+      if (trayElement && !trayElement.contains(event.target as Node)) {
+        setShowNotificationsTray(false);
+      }
+    };
+
+    if (showNotificationsTray) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotificationsTray]);
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -122,7 +141,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                   </button>
 
                   {showNotificationsTray && (
-                    <div className="absolute right-0 mt-2 w-64 bg-surface rounded-lg shadow-lg py-2">
+                    <div className="absolute right-0 mt-2 w-64 bg-surface rounded-lg shadow-lg py-2 notifications-tray">
                       {notifications.length > 0 ? (
                         notifications.map((notification, index) => (
                           <div key={index} className="px-4 py-2 text-white hover:bg-surface-light">
