@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { X, Home, Film, MessageSquare, Newspaper, User, Bell, Search } from 'lucide-react';
 import Logo from '../ui/Logo';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -10,6 +12,7 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
   const [userData, setUserData] = useState<any | null>(null);
+  const [notificationsCount, setNotificationsCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +20,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
     if (storedUserData) {
       setUserData(JSON.parse(storedUserData));
     }
+  }, []);
+
+  useEffect(() => {
+    const notificationsRef = collection(db, 'notifications');
+    const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+      setNotificationsCount(snapshot.size);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = () => {
@@ -85,7 +97,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
               <Bell className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">Notifications</span>
               <span className="bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto">
-                3
+                {notificationsCount}
               </span>
             </div>
           </li>
