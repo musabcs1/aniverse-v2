@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MessageSquare, TrendingUp, Users, Plus } from 'lucide-react';
+import { Search, MessageSquare, TrendingUp, Users, Plus, ThumbsUp } from 'lucide-react';
 import ForumThreadCard from '../components/ui/ForumThreadCard';
 import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, increment, deleteDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
@@ -295,7 +295,7 @@ const ForumPage: React.FC = () => {
 
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center mr-3">
-                    <TrendingUp className="h-5 w-5 text-accent" />
+                    <ThumbsUp className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <div className="text-lg font-bold">{stats.totalUpvotes}</div>
