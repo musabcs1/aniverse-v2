@@ -9,6 +9,7 @@ import AnimeDetailPage from './pages/AnimeDetailPage';
 import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import NotificationsPage from './pages/NotificationsPage';
 import Layout from './components/layout/Layout';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>
