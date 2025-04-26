@@ -36,9 +36,9 @@ service cloud.firestore {
     }
 
     // Notifications rules
-    match /notifications/{document=**} {
-      allow read: if true; // Adjust this based on your security requirements
-      allow create: if request.auth != null; // Allow authenticated users to create notifications
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
     // Reviews rules

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  User, Settings, Shield, Heart, BookOpen, MessageSquare, 
+  User, Settings, Heart, BookOpen, MessageSquare, 
   Clock, Award, ChevronRight, Edit
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface UserStats {
   watching: number;
@@ -33,6 +35,8 @@ const ProfilePage: React.FC = () => {
     level: 0,
     xp: 0,
   });
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [markingAllAsRead, setMarkingAllAsRead] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,9 +78,19 @@ const ProfilePage: React.FC = () => {
       }
     };
 
+    const fetchNotificationsRealtime = (uid: string) => {
+      const notificationsRef = query(collection(db, 'notifications'), where('userId', '==', uid));
+      const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+        const updatedNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setNotifications(updatedNotifications);
+      });
+      return unsubscribe;
+    };
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchUserDataAndStats(user.uid);
+        fetchNotificationsRealtime(user.uid);
       } else {
         navigate('/auth');
         setLoading(false);
@@ -102,6 +116,33 @@ const ProfilePage: React.FC = () => {
       alert('Failed to update avatar. Please try again.');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const notificationRef = doc(db, 'notifications', notificationId);
+      await updateDoc(notificationRef, { read: true });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      setMarkingAllAsRead(true);
+      const unreadNotifications = notifications.filter(notification => !notification.read);
+      const updatePromises = unreadNotifications.map(notification => {
+        const notificationRef = doc(db, 'notifications', notification.id);
+        return updateDoc(notificationRef, { read: true });
+      });
+      await Promise.all(updatePromises);
+      toast.success('All notifications marked as read!');
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      toast.error('Failed to mark all notifications as read.');
+    } finally {
+      setMarkingAllAsRead(false);
     }
   };
 
@@ -157,6 +198,41 @@ const ProfilePage: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="bg-surface rounded-xl p-5 mb-8">
+          <h3 className="text-xl font-semibold mb-4">Notifications</h3>
+          {notifications.length > 0 ? (
+            <>
+              <button
+                className={`text-secondary text-sm mb-4 ${markingAllAsRead ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={markAllAsRead}
+                disabled={markingAllAsRead}
+              >
+                {markingAllAsRead ? 'Marking All as Read...' : 'Mark All as Read'}
+              </button>
+              <ul className="space-y-4">
+                {notifications.map((notification) => (
+                  <li key={notification.id} className="bg-surface-light p-4 rounded-lg">
+                    <p className="text-white">{notification.message}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(notification.timestamp).toLocaleString()}
+                    </p>
+                    {!notification.read && (
+                      <button
+                        className="text-secondary text-sm mt-2"
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        Mark as Read
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-gray-400">No notifications yet.</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
