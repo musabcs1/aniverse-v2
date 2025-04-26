@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { Mail, Lock } from 'lucide-react';
 import { query, where } from 'firebase/firestore';
 import { ForumThread } from '../types';
@@ -119,7 +119,14 @@ const AdminPage: React.FC = () => {
                       try {
                         await deleteDoc(doc(db, 'forumThreads', thread.id));
                         setReportedThreads(prev => prev.filter(t => t.id !== thread.id));
-                        alert('Thread deleted successfully.');
+
+                        // Deduct 10 XP from the thread owner
+                        const userDocRef = doc(db, 'users', thread.authorId);
+                        await updateDoc(userDocRef, {
+                          xp: increment(-10), // Deduct 10 XP
+                        });
+
+                        alert('Thread deleted successfully. 10 XP has been deducted from the owner.');
                       } catch (error) {
                         console.error('Error deleting thread:', error);
                         alert('Failed to delete thread. Please try again.');
