@@ -103,8 +103,8 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
     navigate('/');
   };
 
-  const toggleNotificationsTray = () => {
-    setShowNotificationsTray(!showNotificationsTray);
+  const handleNotificationsClick = () => {
+    navigate('/notifications');
   };
 
   const markAsRead = async (notificationId: string) => {
@@ -159,44 +159,12 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
 
-            <button className="relative" onClick={toggleNotificationsTray}>
+            <button className="relative" onClick={handleNotificationsClick}>
               <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
               <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                 {unreadCount}
               </span>
             </button>
-
-            {showNotificationsTray && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-surface rounded-lg shadow-lg py-2 notifications-tray">
-                <button
-                  className="text-secondary text-sm mb-2 ml-4"
-                  onClick={markAllAsRead}
-                >
-                  Mark All as Read
-                </button>
-                {notifications.length > 0 ? (
-                  notifications.map((notification) => (
-                    <div key={notification.id} className="px-4 py-2 text-white hover:bg-surface-light">
-                      <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>
-                      <p className="text-xs text-gray-400 mb-1">{notification.message}</p>
-                      <span className="text-xs text-gray-500">
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </span>
-                      {!notification.read && (
-                        <button
-                          className="text-secondary text-xs mt-1"
-                          onClick={() => markAsRead(notification.id)}
-                        >
-                          Mark as Read
-                        </button>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-2 text-gray-400">No notifications</div>
-                )}
-              </div>
-            )}
           </div>
 
           {userData ? (
