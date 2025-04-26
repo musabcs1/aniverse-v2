@@ -10,6 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       res.status(200).json(notifications);
     } catch (error) {
+      console.error('Error fetching notifications:', error); // Log the error for debugging
       res.status(500).json({ error: 'Failed to fetch notifications' });
     }
   } else {
