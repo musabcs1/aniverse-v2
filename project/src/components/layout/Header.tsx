@@ -151,9 +151,9 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
                     <div key={notification.id} className="px-4 py-2 text-white hover:bg-surface-light">
-                      <h4>{notification.title}</h4>
-                      <p>{notification.message}</p>
-                      <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                      <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>
+                      <p className="text-xs text-gray-400 mb-1">{notification.message}</p>
+                      <span className="text-xs text-gray-500">{new Date(notification.createdAt).toLocaleString()}</span>
                     </div>
                   ))
                 ) : (

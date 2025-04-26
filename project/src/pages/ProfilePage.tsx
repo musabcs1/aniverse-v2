@@ -380,9 +380,7 @@ const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/*watchlistAnime.map(anime => (
-                    <AnimeCard key={anime.id} anime={anime} />
-                  ))*/}
+                  <p className="text-gray-400">No items in your watchlist yet.</p>
                 </div>
                 
                 <div className="mt-10">
@@ -413,25 +411,7 @@ const ProfilePage: React.FC = () => {
                 <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
                 
                 <div className="space-y-4">
-                  {/*recentActivity.map(activity => (
-                    <div key={activity.id} className="bg-surface p-4 rounded-lg">
-                      <div className="flex items-start">
-                        <img 
-                          src={userData.avatar} 
-                          alt={userData.username} 
-                          className="w-10 h-10 rounded-full mr-3"
-                        />
-                        <div>
-                          <p className="text-white">
-                            <span className="font-medium">{userData.username}</span> {activity.content}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(activity.timestamp).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))*/}
+                  <p className="text-gray-400">No recent activity to display.</p>
                 </div>
                 
                 <button className="w-full mt-8 py-3 text-center text-secondary border border-secondary/30 rounded-lg hover:bg-secondary/10 transition-colors">
