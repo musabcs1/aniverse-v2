@@ -120,12 +120,12 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             </nav>
           </div>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <div className="relative">
+          <div className="hidden md:flex items-center justify-between w-full">
+            <div className="relative flex-grow max-w-md mx-auto">
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="bg-surface/60 py-2 pl-10 pr-4 rounded-full w-56 focus:w-64 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
+                className="bg-surface/60 py-2 pl-10 pr-4 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
