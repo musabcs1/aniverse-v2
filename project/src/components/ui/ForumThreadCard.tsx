@@ -122,6 +122,22 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
     }
   };
 
+  const handleReport = async () => {
+    if (!auth.currentUser) {
+      alert('Please log in to report this thread.');
+      return;
+    }
+
+    try {
+      const threadRef = doc(db, 'forumThreads', thread.id);
+      await updateDoc(threadRef, { reported: true });
+      alert('Thread reported successfully.');
+    } catch (error) {
+      console.error('Error reporting thread:', error);
+      alert('Failed to report thread. Please try again.');
+    }
+  };
+
   return (
     <div className="card p-4 hover:border-l-4 hover:border-l-primary transition-all">
       <div className="flex justify-between items-start">
@@ -174,6 +190,12 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
           >
             <ThumbsDown className="h-3 w-3" />
             <span>{downvotes.length}</span>
+          </button>
+          <button
+            onClick={handleReport}
+            className="text-yellow-500 hover:text-yellow-700 transition-colors"
+          >
+            Report
           </button>
         </div>
         
