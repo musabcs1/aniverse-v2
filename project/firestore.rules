@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read the `admins` collection
+    match /admins/{adminId} {
+      allow read: if request.auth != null;
+    }
+  
+      match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Forum rules
+    match /forumThreads/{threadId} {
+      // Allow authenticated users to read threads
+      allow read: if request.auth != null;
+      // Allow authenticated users to create threads
+      allow create: if request.auth != null;
+      // Allow thread owners to update their own threads or update the `reported` field
+      allow update: if request.auth != null && (request.auth.uid == resource.data.authorId || request.resource.data.keys().hasOnly(['reported', 'upvotes', 'downvotes']));
+      // Allow thread owners or admins to delete threads
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
+    }
+
+    // Allow authenticated users to read and write their own data
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Comments rules
+    match /comments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Notifications rules
+    match /notifications/{document=**} {
+      allow read: if true; // Adjust this based on your security requirements
+      allow create: if request.auth != null; // Allow authenticated users to create notifications
+    }
+
+    // Reviews rules
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+  }
+
+  match /b/{bucket}/o {
+    // Allow authenticated users to upload and read files in avatars folder
+    match /avatars/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
