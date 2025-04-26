@@ -51,7 +51,7 @@ const ForumPage: React.FC = () => {
       // Update stats
       const totalThreads = threads.length;
       const totalReplies = threads.reduce((sum, thread) => sum + thread.replies, 0);
-      const totalUpvotes = threads.reduce((sum, thread) => sum + thread.upvotes.length, 0); // Use length of upvotes array
+      const totalUpvotes = threads.reduce((sum, thread) => sum + (Array.isArray(thread.upvotes) ? thread.upvotes.length : 0), 0); // Ensure upvotes is an array before accessing length
       setStats({ totalThreads, totalReplies, totalUpvotes });
 
       // Update trending topics
