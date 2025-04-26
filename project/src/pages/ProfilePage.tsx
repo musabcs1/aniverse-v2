@@ -5,78 +5,19 @@ import {
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
-import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore functions
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
-// Sample data for watchlist
-const watchlistAnime: Anime[] = [
-  {
-    id: 1,
-    title: "Celestial Legends: The Awakening",
-    coverImage: "https://images.pexels.com/photos/3732475/pexels-photo-3732475.jpeg",
-    description: "A forgotten prophecy. A reluctant hero. As ancient powers reawaken, Hiro must embrace his hidden destiny.",
-    episodes: 24,
-    genres: ["Fantasy", "Action"],
-    rating: 9.2,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Elysium Studios"
-  },
-  {
-    id: 5,
-    title: "Infinite Dreamscape",
-    coverImage: "https://images.pexels.com/photos/3617457/pexels-photo-3617457.jpeg",
-    description: "A groundbreaking virtual reality MMORPG becomes a battlefield when players discover they cannot log out.",
-    episodes: 24,
-    genres: ["Adventure", "Fantasy"],
-    rating: 8.8,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Digital Frontier"
-  },
-  {
-    id: 7,
-    title: "Astral Knights",
-    coverImage: "https://images.pexels.com/photos/6771600/pexels-photo-6771600.jpeg",
-    description: "Seven legendary warriors from across the galaxy unite to battle an ancient cosmic entity threatening to consume all of creation.",
-    episodes: 13,
-    genres: ["Space Opera", "Action"],
-    rating: 9.5,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Galactic Studios"
-  }
-];
-
-// Sample recent activity
-const recentActivity = [
-  {
-    id: 1,
-    type: "comment",
-    content: "Commented on 'Celestial Legends Episode 10 Discussion'",
-    timestamp: "2025-04-16T15:32:00"
-  },
-  {
-    id: 2,
-    type: "rating",
-    content: "Rated 'Cyber Nexus 2099' 9/10",
-    timestamp: "2025-04-15T09:17:00"
-  },
-  {
-    id: 3,
-    type: "watchlist",
-    content: "Added 'Astral Knights' to watchlist",
-    timestamp: "2025-04-14T23:05:00"
-  },
-  {
-    id: 4,
-    type: "forum",
-    content: "Created forum thread 'Top 10 Underrated Anime of 2024'",
-    timestamp: "2025-04-13T14:28:00"
-  }
-];
+interface UserStats {
+  watching: number;
+  completed: number;
+  comments: number;
+  reviews: number;
+  level: number;
+  xp: number;
+}
 
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
@@ -85,26 +26,70 @@ const ProfilePage: React.FC = () => {
   const [avatarURL, setAvatarURL] = useState(''); // State for avatar URL input
   const [updating, setUpdating] = useState(false); // State for update status
   const navigate = useNavigate();
+  const [stats, setStats] = useState<UserStats>({
+    watching: 0,
+    completed: 0,
+    comments: 0,
+    reviews: 0,
+    level: 0,
+    xp: 0
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-          setAvatarURL(userDoc.data().avatar || ''); // Pre-fill the avatar URL input
-        } else {
-          console.error('User data not found in Firestore.');
-        }
+        // Real-time listener for user data
+        const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            const userData = doc.data();
+            setUserData(userData);
+            setAvatarURL(userData.avatar || '');
+
+            // Real-time listener for comments
+            const commentsRef = collection(db, 'comments');
+            const commentsQuery = query(commentsRef, where('userId', '==', user.uid));
+            const commentsUnsubscribe = onSnapshot(commentsQuery, (commentsSnapshot) => {
+              const commentsCount = commentsSnapshot.size;
+
+              // Real-time listener for reviews
+              const reviewsRef = collection(db, 'reviews');
+              const reviewsQuery = query(reviewsRef, where('userId', '==', user.uid));
+              const reviewsUnsubscribe = onSnapshot(reviewsQuery, (reviewsSnapshot) => {
+                const reviewsCount = reviewsSnapshot.size;
+
+                // Update stats
+                setStats({
+                  watching: userData.watchlist?.length || 0,
+                  completed: userData.completed?.length || 0,
+                  comments: commentsCount,
+                  reviews: reviewsCount,
+                  level: userData.level || 0,
+                  xp: userData.xp || 0
+                });
+              });
+
+              // Cleanup reviews listener
+              return () => reviewsUnsubscribe();
+            });
+
+            // Cleanup comments listener
+            return () => commentsUnsubscribe();
+          } else {
+            console.error('User data not found in Firestore.');
+          }
+        });
+
+        // Cleanup user listener
+        return () => userUnsubscribe();
       } else {
         navigate('/auth'); // Redirect to login page if no user is authenticated
       }
       setLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup the listener on component unmount
+    return () => unsubscribe(); // Cleanup the auth state listener on component unmount
   }, [navigate]);
 
   const handleAvatarUpdate = async () => {
@@ -210,7 +195,7 @@ const ProfilePage: React.FC = () => {
                     <BookOpen className="h-5 w-5 mr-2 text-primary" />
                     <span>Watching</span>
                   </div>
-                  <span className="text-white font-semibold">8</span>
+                  <span className="text-white font-semibold">{stats.watching}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -218,7 +203,7 @@ const ProfilePage: React.FC = () => {
                     <Heart className="h-5 w-5 mr-2 text-accent" />
                     <span>Completed</span>
                   </div>
-                  <span className="text-white font-semibold">42</span>
+                  <span className="text-white font-semibold">{stats.completed}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -226,7 +211,7 @@ const ProfilePage: React.FC = () => {
                     <MessageSquare className="h-5 w-5 mr-2 text-secondary" />
                     <span>Comments</span>
                   </div>
-                  <span className="text-white font-semibold">127</span>
+                  <span className="text-white font-semibold">{stats.comments}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -234,7 +219,7 @@ const ProfilePage: React.FC = () => {
                     <Award className="h-5 w-5 mr-2 text-yellow-400" />
                     <span>Reviews</span>
                   </div>
-                  <span className="text-white font-semibold">15</span>
+                  <span className="text-white font-semibold">{stats.reviews}</span>
                 </div>
               </div>
               
@@ -242,55 +227,20 @@ const ProfilePage: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
                     <Shield className="h-5 w-5 mr-2 text-primary" />
-                    <span className="text-gray-300">Level {userData.level}</span>
+                    <span className="text-gray-300">Level {stats.level}</span>
                   </div>
-                  <span className="text-xs text-gray-400">0 XP</span>
+                  <span className="text-xs text-gray-400">{stats.xp} XP</span>
                 </div>
                 <div className="h-2 bg-surface-light rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-primary to-accent w-3/4"></div>
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary to-accent" 
+                    style={{ width: `${(stats.xp % 1000) / 10}%` }}
+                  ></div>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">500 XP until next level</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {1000 - (stats.xp % 1000)} XP until next level
+                </p>
               </div>
-            </div>
-            
-            <div className="bg-surface rounded-xl p-5">
-              <h3 className="text-xl font-semibold mb-4">Badges</h3>
-              <div className="space-y-3">
-                {userData.badges.map((badge: string, index: number) => (
-                  <div key={index} className="flex items-center p-2 bg-surface-light rounded-lg">
-                    <div className="h-8 w-8 rounded-full bg-primary/30 flex items-center justify-center mr-3">
-                      <Award className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm">{badge}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-surface rounded-xl p-5">
-              <h3 className="text-xl font-semibold mb-4">Privacy</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-gray-300">
-                    <Eye className="h-5 w-5 mr-2 text-secondary" />
-                    <span>Profile Visibility</span>
-                  </div>
-                  <span className="text-white font-semibold">Public</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-gray-300">
-                    <EyeOff className="h-5 w-5 mr-2 text-secondary" />
-                    <span>Activity Visibility</span>
-                  </div>
-                  <span className="text-white font-semibold">Friends</span>
-                </div>
-              </div>
-              
-              <button className="mt-4 text-secondary text-sm flex items-center">
-                <span>Manage privacy settings</span>
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </button>
             </div>
           </div>
           
@@ -369,9 +319,9 @@ const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {watchlistAnime.map(anime => (
+                  {/*watchlistAnime.map(anime => (
                     <AnimeCard key={anime.id} anime={anime} />
-                  ))}
+                  ))*/}
                 </div>
                 
                 <div className="mt-10">
@@ -402,7 +352,7 @@ const ProfilePage: React.FC = () => {
                 <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
                 
                 <div className="space-y-4">
-                  {recentActivity.map(activity => (
+                  {/*recentActivity.map(activity => (
                     <div key={activity.id} className="bg-surface p-4 rounded-lg">
                       <div className="flex items-start">
                         <img 
@@ -420,7 +370,7 @@ const ProfilePage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))*/}
                 </div>
                 
                 <button className="w-full mt-8 py-3 text-center text-secondary border border-secondary/30 rounded-lg hover:bg-secondary/10 transition-colors">
