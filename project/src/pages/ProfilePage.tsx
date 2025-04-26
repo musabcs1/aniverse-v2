@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, Settings, Shield, Heart, BookOpen, MessageSquare, 
-  Clock, Award, ChevronRight, Edit, Eye, EyeOff 
+  Clock, Award, ChevronRight, Edit
 } from 'lucide-react';
-import AnimeCard from '../components/ui/AnimeCard';
-import { Anime } from '../types';
-import { doc, getDoc, updateDoc, collection, query, where, onSnapshot, getDocs } from 'firebase/firestore'; // Firestore functions
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
-import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 interface UserStats {
   watching: number;
   completed: number;
   comments: number;
   reviews: number;
-  threads: number; // New field for thread count
+  threads: number;
   level: number;
   xp: number;
 }
@@ -24,174 +22,112 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [avatarURL, setAvatarURL] = useState(''); // State for avatar URL input
-  const [updating, setUpdating] = useState(false); // State for update status
-  const navigate = useNavigate();
+  const [avatarURL, setAvatarURL] = useState('');
+  const [updating, setUpdating] = useState(false);
   const [stats, setStats] = useState<UserStats>({
     watching: 0,
     completed: 0,
     comments: 0,
     reviews: 0,
-    threads: 0, // Initialize thread count
+    threads: 0,
     level: 0,
-    xp: 0
+    xp: 0,
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Initializing ProfilePage...');
-    setLoading(true);
+    const fetchUserDataAndStats = async (uid: string) => {
+      try {
+        const userDocRef = doc(db, 'users', uid);
+        const userSnapshot = await getDoc(userDocRef);
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        console.log('User authenticated:', user.uid);
-        try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userSnapshot = await getDoc(userDocRef);
-
-          if (!userSnapshot.exists()) {
-            console.error('User document not found in Firestore.');
-            navigate('/auth');
-            return;
-          }
-
-          const userData = userSnapshot.data();
-          console.log('User data fetched:', userData);
-          setUserData(userData);
-          setAvatarURL(userData.avatar || '');
-
-          // Fetch stats
-          const watchingCount = userData.watchlist?.length || 0;
-          const completedCount = userData.completed?.length || 0;
-
-          const commentsRef = collection(db, 'comments');
-          const commentsQuery = query(commentsRef, where('userId', '==', user.uid));
-          const commentsSnapshot = await getDocs(commentsQuery);
-
-          const reviewsRef = collection(db, 'reviews');
-          const reviewsQuery = query(reviewsRef, where('userId', '==', user.uid));
-          const reviewsSnapshot = await getDocs(reviewsQuery);
-
-          const threadsRef = collection(db, 'forumThreads');
-          const threadsQuery = query(threadsRef, where('authorId', '==', user.uid));
-          const threadsSnapshot = await getDocs(threadsQuery);
-
-          setStats({
-            watching: watchingCount,
-            completed: completedCount,
-            comments: commentsSnapshot.size,
-            reviews: reviewsSnapshot.size,
-            threads: threadsSnapshot.size,
-            level: userData.level || 0,
-            xp: userData.xp || 0,
-          });
-
-          console.log('User stats updated:', stats);
-        } catch (error) {
-          console.error('Error fetching user data or stats:', error);
+        if (!userSnapshot.exists()) {
+          console.error('User document not found');
           navigate('/auth');
-        } finally {
-          setLoading(false);
+          return;
         }
+
+        const userData = userSnapshot.data();
+        setUserData(userData);
+        setAvatarURL(userData.avatar || '');
+
+        const watchingCount = userData.watchlist?.length || 0;
+        const completedCount = userData.completed?.length || 0;
+
+        const commentsSnapshot = await getDocs(query(collection(db, 'comments'), where('userId', '==', uid)));
+        const reviewsSnapshot = await getDocs(query(collection(db, 'reviews'), where('userId', '==', uid)));
+        const threadsSnapshot = await getDocs(query(collection(db, 'forumThreads'), where('authorId', '==', uid)));
+
+        setStats({
+          watching: watchingCount,
+          completed: completedCount,
+          comments: commentsSnapshot.size,
+          reviews: reviewsSnapshot.size,
+          threads: threadsSnapshot.size,
+          level: userData.level || 0,
+          xp: userData.xp || 0,
+        });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchUserDataAndStats(user.uid);
       } else {
-        console.warn('No authenticated user found. Redirecting to /auth...');
         navigate('/auth');
         setLoading(false);
       }
     });
 
-    return () => {
-      console.log('Cleaning up onAuthStateChanged listener...');
-      unsubscribe();
-    };
-  }, [navigate]);
-
-  useEffect(() => {
-    const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
-    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-      if (docSnapshot.exists()) {
-        const userData = docSnapshot.data();
-        setStats((prevStats) => ({
-          ...prevStats,
-          xp: userData.xp || 0,
-          level: userData.level || 0,
-        }));
-      }
-    });
-
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
       alert('Please provide a valid avatar URL.');
       return;
     }
-
     try {
-      setUpdating(true); // Set updating state to true
+      setUpdating(true);
       const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
-
-      // Update the user's avatar in Firestore
       await updateDoc(userDocRef, { avatar: avatarURL });
-
-      // Update the local state with the new avatar URL
       setUserData((prev: any) => ({ ...prev, avatar: avatarURL }));
-
       alert('Avatar updated successfully!');
     } catch (error) {
       console.error('Error updating avatar:', error);
       alert('Failed to update avatar. Please try again.');
     } finally {
-      setUpdating(false); // Set updating state to false
+      setUpdating(false);
     }
   };
 
   if (loading) {
-    console.log('Page is loading...');
-    return (
-      <div className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-400">Loading...</h1>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (!userData) {
-    console.warn('No user data available. Prompting user to sign in.');
-    return (
-      <div className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-400">Please sign in to view your profile</h1>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
-        {/* Profile Header */}
         <div className="bg-surface rounded-xl overflow-hidden mb-8">
           <div className="h-40 bg-gradient-to-r from-primary/30 to-accent/30 relative">
             <button className="absolute top-4 right-4 bg-surface/30 backdrop-blur-sm p-2 rounded-lg text-white hover:bg-surface/50 transition-colors">
               <Edit className="h-5 w-5" />
             </button>
           </div>
-          
+
           <div className="px-6 py-5 flex flex-col md:flex-row items-start md:items-center relative">
             <div className="absolute -top-16 left-6 h-24 w-24 rounded-full border-4 border-surface overflow-hidden">
-              <img 
-                src={userData.avatar} 
-                alt={userData.username} 
-                className="h-full w-full object-cover"
-              />
+              <img src={userData.avatar} alt={userData.username} className="h-full w-full object-cover" />
             </div>
-            
+
             <div className="mt-10 md:mt-0 md:ml-28">
               <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
               <div className="flex items-center text-gray-400 text-sm mt-1">
@@ -199,11 +135,11 @@ const ProfilePage: React.FC = () => {
                 <span>Member since {new Date(userData.joinDate).toLocaleDateString()}</span>
               </div>
             </div>
-            
+
             <div className="flex mt-4 md:mt-0 md:ml-auto space-x-3">
               <button 
                 className="btn-ghost py-2 px-4 flex items-center space-x-2"
-                onClick={() => setActiveTab("settings")} // Update activeTab to "settings"
+                onClick={() => setActiveTab("settings")}
               >
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
@@ -214,7 +150,7 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
