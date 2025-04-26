@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
-import { doc, getDoc, updateDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore'; // Firestore functions
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -78,81 +78,33 @@ const recentActivity = [
   }
 ];
 
-interface UserStats {
-  watching: number;
-  completed: number;
-  comments: number;
-  reviews: number;
-  level: number;
-  xp: number;
-}
-
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [avatarURL, setAvatarURL] = useState(''); // State for avatar URL input
   const [updating, setUpdating] = useState(false); // State for update status
-  const [stats, setStats] = useState<UserStats>({
-    watching: 0,
-    completed: 0,
-    comments: 0,
-    reviews: 0,
-    level: 0,
-    xp: 0
-  });
   const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
-        
-        // Real-time listener for user data and stats
-        const unsubscribeUser = onSnapshot(userDocRef, async (docSnapshot) => {
-          if (docSnapshot.exists()) {
-            const userData = docSnapshot.data();
-            setUserData(userData);
-            setAvatarURL(userData.avatar || '');
+        const userDoc = await getDoc(userDocRef);
 
-            // Calculate stats
-            const watchingCount = userData.watchlist?.length || 0;
-            const completedCount = userData.completed?.length || 0;
-
-            // Get comments count
-            const commentsRef = collection(db, 'comments');
-            const commentsQuery = query(commentsRef, where('userId', '==', user.uid));
-            const commentsSnapshot = await getDocs(commentsQuery);
-            const commentsCount = commentsSnapshot.size;
-
-            // Get reviews count
-            const reviewsRef = collection(db, 'reviews');
-            const reviewsQuery = query(reviewsRef, where('userId', '==', user.uid));
-            const reviewsSnapshot = await getDocs(reviewsQuery);
-            const reviewsCount = reviewsSnapshot.size;
-
-            // Update stats
-            setStats({
-              watching: watchingCount,
-              completed: completedCount,
-              comments: commentsCount,
-              reviews: reviewsCount,
-              level: userData.level || 0,
-              xp: userData.xp || 0
-            });
-          }
-        });
-
-        return () => {
-          unsubscribeUser();
-        };
+        if (userDoc.exists()) {
+          setUserData(userDoc.data());
+          setAvatarURL(userDoc.data().avatar || ''); // Pre-fill the avatar URL input
+        } else {
+          console.error('User data not found in Firestore.');
+        }
       } else {
-        navigate('/auth');
+        navigate('/auth'); // Redirect to login page if no user is authenticated
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup the listener on component unmount
   }, [navigate]);
 
   const handleAvatarUpdate = async () => {
@@ -258,7 +210,7 @@ const ProfilePage: React.FC = () => {
                     <BookOpen className="h-5 w-5 mr-2 text-primary" />
                     <span>Watching</span>
                   </div>
-                  <span className="text-white font-semibold">{stats.watching}</span>
+                  <span className="text-white font-semibold">8</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -266,7 +218,7 @@ const ProfilePage: React.FC = () => {
                     <Heart className="h-5 w-5 mr-2 text-accent" />
                     <span>Completed</span>
                   </div>
-                  <span className="text-white font-semibold">{stats.completed}</span>
+                  <span className="text-white font-semibold">42</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -274,7 +226,7 @@ const ProfilePage: React.FC = () => {
                     <MessageSquare className="h-5 w-5 mr-2 text-secondary" />
                     <span>Comments</span>
                   </div>
-                  <span className="text-white font-semibold">{stats.comments}</span>
+                  <span className="text-white font-semibold">127</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -282,7 +234,7 @@ const ProfilePage: React.FC = () => {
                     <Award className="h-5 w-5 mr-2 text-yellow-400" />
                     <span>Reviews</span>
                   </div>
-                  <span className="text-white font-semibold">{stats.reviews}</span>
+                  <span className="text-white font-semibold">15</span>
                 </div>
               </div>
               
@@ -290,19 +242,14 @@ const ProfilePage: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
                     <Shield className="h-5 w-5 mr-2 text-primary" />
-                    <span className="text-gray-300">Level {stats.level}</span>
+                    <span className="text-gray-300">Level {userData.level}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{stats.xp} XP</span>
+                  <span className="text-xs text-gray-400">0 XP</span>
                 </div>
                 <div className="h-2 bg-surface-light rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-accent" 
-                    style={{ width: `${(stats.xp % 1000) / 10}%` }}
-                  ></div>
+                  <div className="h-full bg-gradient-to-r from-primary to-accent w-3/4"></div>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {1000 - (stats.xp % 1000)} XP until next level
-                </p>
+                <p className="text-xs text-gray-400 mt-1">500 XP until next level</p>
               </div>
             </div>
             
