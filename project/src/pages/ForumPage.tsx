@@ -125,6 +125,15 @@ const ForumPage: React.FC = () => {
         xp: increment(-10), // Deduct 10 XP
       });
 
+      // Send notification to the thread owner
+      const notificationsRef = collection(db, 'notifications');
+      await addDoc(notificationsRef, {
+        userId: thread.authorId,
+        message: `Your thread titled "${thread.title}" has been deleted.`,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
+
       alert('Thread deleted successfully. 10 XP has been deducted from the owner.');
     } catch (error) {
       console.error('Error deleting thread:', error);

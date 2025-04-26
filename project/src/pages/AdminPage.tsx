@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Mail, Lock } from 'lucide-react';
 import { query, where } from 'firebase/firestore';
 import { ForumThread } from '../types';
@@ -124,6 +124,15 @@ const AdminPage: React.FC = () => {
                         const userDocRef = doc(db, 'users', thread.authorId);
                         await updateDoc(userDocRef, {
                           xp: increment(-10), // Deduct 10 XP
+                        });
+
+                        // Send notification to the thread owner
+                        const notificationsRef = collection(db, 'notifications');
+                        await addDoc(notificationsRef, {
+                          userId: thread.authorId,
+                          message: `Your thread titled "${thread.title}" has been deleted by an admin.`,
+                          createdAt: serverTimestamp(),
+                          read: false,
                         });
 
                         alert('Thread deleted successfully. 10 XP has been deducted from the owner.');

@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Bell, LogOut, User } from 'lucide-react';
+import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import Logo from '../ui/Logo';
 
 interface HeaderProps {
-  scrolled: boolean;
   toggleMobileMenu: () => void;
   mobileMenuOpen: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuOpen }) => {
+const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showNotificationsTray, setShowNotificationsTray] = useState(false);
+  const [notifications, setNotifications] = useState<{ message: string }[]>([]);
 
   useEffect(() => {
     // Check for user data when component mounts and when localStorage changes
@@ -52,6 +53,21 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    // Fetch notifications from the backend or database
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch('/api/notifications'); // Replace with actual API endpoint
+        const data = await response.json();
+        setNotifications(data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -61,6 +77,10 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
     setUserData(null);
     setShowProfileMenu(false);
     navigate('/');
+  };
+
+  const toggleNotificationsTray = () => {
+    setShowNotificationsTray(!showNotificationsTray);
   };
 
   return (
@@ -94,11 +114,27 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
             <div className="flex items-center space-x-4">
               {userData ? (
                 <>
-                  <button className="relative">
+                  <button className="relative" onClick={toggleNotificationsTray}>
                     <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
-                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
+                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
                   </button>
-                  
+
+                  {showNotificationsTray && (
+                    <div className="absolute right-0 mt-2 w-64 bg-surface rounded-lg shadow-lg py-2">
+                      {notifications.length > 0 ? (
+                        notifications.map((notification, index) => (
+                          <div key={index} className="px-4 py-2 text-white hover:bg-surface-light">
+                            {notification.message}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-gray-400">No notifications</div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="relative">
                     <button 
                       onClick={() => setShowProfileMenu(!showProfileMenu)}
