@@ -49,3 +49,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
+
+export async function createThreadDeletedNotification(userId: string, threadTitle: string) {
+  try {
+    const newNotificationRef = doc(collection(db, 'notifications'));
+    const notification = {
+      userId,
+      title: 'Thread Deleted',
+      message: `Your thread titled "${threadTitle}" has been deleted by an admin.`,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    await setDoc(newNotificationRef, notification);
+  } catch (error) {
+    console.error('Error creating thread deleted notification:', error);
+    throw error;
+  }
+}
