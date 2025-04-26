@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { X, Home, Film, MessageSquare, Newspaper, User, Bell, Search } from 'lucide-react';
 import Logo from '../ui/Logo';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { db } from '../../firebaseConfig';
 
 interface MobileMenuProps {
   isOpen: boolean;
