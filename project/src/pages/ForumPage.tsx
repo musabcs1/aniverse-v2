@@ -124,6 +124,17 @@ const ForumPage: React.FC = () => {
     }
   };
 
+  const handleReportThread = async (threadId: string) => {
+    try {
+      const threadRef = doc(db, 'forumThreads', threadId);
+      await updateDoc(threadRef, { reported: true });
+      alert('Thread reported successfully.');
+    } catch (error) {
+      console.error('Error reporting thread:', error);
+      alert('Failed to report thread. Please try again.');
+    }
+  };
+
   const filteredThreads = forumThreads.filter(thread => {
     const matchesSearch = thread.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || thread.category === selectedCategory;
@@ -238,6 +249,12 @@ const ForumPage: React.FC = () => {
                     Delete Thread
                   </button>
                 )}
+                <button
+                  onClick={() => handleReportThread(thread.id)}
+                  className="text-yellow-500 hover:text-yellow-700 text-sm"
+                >
+                  Report Thread
+                </button>
               </div>
             ))}
           </div>

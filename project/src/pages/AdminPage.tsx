@@ -4,11 +4,22 @@ import { db } from '../firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import { Mail, Lock } from 'lucide-react';
 import { query, where } from 'firebase/firestore';
+import { ForumThread } from '../types';
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatar?: string;
+}
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [users, setUsers] = useState<any[]>([]); // State to store user data
+  const [users, setUsers] = useState<User[]>([]);
+  const [reportedThreads, setReportedThreads] = useState<ForumThread[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingThreads, setLoadingThreads] = useState(true);
 
   // Check if the user is an admin
   useEffect(() => {
@@ -25,17 +36,34 @@ const AdminPage: React.FC = () => {
     try {
       const usersCollection = collection(db, 'users');
       const userDocs = await getDocs(usersCollection);
-      const usersData = userDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log("Fetched Users:", usersData); // Debugging
+      const usersData = userDocs.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
+    } finally {
+      setLoadingUsers(false);
     }
   };
 
-  // Fetch users when the component mounts
+  // Fetch reported threads from Firestore
+  const fetchReportedThreads = async () => {
+    try {
+      const threadsRef = collection(db, 'forumThreads');
+      const q = query(threadsRef, where('reported', '==', true));
+      const querySnapshot = await getDocs(q);
+      const threads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ForumThread));
+      setReportedThreads(threads);
+    } catch (error) {
+      console.error('Error fetching reported threads:', error);
+    } finally {
+      setLoadingThreads(false);
+    }
+  };
+
+  // Fetch users and reported threads when the component mounts
   useEffect(() => {
     fetchUsers();
+    fetchReportedThreads();
   }, []);
 
   // If the user is not an admin, show nothing
@@ -47,24 +75,48 @@ const AdminPage: React.FC = () => {
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8">Admin Panel</h1>
-        <div className="space-y-4">
-          {users.map(user => (
-            <div
-              key={user.id}
-              className="flex items-center bg-surface p-4 rounded-lg shadow-lg"
-            >
-              <img
-                src={user.avatar || 'https://via.placeholder.com/150'}
-                alt={user.username}
-                className="w-16 h-16 rounded-full mr-4"
-              />
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold">{user.username}</h2>
-                <p className="text-gray-400">{user.email}</p>
+
+        <h2 className="text-2xl font-semibold mb-4">Users</h2>
+        {loadingUsers ? (
+          <p>Loading users...</p>
+        ) : users.length === 0 ? (
+          <p>No users found.</p>
+        ) : (
+          <div className="space-y-4">
+            {users.map(user => (
+              <div
+                key={user.id}
+                className="flex items-center bg-surface p-4 rounded-lg shadow-lg"
+              >
+                <img
+                  src={user.avatar || 'https://via.placeholder.com/150'}
+                  alt={user.username}
+                  className="w-16 h-16 rounded-full mr-4"
+                />
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold">{user.username}</h2>
+                  <p className="text-gray-400">{user.email}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        <h2 className="text-2xl font-semibold mb-4">Reported Threads</h2>
+        {loadingThreads ? (
+          <p>Loading reported threads...</p>
+        ) : reportedThreads.length === 0 ? (
+          <p>No reported threads found.</p>
+        ) : (
+          <div className="space-y-4">
+            {reportedThreads.map(thread => (
+              <div key={thread.id} className="p-4 bg-surface rounded-lg">
+                <h3 className="text-lg font-bold">{thread.title}</h3>
+                <p className="text-gray-400">{thread.content}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
