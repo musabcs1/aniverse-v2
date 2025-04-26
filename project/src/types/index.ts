@@ -50,13 +50,20 @@ export interface ForumThread {
   authorId: string;
   authorName: string;
   authorAvatar: string;
-  category: ForumCategory;
   createdAt: Date;
   updatedAt: Date;
+  category: ForumCategory;
   replies: number;
-  upvotes: number;
-  downvotes: number;
+  upvotes: string[]; // Changed from number to string[]
+  downvotes: string[]; // Changed from number to string[]
   tags: string[];
+  comments: Array<{
+    id: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    createdAt: Date;
+  }>;
 }
 
 export interface NewsArticle {

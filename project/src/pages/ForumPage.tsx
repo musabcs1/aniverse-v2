@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MessageSquare, TrendingUp, Users, Plus } from 'lucide-react';
 import ForumThreadCard from '../components/ui/ForumThreadCard';
-import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { ForumThread, ForumCategory } from '../types';
 
@@ -42,6 +42,7 @@ const ForumPage: React.FC = () => {
           category: data.category as ForumCategory, // Type assertion here
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
+          comments: data.comments || [], // Ensure comments are initialized
         } as ForumThread;
       });
 
@@ -50,12 +51,12 @@ const ForumPage: React.FC = () => {
       // Update stats
       const totalThreads = threads.length;
       const totalReplies = threads.reduce((sum, thread) => sum + thread.replies, 0);
-      const totalUpvotes = threads.reduce((sum, thread) => sum + thread.upvotes, 0);
+      const totalUpvotes = threads.reduce((sum, thread) => sum + thread.upvotes.length, 0); // Use length of upvotes array
       setStats({ totalThreads, totalReplies, totalUpvotes });
 
       // Update trending topics
       const trending = threads
-        .sort((a, b) => (b.replies + b.upvotes) - (a.replies + a.upvotes))
+        .sort((a, b) => (b.replies + b.upvotes.length) - (a.replies + a.upvotes.length)) // Use length of upvotes array
         .slice(0, 5)
         .map(thread => thread.title);
       setTrendingTopics(trending);
@@ -97,6 +98,24 @@ const ForumPage: React.FC = () => {
     } catch (error) {
       console.error('Error creating thread:', error);
       alert('Failed to create thread. Please try again.');
+    }
+  };
+
+  const handleDeleteThread = async (thread: ForumThread) => {
+    if (!auth.currentUser || auth.currentUser.uid !== thread.authorId) {
+      alert('You are not authorized to delete this thread.');
+      return;
+    }
+
+    const confirmDelete = window.confirm('Are you sure you want to delete this thread?');
+    if (!confirmDelete) return;
+
+    try {
+      const threadRef = doc(db, 'forumThreads', thread.id);
+      await deleteDoc(threadRef);
+      alert('Thread deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting thread:', error);
     }
   };
 
@@ -204,7 +223,17 @@ const ForumPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3 space-y-6">
             {filteredThreads.map(thread => (
-              <ForumThreadCard key={thread.id} thread={thread} />
+              <div key={thread.id}>
+                <ForumThreadCard thread={thread} />
+                {auth.currentUser?.uid === thread.authorId && (
+                  <button
+                    onClick={() => handleDeleteThread(thread)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Delete Thread
+                  </button>
+                )}
+              </div>
             ))}
           </div>
 
