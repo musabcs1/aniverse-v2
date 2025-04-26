@@ -38,40 +38,39 @@ const ProfilePage: React.FC = () => {
   });
 
   useEffect(() => {
-    // Add local loading state
+    console.log('Initializing ProfilePage...');
     setLoading(true);
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        console.log('User authenticated:', user.uid);
         try {
-          // Get user data
           const userDocRef = doc(db, 'users', user.uid);
           const userSnapshot = await getDoc(userDocRef);
 
           if (!userSnapshot.exists()) {
+            console.error('User document not found in Firestore.');
             navigate('/auth');
             return;
           }
 
           const userData = userSnapshot.data();
+          console.log('User data fetched:', userData);
           setUserData(userData);
           setAvatarURL(userData.avatar || '');
 
-          // Calculate stats
+          // Fetch stats
           const watchingCount = userData.watchlist?.length || 0;
           const completedCount = userData.completed?.length || 0;
 
-          // Get comments count
           const commentsRef = collection(db, 'comments');
           const commentsQuery = query(commentsRef, where('userId', '==', user.uid));
           const commentsSnapshot = await getDocs(commentsQuery);
 
-          // Get reviews count  
           const reviewsRef = collection(db, 'reviews');
           const reviewsQuery = query(reviewsRef, where('userId', '==', user.uid));
           const reviewsSnapshot = await getDocs(reviewsQuery);
 
-          // Get threads count
           const threadsRef = collection(db, 'forumThreads');
           const threadsQuery = query(threadsRef, where('authorId', '==', user.uid));
           const threadsSnapshot = await getDocs(threadsQuery);
@@ -80,26 +79,30 @@ const ProfilePage: React.FC = () => {
             watching: watchingCount,
             completed: completedCount,
             comments: commentsSnapshot.size,
-            reviews: reviewsSnapshot.size, 
+            reviews: reviewsSnapshot.size,
             threads: threadsSnapshot.size,
             level: userData.level || 0,
-            xp: userData.xp || 0
+            xp: userData.xp || 0,
           });
 
+          console.log('User stats updated:', stats);
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('Error fetching user data or stats:', error);
           navigate('/auth');
         } finally {
           setLoading(false);
         }
       } else {
+        console.warn('No authenticated user found. Redirecting to /auth...');
         navigate('/auth');
         setLoading(false);
       }
     });
 
-    // Cleanup subscription
-    return () => unsubscribe();
+    return () => {
+      console.log('Cleaning up onAuthStateChanged listener...');
+      unsubscribe();
+    };
   }, [navigate]);
 
   useEffect(() => {
@@ -144,6 +147,7 @@ const ProfilePage: React.FC = () => {
   };
 
   if (loading) {
+    console.log('Page is loading...');
     return (
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
@@ -156,6 +160,7 @@ const ProfilePage: React.FC = () => {
   }
 
   if (!userData) {
+    console.warn('No user data available. Prompting user to sign in.');
     return (
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
