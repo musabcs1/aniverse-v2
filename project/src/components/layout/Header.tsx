@@ -15,9 +15,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
   const [userData, setUserData] = useState<any | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isPurpleTheme, setIsPurpleTheme] = useState(() => {
-    return localStorage.getItem('theme') === 'purple';
-  });
 
   useEffect(() => {
     // Check for user data when component mounts and when localStorage changes
@@ -55,14 +52,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (isPurpleTheme) {
-      document.body.style.backgroundColor = 'purple';
-    } else {
-      document.body.style.backgroundColor = '';
-    }
-  }, [isPurpleTheme]);
-
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -72,12 +61,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
     setUserData(null);
     setShowProfileMenu(false);
     navigate('/');
-  };
-
-  const toggleTheme = () => {
-    const newTheme = !isPurpleTheme;
-    setIsPurpleTheme(newTheme);
-    localStorage.setItem('theme', newTheme ? 'purple' : 'default');
   };
 
   return (
@@ -99,9 +82,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled, toggleMobileMenu, mobileMenuO
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
-            <button onClick={toggleTheme} className="btn-primary py-2 px-4">
-              Toggle Purple Theme
-            </button>
             <div className="relative">
               <input 
                 type="text" 

@@ -118,9 +118,17 @@ const ForumPage: React.FC = () => {
     try {
       const threadRef = doc(db, 'forumThreads', thread.id);
       await deleteDoc(threadRef);
-      alert('Thread deleted successfully.');
+
+      // Deduct 10 XP from the thread owner
+      const userDocRef = doc(db, 'users', thread.authorId);
+      await updateDoc(userDocRef, {
+        xp: increment(-10), // Deduct 10 XP
+      });
+
+      alert('Thread deleted successfully. 10 XP has been deducted from the owner.');
     } catch (error) {
       console.error('Error deleting thread:', error);
+      alert('Failed to delete thread. Please try again.');
     }
   };
 
