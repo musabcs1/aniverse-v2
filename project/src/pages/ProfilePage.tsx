@@ -8,6 +8,7 @@ import { Anime } from '../types';
 import { doc, getDoc, updateDoc, collection, query, where, onSnapshot, getDocs } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface UserStats {
   watching: number;
@@ -37,81 +38,68 @@ const ProfilePage: React.FC = () => {
   });
 
   useEffect(() => {
-    // Check if user data exists in localStorage first
-    const storedUserData = localStorage.getItem('userData');
-    if (!storedUserData) {
-      navigate('/auth');
-      return;
-    }
+    // Add local loading state
+    setLoading(true);
 
-    const fetchUserDataAndStats = async (uid: string) => {
-      try {
-        // Fetch user data
-        const userDocRef = doc(db, 'users', uid);
-        const userSnapshot = await getDoc(userDocRef);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Get user data
+          const userDocRef = doc(db, 'users', user.uid);
+          const userSnapshot = await getDoc(userDocRef);
 
-        if (!userSnapshot.exists()) {
-          console.error('User document not found');
+          if (!userSnapshot.exists()) {
+            navigate('/auth');
+            return;
+          }
+
+          const userData = userSnapshot.data();
+          setUserData(userData);
+          setAvatarURL(userData.avatar || '');
+
+          // Calculate stats
+          const watchingCount = userData.watchlist?.length || 0;
+          const completedCount = userData.completed?.length || 0;
+
+          // Get comments count
+          const commentsRef = collection(db, 'comments');
+          const commentsQuery = query(commentsRef, where('userId', '==', user.uid));
+          const commentsSnapshot = await getDocs(commentsQuery);
+
+          // Get reviews count  
+          const reviewsRef = collection(db, 'reviews');
+          const reviewsQuery = query(reviewsRef, where('userId', '==', user.uid));
+          const reviewsSnapshot = await getDocs(reviewsQuery);
+
+          // Get threads count
+          const threadsRef = collection(db, 'forumThreads');
+          const threadsQuery = query(threadsRef, where('authorId', '==', user.uid));
+          const threadsSnapshot = await getDocs(threadsQuery);
+
+          setStats({
+            watching: watchingCount,
+            completed: completedCount,
+            comments: commentsSnapshot.size,
+            reviews: reviewsSnapshot.size, 
+            threads: threadsSnapshot.size,
+            level: userData.level || 0,
+            xp: userData.xp || 0
+          });
+
+        } catch (error) {
+          console.error('Error fetching user data:', error);
           navigate('/auth');
-          return;
+        } finally {
+          setLoading(false);
         }
-
-        const userData = userSnapshot.data();
-        setUserData(userData);
-        setAvatarURL(userData.avatar || '');
-
-        // Calculate stats
-        const watchingCount = userData.watchlist?.length || 0;
-        const completedCount = userData.completed?.length || 0;
-
-        // Count comments
-        const commentsRef = collection(db, 'comments');
-        const commentsQuery = query(commentsRef, where('userId', '==', uid));
-        const commentsSnapshot = await getDocs(commentsQuery);
-        const commentsCount = commentsSnapshot.size;
-
-        // Count reviews
-        const reviewsRef = collection(db, 'reviews');
-        const reviewsQuery = query(reviewsRef, where('userId', '==', uid));
-        const reviewsSnapshot = await getDocs(reviewsQuery);
-        const reviewsCount = reviewsSnapshot.size;
-
-        // Count threads
-        const threadsRef = collection(db, 'forumThreads');
-        const threadsQuery = query(threadsRef, where('authorId', '==', uid));
-        const threadsSnapshot = await getDocs(threadsQuery);
-        const threadsCount = threadsSnapshot.size;
-
-        // Update stats
-        setStats({
-          watching: watchingCount,
-          completed: completedCount,
-          comments: commentsCount,
-          reviews: reviewsCount,
-          threads: threadsCount, // Update thread count
-          level: userData.level || 0,
-          xp: userData.xp || 0
-        });
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        navigate('/auth');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Get user data from localStorage
-    try {
-      const parsedUserData = JSON.parse(storedUserData);
-      if (parsedUserData && parsedUserData.uid) {
-        fetchUserDataAndStats(parsedUserData.uid);
       } else {
         navigate('/auth');
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      navigate('/auth');
-    }
+    });
+
+    // Cleanup subscription
+    return () => unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
