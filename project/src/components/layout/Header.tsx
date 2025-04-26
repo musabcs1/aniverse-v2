@@ -120,8 +120,8 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             </nav>
           </div>
 
-          <div className="hidden md:flex items-center justify-between w-full">
-            <div className="relative flex-grow max-w-md mx-auto">
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="relative" style={{ width: '225px' }}>
               <input 
                 type="text" 
                 placeholder="Search..." 
@@ -130,70 +130,68 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
 
-            <div className="flex items-center space-x-4">
-              {userData ? (
-                <>
-                  <button className="relative" onClick={toggleNotificationsTray}>
-                    <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
-                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {notifications.length}
-                    </span>
+            <button className="relative" onClick={toggleNotificationsTray}>
+              <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
+              <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {notifications.length}
+              </span>
+            </button>
+
+            {showNotificationsTray && (
+              <div className="absolute right-0 mt-[45px] w-64 bg-surface rounded-lg shadow-lg py-2 notifications-tray">
+                {notifications.length > 0 ? (
+                  notifications.map((notification, index) => (
+                    <div key={index} className="px-4 py-2 text-white hover:bg-surface-light">
+                      {notification.message}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-gray-400">No notifications</div>
+                )}
+              </div>
+            )}
+
+            {userData ? (
+              <>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center space-x-2"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={userData.avatar} 
+                        alt="Profile"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <span className="text-white">{userData.username}</span>
                   </button>
 
-                  {showNotificationsTray && (
-                    <div className="absolute right-0 mt-[45px] w-64 bg-surface rounded-lg shadow-lg py-2 notifications-tray">
-                      {notifications.length > 0 ? (
-                        notifications.map((notification, index) => (
-                          <div key={index} className="px-4 py-2 text-white hover:bg-surface-light">
-                            {notification.message}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-gray-400">No notifications</div>
-                      )}
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
+                      <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
+                        Profile
+                      </Link>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Out
+                      </button>
                     </div>
                   )}
-
-                  <div className="relative">
-                    <button 
-                      onClick={() => setShowProfileMenu(!showProfileMenu)}
-                      className="flex items-center space-x-2"
-                    >
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
-                        <img 
-                          src={userData.avatar} 
-                          alt="Profile"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <span className="text-white">{userData.username}</span>
-                    </button>
-
-                    {showProfileMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
-                        <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
-                          Profile
-                        </Link>
-                        <button 
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Sign Out
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {userData?.role === 'admin' && (
-                    <Link to="/admin" className="btn-secondary">
-                      Admin Panel
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <Link to="/auth" className="btn-primary">Sign In</Link>
-              )}
-            </div>
+                </div>
+                {userData?.role === 'admin' && (
+                  <Link to="/admin" className="btn-secondary">
+                    Admin Panel
+                  </Link>
+                )}
+              </>
+            ) : (
+              <Link to="/auth" className="btn-primary">Sign In</Link>
+            )}
           </div>
 
           <button 
