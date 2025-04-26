@@ -40,56 +40,28 @@ const ProfilePage: React.FC = () => {
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
 
-        // Real-time listener for user data
-        const userUnsubscribe = onSnapshot(userDocRef, (doc) => {
-          if (doc.exists()) {
-            const userData = doc.data();
-            setUserData(userData);
-            setAvatarURL(userData.avatar || '');
-
-            // Real-time listener for comments
-            const commentsRef = collection(db, 'comments');
-            const commentsQuery = query(commentsRef, where('userId', '==', user.uid));
-            const commentsUnsubscribe = onSnapshot(commentsQuery, (commentsSnapshot) => {
-              const commentsCount = commentsSnapshot.size;
-
-              // Real-time listener for reviews
-              const reviewsRef = collection(db, 'reviews');
-              const reviewsQuery = query(reviewsRef, where('userId', '==', user.uid));
-              const reviewsUnsubscribe = onSnapshot(reviewsQuery, (reviewsSnapshot) => {
-                const reviewsCount = reviewsSnapshot.size;
-
-                // Update stats
-                setStats({
-                  watching: userData.watchlist?.length || 0,
-                  completed: userData.completed?.length || 0,
-                  comments: commentsCount,
-                  reviews: reviewsCount,
-                  level: userData.level || 0,
-                  xp: userData.xp || 0
-                });
-              });
-
-              // Cleanup reviews listener
-              return () => reviewsUnsubscribe();
-            });
-
-            // Cleanup comments listener
-            return () => commentsUnsubscribe();
+        try {
+          const docSnap = await getDoc(userDocRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setUserData(data);
+            setAvatarURL(data.avatar || '');
+            setLoading(false);
           } else {
-            console.error('User data not found in Firestore.');
+            console.log("Document does not exist");
+            setLoading(false);
           }
-        });
-
-        // Cleanup user listener
-        return () => userUnsubscribe();
+        } catch (e) {
+          console.log("Error getting document:", e);
+          setLoading(false);
+        }
       } else {
-        navigate('/auth'); // Redirect to login page if no user is authenticated
+        navigate('/auth');
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup the auth state listener on component unmount
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleAvatarUpdate = async () => {
