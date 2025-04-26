@@ -97,7 +97,7 @@ const ProfilePage: React.FC = () => {
       if (user) {
         fetchUserDataAndStats(user.uid);
       } else {
-        navigate('/auth');
+        navigate('/auth'); // Redirect to /auth if not authenticated
         setLoading(false);
       }
     });
