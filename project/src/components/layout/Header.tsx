@@ -99,6 +99,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   };
 
   const toggleNotificationsTray = () => {
+    console.log('Toggling notifications tray. Current state:', showNotificationsTray);
     setShowNotificationsTray(!showNotificationsTray);
   };
 
