@@ -105,6 +105,22 @@ const ProfilePage: React.FC = () => {
     return () => unsubscribe();
   }, [navigate]);
 
+  useEffect(() => {
+    const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        setStats((prevStats) => ({
+          ...prevStats,
+          xp: userData.xp || 0,
+          level: userData.level || 0,
+        }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
       alert('Please provide a valid avatar URL.');
@@ -245,22 +261,24 @@ const ProfilePage: React.FC = () => {
               </div>
               
               <div className="mt-6 pt-5 border-t border-gray-800">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <Shield className="h-5 w-5 mr-2 text-primary" />
-                    <span className="text-gray-300">Level {stats.level}</span>
+                <div className="bg-surface rounded-xl p-5">
+                  <h3 className="text-xl font-semibold mb-4">Level & XP</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300">Level {stats.level}</span>
+                      <span className="text-xs text-gray-400">{stats.xp} XP</span>
+                    </div>
+                    <div className="h-2 bg-surface-light rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-primary to-accent" 
+                        style={{ width: `${(stats.xp % 1000) / 10}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {1000 - (stats.xp % 1000)} XP until next level
+                    </p>
                   </div>
-                  <span className="text-xs text-gray-400">{stats.xp} XP</span>
                 </div>
-                <div className="h-2 bg-surface-light rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-accent" 
-                    style={{ width: `${(stats.xp % 1000) / 10}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {1000 - (stats.xp % 1000)} XP until next level
-                </p>
               </div>
             </div>
           </div>

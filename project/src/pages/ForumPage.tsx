@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MessageSquare, TrendingUp, Users, Plus } from 'lucide-react';
 import ForumThreadCard from '../components/ui/ForumThreadCard';
-import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { ForumThread, ForumCategory } from '../types';
 
@@ -85,8 +85,15 @@ const ForumPage: React.FC = () => {
         tags: [],
       });
 
+      // Update user's XP in Firestore
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userDocRef, {
+        xp: increment(10), // Increment XP by 10
+      });
+
       setShowNewThreadForm(false);
       setNewThread({ title: '', content: '', category: 'General' });
+      alert('Thread created successfully! You earned 10 XP.');
     } catch (error) {
       console.error('Error creating thread:', error);
       alert('Failed to create thread. Please try again.');
