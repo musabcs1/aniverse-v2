@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { Mail, Lock } from 'lucide-react';
 import { query, where } from 'firebase/firestore';
 import { ForumThread } from '../types';
@@ -113,6 +113,23 @@ const AdminPage: React.FC = () => {
               <div key={thread.id} className="p-4 bg-surface rounded-lg">
                 <h3 className="text-lg font-bold">{thread.title}</h3>
                 <p className="text-gray-400">{thread.content}</p>
+                <button
+                  onClick={async () => {
+                    if (window.confirm('Are you sure you want to delete this thread?')) {
+                      try {
+                        await deleteDoc(doc(db, 'forumThreads', thread.id));
+                        setReportedThreads(prev => prev.filter(t => t.id !== thread.id));
+                        alert('Thread deleted successfully.');
+                      } catch (error) {
+                        console.error('Error deleting thread:', error);
+                        alert('Failed to delete thread. Please try again.');
+                      }
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-700 text-sm mt-2"
+                >
+                  Delete Thread
+                </button>
               </div>
             ))}
           </div>
