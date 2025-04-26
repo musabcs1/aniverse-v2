@@ -120,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             </nav>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4" style={{ position: 'absolute', top: '19px', left: '697px', height: '40px' }}>
             <div className="relative" style={{ width: '225px' }}>
               <input 
                 type="text" 
@@ -150,49 +150,49 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                 )}
               </div>
             )}
-
-            {userData ? (
-              <>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center space-x-2"
-                  >
-                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={userData.avatar} 
-                        alt="Profile"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <span className="text-white">{userData.username}</span>
-                  </button>
-
-                  {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
-                      <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
-                        Profile
-                      </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {userData?.role === 'admin' && (
-                  <Link to="/admin" className="btn-secondary">
-                    Admin Panel
-                  </Link>
-                )}
-              </>
-            ) : (
-              <Link to="/auth" className="btn-primary">Sign In</Link>
-            )}
           </div>
+
+          {userData ? (
+            <>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center space-x-2"
+                >
+                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={userData.avatar} 
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <span className="text-white">{userData.username}</span>
+                </button>
+
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
+                    <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
+                      Profile
+                    </Link>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+              {userData?.role === 'admin' && (
+                <Link to="/admin" className="btn-secondary">
+                  Admin Panel
+                </Link>
+              )}
+            </>
+          ) : (
+            <Link to="/auth" className="btn-primary">Sign In</Link>
+          )}
 
           <button 
             className="md:hidden flex items-center"
