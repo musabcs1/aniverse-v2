@@ -106,7 +106,15 @@ const ProfilePage: React.FC = () => {
   };
 
   if (loading) {
-    return null;
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-400">Loading...</h1>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!userData) {
