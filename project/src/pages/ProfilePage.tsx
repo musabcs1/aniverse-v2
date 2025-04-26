@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
-import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore'; // Firestore functions
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot, getDocs } from 'firebase/firestore'; // Firestore functions
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ interface UserStats {
   completed: number;
   comments: number;
   reviews: number;
+  threads: number; // New field for thread count
   level: number;
   xp: number;
 }
@@ -31,30 +32,70 @@ const ProfilePage: React.FC = () => {
     completed: 0,
     comments: 0,
     reviews: 0,
+    threads: 0, // Initialize thread count
     level: 0,
     xp: 0
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
+    const fetchUserDataAndStats = async (uid: string) => {
+      try {
+        // Fetch user data
+        const userDocRef = doc(db, 'users', uid);
+        const userSnapshot = await getDoc(userDocRef);
 
-        try {
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setUserData(data);
-            setAvatarURL(data.avatar || '');
-            setLoading(false);
-          } else {
-            console.log("Document does not exist");
-            setLoading(false);
-          }
-        } catch (e) {
-          console.log("Error getting document:", e);
+        if (!userSnapshot.exists()) {
+          console.error('User document not found');
           setLoading(false);
+          return;
         }
+
+        const userData = userSnapshot.data();
+        setUserData(userData);
+        setAvatarURL(userData.avatar || '');
+
+        // Calculate stats
+        const watchingCount = userData.watchlist?.length || 0;
+        const completedCount = userData.completed?.length || 0;
+
+        // Count comments
+        const commentsRef = collection(db, 'comments');
+        const commentsQuery = query(commentsRef, where('userId', '==', uid));
+        const commentsSnapshot = await getDocs(commentsQuery);
+        const commentsCount = commentsSnapshot.size;
+
+        // Count reviews
+        const reviewsRef = collection(db, 'reviews');
+        const reviewsQuery = query(reviewsRef, where('userId', '==', uid));
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+        const reviewsCount = reviewsSnapshot.size;
+
+        // Count threads
+        const threadsRef = collection(db, 'forumThreads');
+        const threadsQuery = query(threadsRef, where('authorId', '==', uid));
+        const threadsSnapshot = await getDocs(threadsQuery);
+        const threadsCount = threadsSnapshot.size;
+
+        // Update stats
+        setStats({
+          watching: watchingCount,
+          completed: completedCount,
+          comments: commentsCount,
+          reviews: reviewsCount,
+          threads: threadsCount, // Update thread count
+          level: userData.level || 0,
+          xp: userData.xp || 0
+        });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchUserDataAndStats(user.uid);
       } else {
         navigate('/auth');
         setLoading(false);
@@ -192,6 +233,14 @@ const ProfilePage: React.FC = () => {
                     <span>Reviews</span>
                   </div>
                   <span className="text-white font-semibold">{stats.reviews}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-gray-300">
+                    <MessageSquare className="h-5 w-5 mr-2 text-primary" />
+                    <span>Threads</span>
+                  </div>
+                  <span className="text-white font-semibold">{stats.threads}</span>
                 </div>
               </div>
               
