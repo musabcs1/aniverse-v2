@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import Logo from '../ui/Logo';
 import { Notification } from '../../types';
-import { onSnapshot, collection } from 'firebase/firestore';
+import { onSnapshot, collection, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
 interface HeaderProps {
@@ -21,7 +21,6 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    // Check for user data when component mounts and when localStorage changes
     const checkAuth = () => {
       const storedUserData = localStorage.getItem('userData');
       if (storedUserData) {
@@ -29,7 +28,6 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
           const parsedData = JSON.parse(storedUserData);
           setUserData(parsedData);
         } catch {
-          // If data is invalid, clear it
           localStorage.removeItem('userData');
           setUserData(null);
         }
@@ -72,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
       setNotifications(updatedNotifications);
     });
 
-    return () => unsubscribe(); // Cleanup the listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -107,6 +105,28 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
 
   const toggleNotificationsTray = () => {
     setShowNotificationsTray(!showNotificationsTray);
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const notificationRef = doc(db, 'notifications', notificationId);
+      await updateDoc(notificationRef, { read: true });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const unreadNotifications = notifications.filter((n) => !n.read);
+      const updatePromises = unreadNotifications.map((notification) => {
+        const notificationRef = doc(db, 'notifications', notification.id);
+        return updateDoc(notificationRef, { read: true });
+      });
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -148,12 +168,28 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
 
             {showNotificationsTray && (
               <div className="absolute left-0 top-full mt-2 w-64 bg-surface rounded-lg shadow-lg py-2 notifications-tray">
+                <button
+                  className="text-secondary text-sm mb-2 ml-4"
+                  onClick={markAllAsRead}
+                >
+                  Mark All as Read
+                </button>
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
                     <div key={notification.id} className="px-4 py-2 text-white hover:bg-surface-light">
                       <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>
                       <p className="text-xs text-gray-400 mb-1">{notification.message}</p>
-                      <span className="text-xs text-gray-500">{new Date(notification.createdAt).toLocaleString()}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </span>
+                      {!notification.read && (
+                        <button
+                          className="text-secondary text-xs mt-1"
+                          onClick={() => markAsRead(notification.id)}
+                        >
+                          Mark as Read
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (
