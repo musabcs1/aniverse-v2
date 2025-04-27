@@ -4,7 +4,7 @@ import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play, StarIcon } from 'lucide-react';
+import { Play, BookmarkPlus, Share2Icon, StarIcon, CalendarIcon, ClockIcon, UsersIcon } from 'lucide-react';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,16 +29,14 @@ const AnimeDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="pt-24 pb-16">
+      <div className="min-h-screen bg-[#0D0D1A] pt-20">
         <div className="container mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="flex gap-8">
-              <div className="w-64 h-96 bg-surface-light rounded-lg"></div>
-              <div className="flex-1">
-                <div className="h-10 bg-surface-light rounded w-3/4 mb-4"></div>
-                <div className="h-4 bg-surface-light rounded w-full mb-2"></div>
-                <div className="h-4 bg-surface-light rounded w-3/4"></div>
-              </div>
+          <div className="animate-pulse flex gap-8">
+            <div className="w-[300px] h-[450px] bg-[#2B0144] rounded-lg"></div>
+            <div className="flex-1">
+              <div className="h-8 w-1/2 bg-[#2B0144] rounded mb-4"></div>
+              <div className="h-4 w-full bg-[#2B0144] rounded mb-2"></div>
+              <div className="h-4 w-3/4 bg-[#2B0144] rounded"></div>
             </div>
           </div>
         </div>
@@ -46,82 +44,96 @@ const AnimeDetailPage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error || !anime) {
     return (
-      <div className="pt-24 pb-16">
+      <div className="min-h-screen bg-[#0D0D1A] pt-20">
         <div className="container mx-auto px-4 text-center">
           <div className="text-red-500 mb-4">
             {error instanceof Error ? error.message : 'Error loading anime details'}
           </div>
-          <p className="text-gray-400 mb-4">Redirecting to anime directory...</p>
           <button 
             onClick={() => navigate('/anime')}
-            className="btn-primary"
+            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
           >
-            Go to Anime Directory
+            Back to Anime List
           </button>
         </div>
       </div>
     );
   }
 
-  if (!anime) return null;
-
-  const episodes = Array.from(
-    { length: anime.episodes || 26 }, 
-    (_, i) => `Episode ${i + 1}`
-  );
-
   return (
-    <div className="pt-24 pb-16">
+    <div className="min-h-screen bg-[#0D0D1A] pt-20">
       <div className="container mx-auto px-4">
         <div className="flex gap-8">
-          {/* Left Side - Anime Info */}
+          {/* Left Column */}
           <div className="w-[300px] flex-shrink-0">
-            <img
-              src={anime.coverImage}
-              alt={anime.title}
-              className="w-full aspect-[2/3] object-cover rounded-lg shadow-lg mb-6"
-            />
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2 text-gray-400">
-                <StarIcon className="h-5 w-5 text-secondary" />
-                <span>{anime.rating.toFixed(1)} Rating</span>
+            <div className="sticky top-24">
+              <img
+                src={anime.coverImage}
+                alt={anime.title}
+                className="w-full aspect-[2/3] object-cover rounded-lg shadow-xl mb-6"
+              />
+              <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
+              <div className="flex items-center gap-4 text-gray-300 mb-4">
+                <div className="flex items-center gap-2">
+                  <StarIcon className="h-5 w-5 text-[#00FF85]" />
+                  <span>{anime.rating.toFixed(1)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5 text-white" />
+                  <span>{anime.releaseYear}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="h-5 w-5 text-white" />
+                  <span>{anime.episodes} Episodes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <UsersIcon className="h-5 w-5 text-white" />
+                  <span>{anime.studio}</span>
+                </div>
               </div>
-              <div className="text-gray-400">
-                {anime.episodes} Episodes
-              </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {anime.genres.map((genre, index) => (
                   <span 
                     key={index}
-                    className="px-3 py-1 text-sm rounded-full bg-primary/30 text-white"
+                    className="px-3 py-1 text-sm rounded-full bg-[#6B00B3] text-white"
                   >
                     {genre}
                   </span>
                 ))}
               </div>
-              <button className="btn-primary w-full flex items-center justify-center space-x-2 py-3">
+              <p className="text-gray-300 mb-6">{anime.description}</p>
+              <button className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC] mb-4">
                 <Play className="h-5 w-5" />
-                <span>Watch Now</span>
+                Watch Now
+              </button>
+              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] mb-4">
+                <BookmarkPlus className="h-5 w-5" />
+                Add to List
+              </button>
+              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A]">
+                <Share2Icon className="h-5 w-5" />
+                Share
+              </button>
+              <h2 className="text-2xl font-bold text-white mt-8 mb-4">Seasons</h2>
+              <button className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC]">
+                Season 1
               </button>
             </div>
           </div>
 
-          {/* Right Side - Episodes */}
+          {/* Right Column */}
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
-            <p className="text-gray-400 mb-8">{anime.description}</p>
-
-            <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Episodes</h2>
             <div className="grid gap-3">
-              {episodes.map((episode, index) => (
+              {Array.from({ length: anime.episodes }, (_, i) => (
                 <button
-                  key={index}
-                  className="bg-[#1f1f3a] w-full p-4 rounded-lg text-white hover:bg-[#2a2a4a] transition-colors flex items-center justify-between group"
+                  key={i}
+                  className="w-full p-4 bg-[#2B0144] rounded-lg text-white hover:bg-[#6B00B3]/20 transition-colors flex items-center justify-between group"
                 >
-                  <span className="font-medium">{episode}</span>
-                  <Play className="h-5 w-5 text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span>Season 1 Episode {i + 1}</span>
+                  <Play className="h-5 w-5 text-white" />
                 </button>
               ))}
             </div>
