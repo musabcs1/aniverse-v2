@@ -15,7 +15,10 @@ const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Sho
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
 
 const AnimeDirectoryPage: React.FC = () => {
-  const [animeListState, setAnimeListState] = useState<Anime[]>(animeList);
+  const [animeListState, setAnimeListState] = useState<Anime[]>(animeList.map(anime => ({
+    ...anime,
+    status: anime.status as 'Completed' | 'Ongoing' | 'Upcoming',
+  })));
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
