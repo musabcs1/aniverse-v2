@@ -1,90 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 import AnimeCard from '../ui/AnimeCard';
 import { Anime } from '../../types';
 
-// Sample data
-const trendingAnime: Anime[] = [
-  {
-    id: "1",
-    title: "My Hero Academia",
-    coverImage: "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
-    description: "A forgotten prophecy. A reluctant hero. As ancient powers reawaken, Hiro must embrace his hidden destiny.",
-    episodes: 24,
-    genres: ["Fantasy", "Action"],
-    rating: 9.2,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Aniverse Studios"
-  },
-  {
-    id: "2",
-    title: "Jujutsu Kaisen",
-    coverImage: "https://cdn.kobo.com/book-images/44717797-1fe9-475e-bca1-fe8aa6d0e7d8/1200/1200/False/jujutsu-kaisen-vol-1.jpg",
-    description: "In a dystopian future where humanity and technology have merged, a rogue AI threatens to enslave mankind.",
-    episodes: 12,
-    genres: ["Sci-Fi", "Cyberpunk"],
-    rating: 8.9,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "NeoCyber Productions"
-  },
-  {
-    id: "3",
-    title: "Dragon Ball Super",
-    coverImage: "https://m.media-amazon.com/images/M/MV5BYTgyMzA5MjEtNDY3Ny00ZDkyLWJhYzEtYzI2Nzk5Mzc3ZDk1XkEyXkFqcGc@._V1_.jpg",
-    description: "In feudal Japan, a masterless samurai seeks redemption by protecting a village from ruthless bandits.",
-    episodes: 18,
-    genres: ["Historical", "Martial Arts"],
-    rating: 8.7,
-    releaseYear: 2023,
-    status: "Completed",
-    studio: "Shogun Animation"
-  },
-  {
-    id: "4",
-    title: "Naruto",
-    coverImage: "https://m.media-amazon.com/images/M/MV5BZTNjOWI0ZTAtOGY1OS00ZGU0LWEyOWYtMjhkYjdlYmVjMDk2XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
-    description: "At an elite academy, students with supernatural abilities train to combat malevolent spirits threatening humanity.",
-    episodes: 16,
-    genres: ["Supernatural", "Drama"],
-    rating: 9.0,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "Phantom Works"
-  },
-  {
-    id: "5",
-    title: "One Piece",
-    coverImage: "https://m.media-amazon.com/images/I/81rEhhwbubL._AC_UF1000,1000_QL80_.jpg",
-    description: "A groundbreaking virtual reality MMORPG becomes a battlefield when players discover they cannot log out.",
-    episodes: 24,
-    genres: ["Adventure", "Fantasy"],
-    rating: 8.8,
-    releaseYear: 2025,
-    status: "Ongoing",
-    studio: "Digital Frontier"
-  },
-  {
-    id: "6",
-    title: "Echoes of Destiny",
-    coverImage: "https://images.pexels.com/photos/1493226/pexels-photo-1493226.jpeg",
-    description: "An amnesiac girl discovers she can see glimpses of the future, becoming the key to preventing a global catastrophe.",
-    episodes: 22,
-    genres: ["Mystery", "Thriller"],
-    rating: 9.1,
-    releaseYear: 2024,
-    status: "Ongoing",
-    studio: "Chrono Visuals"
-  }
-];
-
-const categories = ["All", "Action", "Adventure", "Romance", "Fantasy", "Sci-Fi", "Comedy"];
-
 const TrendingSection: React.FC = () => {
+  const [trendingAnime, setTrendingAnime] = useState<Anime[]>([]);
   const [activeCategory, setActiveCategory] = useState("All");
-  
+
+  useEffect(() => {
+    const fetchTrendingAnime = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'anime'));
+        const fetchedAnime = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Anime[];
+        setTrendingAnime(fetchedAnime);
+      } catch (error) {
+        console.error('Error fetching trending anime:', error);
+      }
+    };
+
+    fetchTrendingAnime();
+  }, []);
+
+  const categories = ["All", "Action", "Adventure", "Romance", "Fantasy", "Sci-Fi", "Comedy"];
+
   const filteredAnime = activeCategory === "All" 
     ? trendingAnime 
     : trendingAnime.filter(anime => anime.genres.includes(activeCategory));
