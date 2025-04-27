@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, ChevronDownIcon } from '@heroicons/react/outline'; // Replaced invalid imports with valid icons from Heroicons
+import { ChevronDownIcon, AdjustmentsHorizontalIcon, MagnifyingGlassIcon } from '@heroicons/react/outline'; // Replaced invalid imports with valid Heroicons
 import animeList from '../../api/animeList.json';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
