@@ -7,7 +7,7 @@ import { Anime } from '../../types';
 // Sample data
 const AniversePicks: Anime[] = [
   {
-    id: 7,
+    id: "7", // Converted to string
     title: "Astral Knights",
     coverImage: "https://images.pexels.com/photos/6771600/pexels-photo-6771600.jpeg",
     description: "Seven legendary warriors from across the galaxy unite to battle an ancient cosmic entity threatening to consume all of creation.",
@@ -19,7 +19,7 @@ const AniversePicks: Anime[] = [
     studio: "Galactic Studios"
   },
   {
-    id: 8,
+    id: "8", // Converted to string
     title: "Garden of Memories",
     coverImage: "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg",
     description: "A beautiful, emotional journey about a girl who can see people's memories by touching the flowers they've grown.",
@@ -31,7 +31,7 @@ const AniversePicks: Anime[] = [
     studio: "Bloom Animation"
   },
   {
-    id: 9,
+    id: "9", // Converted to string
     title: "Midnight Protocol",
     coverImage: "https://images.pexels.com/photos/2694037/pexels-photo-2694037.jpeg",
     description: "In a world where hackers fight for digital freedom, one brilliant coder discovers a conspiracy that threatens global security.",
