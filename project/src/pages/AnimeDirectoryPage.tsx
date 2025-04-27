@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDownIcon, AdjustmentsHorizontalIcon, MagnifyingGlassIcon } from '@heroicons/react/outline'; // Replaced invalid imports with valid Heroicons
+import { Search, Sliders, ChevronDown } from 'lucide-react'; // Replaced Heroicons with valid Lucide icons
 import animeList from '../../api/animeList.json';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
@@ -112,16 +112,16 @@ const AnimeDirectoryPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <MagnifyingGlassIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
             </div>
             
             <button 
               className="btn-ghost flex items-center justify-center space-x-2"
               onClick={() => setFiltersVisible(!filtersVisible)}
             >
-              <AdjustmentsHorizontalIcon className="h-5 w-5" />
+              <Sliders className="h-5 w-5" />
               <span>Filters</span>
-              <ChevronDownIcon className={`h-4 w-4 transition-transform ${filtersVisible ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-4 w-4 transition-transform ${filtersVisible ? 'rotate-180' : ''}`} />
             </button>
             
             <select 
