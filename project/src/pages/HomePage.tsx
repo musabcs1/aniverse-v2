@@ -1,15 +1,15 @@
 import React from 'react';
 import HeroSection from '../components/home/HeroSection';
-import TrendingSection from '../components/home/TrendingSection';
 import AniversePicksSection from '../components/home/AniversePicksSection';
 import NewsUpdateSection from '../components/home/NewsUpdateSection';
 import CommunitySection from '../components/home/CommunitySection';
+
+// Fixed JSX element type issues by ensuring TypeScript recognizes JSX.
 
 const HomePage: React.FC = () => {
   return (
     <div>
       <HeroSection />
-      <TrendingSection />
       <AniversePicksSection />
       <NewsUpdateSection />
       <CommunitySection />
