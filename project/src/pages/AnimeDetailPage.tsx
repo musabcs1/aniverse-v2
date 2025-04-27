@@ -4,7 +4,7 @@ import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play, BookmarkPlus, ShareNetwork, StarIcon, CalendarIcon, ClockIcon, UsersIcon } from 'lucide-react';
+import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, UsersIcon } from 'lucide-react';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -111,7 +111,7 @@ const AnimeDetailPage: React.FC = () => {
               Add to List
             </button>
             <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A]">
-              <ShareNetwork className="h-5 w-5" />
+              <Share2 className="h-5 w-5" />
               Share
             </button>
             <h2 className="text-2xl font-bold text-white mt-8 mb-4">Seasons</h2>
