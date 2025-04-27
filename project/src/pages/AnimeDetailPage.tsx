@@ -9,11 +9,12 @@ const AnimeDetailPage: React.FC = () => {
   const [anime, setAnime] = useState<Anime | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [episodes, setEpisodes] = useState<{ season: number; episodes: string[] }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAnime = async () => {
       if (!id) {
-        console.error('No ID provided in the URL.');
+        setError('No ID provided in the URL.');
         return;
       }
       try {
@@ -22,8 +23,7 @@ const AnimeDetailPage: React.FC = () => {
           const animeData = animeDoc.data() as Anime;
           setAnime(animeData);
 
-          // Simulate fetching episodes for all seasons dynamically
-          const totalSeasons = animeData.seasons || 1; // Assuming 'seasons' is a field in the anime document
+          const totalSeasons = animeData.seasons || 1;
           const allEpisodes = [];
           for (let season = 1; season <= totalSeasons; season++) {
             allEpisodes.push({
@@ -33,9 +33,10 @@ const AnimeDetailPage: React.FC = () => {
           }
           setEpisodes(allEpisodes);
         } else {
-          console.error('No anime found with the provided ID.');
+          setError('No anime found with the provided ID.');
         }
       } catch (error) {
+        setError('Error fetching anime data. Please try again later.');
         console.error('Error fetching anime:', error);
       }
     };
@@ -46,6 +47,10 @@ const AnimeDetailPage: React.FC = () => {
   const handleSeasonSelect = (season: number) => {
     setSelectedSeason(season);
   };
+
+  if (error) {
+    return <div className="pt-24 pb-16 text-center text-red-500">{error}</div>;
+  }
 
   if (!anime) {
     return <div className="pt-24 pb-16 text-center">Loading...</div>;
