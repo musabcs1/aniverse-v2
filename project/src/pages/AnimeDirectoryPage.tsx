@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Filter, ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, ChevronDownIcon } from '@heroicons/react/outline'; // Replaced invalid imports with valid icons from Heroicons
 import animeList from '../../api/animeList.json';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
@@ -14,8 +15,10 @@ const years = [2025, 2024, 2023, 2022, 2021];
 const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Shogun Animation", "Phantom Works", "Digital Frontier", "Chrono Visuals"];
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
 
+const generateSlug = (title: string) => title.toLowerCase().replace(/\s+/g, '-');
+
 const AnimeDirectoryPage: React.FC = () => {
-  const [animeListState, setAnimeListState] = useState<Anime[]>(animeList.map(anime => ({
+  const [animeListState] = useState<Anime[]>(animeList.map(anime => ({
     ...anime,
     status: anime.status as 'Completed' | 'Ongoing' | 'Upcoming',
   })));
@@ -109,16 +112,16 @@ const AnimeDirectoryPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
             </div>
             
             <button 
               className="btn-ghost flex items-center justify-center space-x-2"
               onClick={() => setFiltersVisible(!filtersVisible)}
             >
-              <Filter className="h-5 w-5" />
+              <AdjustmentsHorizontalIcon className="h-5 w-5" />
               <span>Filters</span>
-              <ChevronDown className={`h-4 w-4 transition-transform ${filtersVisible ? 'rotate-180' : ''}`} />
+              <ChevronDownIcon className={`h-4 w-4 transition-transform ${filtersVisible ? 'rotate-180' : ''}`} />
             </button>
             
             <select 
@@ -230,7 +233,9 @@ const AnimeDirectoryPage: React.FC = () => {
         {sortedAnime.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {sortedAnime.map(anime => (
-              <AnimeCard key={anime.id} anime={anime} />
+              <Link to={`/anime/${generateSlug(anime.title)}`} key={anime.id}>
+                <AnimeCard anime={anime} />
+              </Link>
             ))}
           </div>
         ) : (
