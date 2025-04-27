@@ -94,19 +94,19 @@ const AnimeDetailPage: React.FC = () => {
             <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
             <div className="flex items-center gap-4 text-gray-300 mb-4">
               <div className="flex items-center gap-2">
-                <StarIcon className="h-5 w-5 text-[#00FF85]" />
+                <StarIcon className="h-5 w-5 text-blue-500" />
                 <span>{anime.rating.toFixed(1)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-white" />
+                <CalendarIcon className="h-5 w-5 text-blue-500" />
                 <span>{anime.releaseYear}</span>
               </div>
               <div className="flex items-center gap-2">
-                <ClockIcon className="h-5 w-5 text-white" />
+                <ClockIcon className="h-5 w-5 text-blue-500" />
                 <span>{anime.episodes} Episodes</span>
               </div>
               <div className="flex items-center gap-2">
-                <UsersIcon className="h-5 w-5 text-white" />
+                <UsersIcon className="h-5 w-5 text-blue-500" />
                 <span>{anime.studio}</span>
               </div>
             </div>
@@ -151,15 +151,14 @@ const AnimeDetailPage: React.FC = () => {
             }}
           >
             <h2 className="text-3xl font-extrabold text-white mb-4">Episodes</h2>
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {Array.from({ length: anime.episodes }, (_, i) => (
-                <button
+                <div
                   key={i}
                   className="w-full p-4 bg-[#2B0144] rounded-lg text-white hover:bg-[#6B00B3]/20 transition-colors flex items-center justify-between group"
                 >
-                  <span className="text-lg">Season 1 Episode {i + 1}</span>
-                  <Play className="h-5 w-5 text-white" />
-                </button>
+                  <span className="text-lg">Episode {i + 1}</span>
+                </div>
               ))}
             </div>
           </div>

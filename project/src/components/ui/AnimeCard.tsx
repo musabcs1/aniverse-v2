@@ -32,7 +32,7 @@ const AnimeCard: React.FC<AnimeCardProps> = ({ anime, featured = false }) => {
               </span>
             ))}
             <div className="flex items-center ml-auto text-xs space-x-1 text-secondary">
-              <StarIcon className="h-3 w-3 fill-secondary text-secondary" />
+              <StarIcon className="h-3 w-3 fill-secondary text-blue-500" />
               <span>{anime.rating.toFixed(1)}</span>
             </div>
           </div>
