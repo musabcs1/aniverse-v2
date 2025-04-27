@@ -120,6 +120,7 @@ const AnimeDetailPage: React.FC = () => {
                 </span>
               ))}
             </div>
+            <p className="text-gray-300 mb-6">{anime.description}</p>
             <button className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC] mb-4">
               <Play className="h-5 w-5" />
               Watch Now
@@ -157,7 +158,10 @@ const AnimeDetailPage: React.FC = () => {
                   key={i}
                   className="w-full p-4 bg-[#2B0144] rounded-lg text-white hover:bg-[#6B00B3]/20 transition-colors flex items-center justify-between group"
                 >
-                  <span className="text-lg">Episode {i + 1}</span>
+                  <div className="flex items-center gap-2">
+                    <Play className="h-5 w-5 text-blue-500" />
+                    <span className="text-lg">Episode {i + 1}</span>
+                  </div>
                 </div>
               ))}
             </div>
