@@ -17,7 +17,6 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const [userData, setUserData] = useState<any | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showNotificationsTray, setShowNotificationsTray] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -44,11 +43,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -58,76 +53,30 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   useEffect(() => {
     const notificationsRef = collection(db, 'notifications');
     const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
-      const updatedNotifications = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title || 'Untitled',
-          message: data.message || 'No message',
-          createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-          read: data.read || false,
-        };
-      });
+      const updatedNotifications = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        title: doc.data().title || 'Untitled',
+        message: doc.data().message || 'No message',
+        createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
+        read: doc.data().read || false,
+      }));
       setNotifications(updatedNotifications);
     });
 
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const trayElement = document.querySelector('.notifications-tray');
-      if (trayElement && !trayElement.contains(event.target as Node)) {
-        setShowNotificationsTray(false);
-      }
-    };
-
-    if (showNotificationsTray) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showNotificationsTray]);
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     localStorage.removeItem('userData');
     setUserData(null);
     setShowProfileMenu(false);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const handleNotificationsClick = () => {
     navigate('/notifications');
-  };
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const notificationRef = doc(db, 'notifications', notificationId);
-      await updateDoc(notificationRef, { read: true });
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      const unreadNotifications = notifications.filter((n) => !n.read);
-      const updatePromises = unreadNotifications.map((notification) => {
-        const notificationRef = doc(db, 'notifications', notification.id);
-        return updateDoc(notificationRef, { read: true });
-      });
-      await Promise.all(updatePromises);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
   };
 
   const handleSearch = (event: React.FormEvent) => {

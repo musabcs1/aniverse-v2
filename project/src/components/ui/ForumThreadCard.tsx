@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, ClockIcon } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 
@@ -32,8 +32,8 @@ interface ForumThreadCardProps {
 const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState<Array<{ id: string; content: string; authorId: string; authorName: string; createdAt: Date }>>(thread.comments || []);
-  const [upvotes, setUpvotes] = useState(thread.upvotes || []);
-  const [downvotes, setDownvotes] = useState(thread.downvotes || []);
+  const [upvotes, setUpvotes] = useState(Array.isArray(thread.upvotes) ? thread.upvotes : []);
+  const [downvotes, setDownvotes] = useState(Array.isArray(thread.downvotes) ? thread.downvotes : []);
 
   const handleAddComment = async () => {
     if (!auth.currentUser) {
@@ -155,7 +155,7 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
               <span>by {thread.authorName}</span>
               <span className="mx-2">•</span>
               <span className="flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
+                <ClockIcon className="h-3 w-3 mr-1" />
                 {new Date(thread.createdAt).toLocaleDateString()}
               </span>
             </div>
