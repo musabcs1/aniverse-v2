@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, setDoc, doc } from 'firebase/firestore';
-import fs from 'fs';
-import path from 'path';
+
+const fs = require('fs');
+const path = require('path');
 
 // Firebase configuration
 const firebaseConfig = {

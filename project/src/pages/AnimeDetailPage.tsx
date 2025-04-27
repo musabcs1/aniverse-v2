@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,10 +17,17 @@ const AnimeDetailPage: React.FC = () => {
         setError('No ID provided in the URL.');
         return;
       }
+
+      const formattedId = id.replace(/-/g, ' '); // Replace '-' with spaces to match anime titles
+
       try {
-        const animeDoc = await getDoc(doc(db, 'anime', id));
-        if (animeDoc.exists()) {
-          const animeData = animeDoc.data() as Anime;
+        const animeQuery = query(
+          collection(db, 'anime'),
+          where('title', '==', formattedId)
+        );
+        const querySnapshot = await getDocs(animeQuery);
+        if (!querySnapshot.empty) {
+          const animeData = querySnapshot.docs[0].data() as Anime;
           setAnime(animeData);
 
           const totalSeasons = animeData.seasons || 1;
@@ -33,7 +40,7 @@ const AnimeDetailPage: React.FC = () => {
           }
           setEpisodes(allEpisodes);
         } else {
-          setError('No anime found with the provided ID.');
+          setError('No anime found with the provided title.');
         }
       } catch (error) {
         setError('Error fetching anime data. Please try again later.');
