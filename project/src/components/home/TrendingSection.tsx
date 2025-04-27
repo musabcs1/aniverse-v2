@@ -15,6 +15,7 @@ const TrendingSection: React.FC = () => {
       try {
         console.log('Fetching trending anime from Firestore...');
         const querySnapshot = await getDocs(collection(db, 'anime'));
+        console.log('Query Snapshot:', querySnapshot.docs.map(doc => doc.data()));
         const fetchedAnime = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
