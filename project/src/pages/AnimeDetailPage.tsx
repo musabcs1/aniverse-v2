@@ -87,14 +87,10 @@ const AnimeDetailPage: React.FC = () => {
           <div
             style={{
               position: 'absolute',
-              top: '622px',
-              left: '364px'
+              top: '104px',
+              left: '394px'
             }}
           >
-            {/* Additional content or elements can be placed here */}
-          </div>
-
-          <div>
             <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
             <div className="flex items-center gap-4 text-gray-300 mb-4">
               <div className="flex items-center gap-2">
@@ -147,7 +143,13 @@ const AnimeDetailPage: React.FC = () => {
           </div>
 
           {/* Right Column */}
-          <div>
+          <div
+            style={{
+              position: 'absolute',
+              top: '116px',
+              left: '960px'
+            }}
+          >
             <h2 className="text-3xl font-extrabold text-white mb-4">Episodes</h2>
             <div className="grid gap-3">
               {Array.from({ length: anime.episodes }, (_, i) => (
