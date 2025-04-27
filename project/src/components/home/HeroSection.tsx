@@ -36,13 +36,14 @@ const featuredAnime: FeaturedAnime[] = [
 
 const HeroSection: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const currentAnime = featuredAnime[activeIndex];
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % featuredAnime.length);
+      setIsInitialRender(false); // Disable initial render flag after the first interval
     }, 8000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -53,8 +54,12 @@ const HeroSection: React.FC = () => {
         {featuredAnime.map((anime, index) => (
           <div 
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === activeIndex ? 'opacity-100' : 'opacity-0'
+            className={`absolute inset-0 ${
+              index === activeIndex
+                ? isInitialRender && index === 0
+                  ? '' // Skip transition for the first render
+                  : 'transition-opacity duration-1000 opacity-100'
+                : 'opacity-0'
             }`}
             style={{ zIndex: index === activeIndex ? 1 : 0 }}
           >
