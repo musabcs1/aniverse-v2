@@ -12,13 +12,19 @@ const AnimeDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchAnime = async () => {
-      if (!id) return;
+      if (!id) {
+        console.error('No ID provided in the URL.');
+        return;
+      }
+      console.log('Fetching anime with ID:', id);
       try {
         const animeDoc = await getDoc(doc(db, 'anime', id));
         if (animeDoc.exists()) {
+          console.log('Fetched anime data:', animeDoc.data());
           setAnime(animeDoc.data() as Anime);
-          // Simulate fetching episodes for the first season
-          setEpisodes(["Episode 1", "Episode 2", "Episode 3"]);
+          setEpisodes(["Episode 1", "Episode 2", "Episode 3"]); // Simulated episodes
+        } else {
+          console.error('No anime found with the provided ID.');
         }
       } catch (error) {
         console.error('Error fetching anime:', error);
