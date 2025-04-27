@@ -13,11 +13,13 @@ const TrendingSection: React.FC = () => {
   useEffect(() => {
     const fetchTrendingAnime = async () => {
       try {
+        console.log('Fetching trending anime from Firestore...');
         const querySnapshot = await getDocs(collection(db, 'anime'));
         const fetchedAnime = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as Anime[];
+        console.log('Fetched trending anime:', fetchedAnime);
         setTrendingAnime(fetchedAnime);
       } catch (error) {
         console.error('Error fetching trending anime:', error);
