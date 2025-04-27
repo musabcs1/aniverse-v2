@@ -7,7 +7,7 @@ import { Anime } from '../../types';
 // Sample data
 const trendingAnime: Anime[] = [
   {
-    id: 1,
+    id: "1",
     title: "My Hero Academia",
     coverImage: "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     description: "A forgotten prophecy. A reluctant hero. As ancient powers reawaken, Hiro must embrace his hidden destiny.",
@@ -19,7 +19,7 @@ const trendingAnime: Anime[] = [
     studio: "Aniverse Studios"
   },
   {
-    id: 2,
+    id: "2",
     title: "Jujutsu Kaisen",
     coverImage: "https://cdn.kobo.com/book-images/44717797-1fe9-475e-bca1-fe8aa6d0e7d8/1200/1200/False/jujutsu-kaisen-vol-1.jpg",
     description: "In a dystopian future where humanity and technology have merged, a rogue AI threatens to enslave mankind.",
@@ -31,7 +31,7 @@ const trendingAnime: Anime[] = [
     studio: "NeoCyber Productions"
   },
   {
-    id: 3,
+    id: "3",
     title: "Dragon Ball Super",
     coverImage: "https://m.media-amazon.com/images/M/MV5BYTgyMzA5MjEtNDY3Ny00ZDkyLWJhYzEtYzI2Nzk5Mzc3ZDk1XkEyXkFqcGc@._V1_.jpg",
     description: "In feudal Japan, a masterless samurai seeks redemption by protecting a village from ruthless bandits.",
@@ -43,7 +43,7 @@ const trendingAnime: Anime[] = [
     studio: "Shogun Animation"
   },
   {
-    id: 4,
+    id: "4",
     title: "Naruto",
     coverImage: "https://m.media-amazon.com/images/M/MV5BZTNjOWI0ZTAtOGY1OS00ZGU0LWEyOWYtMjhkYjdlYmVjMDk2XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     description: "At an elite academy, students with supernatural abilities train to combat malevolent spirits threatening humanity.",
@@ -55,7 +55,7 @@ const trendingAnime: Anime[] = [
     studio: "Phantom Works"
   },
   {
-    id: 5,
+    id: "5",
     title: "One Piece",
     coverImage: "https://m.media-amazon.com/images/I/81rEhhwbubL._AC_UF1000,1000_QL80_.jpg",
     description: "A groundbreaking virtual reality MMORPG becomes a battlefield when players discover they cannot log out.",
@@ -67,7 +67,7 @@ const trendingAnime: Anime[] = [
     studio: "Digital Frontier"
   },
   {
-    id: 6,
+    id: "6",
     title: "Echoes of Destiny",
     coverImage: "https://images.pexels.com/photos/1493226/pexels-photo-1493226.jpeg",
     description: "An amnesiac girl discovers she can see glimpses of the future, becoming the key to preventing a global catastrophe.",
