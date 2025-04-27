@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,25 +19,40 @@ const AnimeDetailPage: React.FC = () => {
       }
 
       try {
+        // First try to get the anime by direct ID
         const animeDoc = doc(db, 'anime', id);
         const animeSnapshot = await getDoc(animeDoc);
         
         if (animeSnapshot.exists()) {
           const animeData = animeSnapshot.data() as Anime;
           setAnime(animeData);
-
-          const totalSeasons = animeData.seasons || 1;
-          const allEpisodes = [];
-          for (let season = 1; season <= totalSeasons; season++) {
-            allEpisodes.push({
-              season,
-              episodes: Array.from({ length: animeData.episodesPerSeason || 12 }, (_, i) => `Season ${season} Episode ${i + 1}`),
-            });
-          }
-          setEpisodes(allEpisodes);
         } else {
-          setError('Anime not found.');
+          // If not found by ID, try to find by numeric ID
+          const animeQuery = query(
+            collection(db, 'anime'),
+            where('id', '==', Number(id))
+          );
+          const querySnapshot = await getDocs(animeQuery);
+          
+          if (!querySnapshot.empty) {
+            const animeData = querySnapshot.docs[0].data() as Anime;
+            setAnime(animeData);
+          } else {
+            setError('Anime not found.');
+            return;
+          }
         }
+
+        // After successfully finding the anime, set up episodes
+        const totalSeasons = anime?.seasons || 1;
+        const allEpisodes = [];
+        for (let season = 1; season <= totalSeasons; season++) {
+          allEpisodes.push({
+            season,
+            episodes: Array.from({ length: anime?.episodesPerSeason || 12 }, (_, i) => `Season ${season} Episode ${i + 1}`),
+          });
+        }
+        setEpisodes(allEpisodes);
       } catch (error) {
         setError('Error fetching anime data. Please try again later.');
         console.error('Error fetching anime:', error);
