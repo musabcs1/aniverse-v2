@@ -53,8 +53,9 @@ var firebaseConfig = {
 var app = (0, app_1.initializeApp)(firebaseConfig);
 var db = (0, firestore_1.getFirestore)(app);
 var animeListPath = path.resolve(__dirname, 'animeList.json');
+var generateSlug = function (title) { return title.toLowerCase().replace(/\s+/g, '-'); };
 var syncAnimeListToFirestore = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var animeList, animeCollection, _i, animeList_1, anime, animeDoc, error_1;
+    var animeList, animeCollection, _i, animeList_1, anime, animeDoc, animeWithSlug, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -67,7 +68,8 @@ var syncAnimeListToFirestore = function () { return __awaiter(void 0, void 0, vo
                 if (!(_i < animeList_1.length)) return [3 /*break*/, 4];
                 anime = animeList_1[_i];
                 animeDoc = (0, firestore_1.doc)(animeCollection, anime.id);
-                return [4 /*yield*/, (0, firestore_1.setDoc)(animeDoc, anime)];
+                animeWithSlug = { ...anime, slug: generateSlug(anime.title) };
+                return [4 /*yield*/, (0, firestore_1.setDoc)(animeDoc, animeWithSlug)];
             case 2:
                 _a.sent();
                 console.log("Synced anime: ".concat(anime.title));
