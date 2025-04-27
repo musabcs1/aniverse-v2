@@ -10,7 +10,7 @@ declare module 'lucide-react' {
   export const StarIcon: React.FC<IconProps>;
   export const CalendarIcon: React.FC<IconProps>;
   export const ClockIcon: React.FC<IconProps>;
-  export const clapperboard: React.FC<IconProps>;
+  export const Clapperboard: React.FC<IconProps>;
   export const BookmarkPlus: React.FC<IconProps>;
   export const Share2: React.FC<IconProps>;
   export const ChevronRight: React.FC<IconProps>;

@@ -142,7 +142,6 @@ const AnimeDetailPage: React.FC = () => {
             >
               Season 1
             </button>
-            <p className="text-gray-300 mt-6">{anime.description}</p>
           </div>
 
           {/* Right Column */}
