@@ -8,7 +8,7 @@ const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [anime, setAnime] = useState<Anime | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [episodes, setEpisodes] = useState<string[]>([]);
+  const [episodes, setEpisodes] = useState<{ season: number; episodes: string[] }[]>([]);
 
   useEffect(() => {
     const fetchAnime = async () => {
@@ -16,13 +16,22 @@ const AnimeDetailPage: React.FC = () => {
         console.error('No ID provided in the URL.');
         return;
       }
-      console.log('Fetching anime with ID:', id);
       try {
         const animeDoc = await getDoc(doc(db, 'anime', id));
         if (animeDoc.exists()) {
-          console.log('Fetched anime data:', animeDoc.data());
-          setAnime(animeDoc.data() as Anime);
-          setEpisodes(["Episode 1", "Episode 2", "Episode 3"]); // Simulated episodes
+          const animeData = animeDoc.data() as Anime;
+          setAnime(animeData);
+
+          // Simulate fetching episodes for all seasons dynamically
+          const totalSeasons = animeData.seasons || 1; // Assuming 'seasons' is a field in the anime document
+          const allEpisodes = [];
+          for (let season = 1; season <= totalSeasons; season++) {
+            allEpisodes.push({
+              season,
+              episodes: Array.from({ length: animeData.episodesPerSeason || 12 }, (_, i) => `Season ${season} Episode ${i + 1}`),
+            });
+          }
+          setEpisodes(allEpisodes);
         } else {
           console.error('No anime found with the provided ID.');
         }
@@ -36,8 +45,6 @@ const AnimeDetailPage: React.FC = () => {
 
   const handleSeasonSelect = (season: number) => {
     setSelectedSeason(season);
-    // Simulate fetching episodes for the selected season
-    setEpisodes([`Season ${season} Episode 1`, `Season ${season} Episode 2`, `Season ${season} Episode 3`]);
   };
 
   if (!anime) {
@@ -62,15 +69,15 @@ const AnimeDetailPage: React.FC = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-white mb-4">Seasons</h2>
           <div className="flex space-x-4">
-            {[1, 2, 3].map((season) => (
+            {episodes.map((seasonData, index) => (
               <button
-                key={season}
+                key={index}
                 className={`px-4 py-2 rounded-lg text-white ${
-                  selectedSeason === season ? 'bg-secondary' : 'bg-surface-light hover:bg-surface'
+                  selectedSeason === seasonData.season ? 'bg-secondary' : 'bg-surface-light hover:bg-surface'
                 }`}
-                onClick={() => handleSeasonSelect(season)}
+                onClick={() => handleSeasonSelect(seasonData.season)}
               >
-                Season {season}
+                Season {seasonData.season}
               </button>
             ))}
           </div>
@@ -79,14 +86,15 @@ const AnimeDetailPage: React.FC = () => {
         <div>
           <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
           <ul className="space-y-2">
-            {episodes.map((episode, index) => (
-              <li
-                key={index}
-                className="bg-surface-light p-4 rounded-lg text-white shadow-md hover:bg-surface"
-              >
-                {episode}
-              </li>
-            ))}
+            {episodes
+              .find((seasonData) => seasonData.season === selectedSeason)?.episodes.map((episode, index) => (
+                <li
+                  key={index}
+                  className="bg-surface-light p-4 rounded-lg text-white shadow-md hover:bg-surface"
+                >
+                  {episode}
+                </li>
+              ))}
           </ul>
         </div>
       </div>
