@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { SearchIcon, ChevronDownIcon, FilterIcon } from '@heroicons/react/solid'; // Replaced invalid imports with valid Heroicons
+import { SearchIcon, SlidersHorizontal, ChevronDownIcon } from 'lucide-react';
 import animeList from '../../api/animeList.json';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
@@ -14,8 +13,6 @@ const genres = [
 const years = [2025, 2024, 2023, 2022, 2021];
 const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Shogun Animation", "Phantom Works", "Digital Frontier", "Chrono Visuals"];
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
-
-const generateSlug = (title: string) => title.toLowerCase().replace(/\s+/g, '-');
 
 const AnimeDirectoryPage: React.FC = () => {
   const [animeListState] = useState<Anime[]>(animeList.map(anime => ({
@@ -119,7 +116,7 @@ const AnimeDirectoryPage: React.FC = () => {
               className="btn-ghost flex items-center justify-center space-x-2"
               onClick={() => setFiltersVisible(!filtersVisible)}
             >
-              <FilterIcon className="h-5 w-5" />
+              <SlidersHorizontal className="h-5 w-5" />
               <span>Filters</span>
               <ChevronDownIcon className={`h-4 w-4 transition-transform ${filtersVisible ? 'rotate-180' : ''}`} />
             </button>
@@ -233,9 +230,7 @@ const AnimeDirectoryPage: React.FC = () => {
         {sortedAnime.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {sortedAnime.map(anime => (
-              <Link to={`/anime/${generateSlug(anime.title)}`} key={anime.id}>
-                <AnimeCard anime={anime} />
-              </Link>
+              <AnimeCard key={anime.id} anime={anime} />
             ))}
           </div>
         ) : (
