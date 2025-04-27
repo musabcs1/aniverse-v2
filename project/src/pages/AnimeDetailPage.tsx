@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
@@ -9,6 +9,7 @@ import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, UsersIco
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isSeason1Selected, setIsSeason1Selected] = useState(false);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', id],
@@ -67,12 +68,33 @@ const AnimeDetailPage: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column */}
-          <div>
+          <div
+            style={{
+              position: 'absolute',
+              top: '99px',
+              left: '16px',
+              width: '348px',
+              height: '523px'
+            }}
+          >
             <img
               src={anime.coverImage}
               alt={anime.title}
-              className="w-full aspect-[2/3] object-cover rounded-lg shadow-xl mb-6"
+              className="w-full h-full object-cover rounded-lg shadow-xl"
             />
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: '622px',
+              left: '364px'
+            }}
+          >
+            {/* Additional content or elements can be placed here */}
+          </div>
+
+          <div>
             <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
             <div className="flex items-center gap-4 text-gray-300 mb-4">
               <div className="flex items-center gap-2">
@@ -106,16 +128,19 @@ const AnimeDetailPage: React.FC = () => {
               <Play className="h-5 w-5" />
               Watch Now
             </button>
-            <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] mb-4">
+            <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform mb-4">
               <BookmarkPlus className="h-5 w-5" />
               Add to List
             </button>
-            <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A]">
+            <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
               <Share2 className="h-5 w-5" />
               Share
             </button>
             <h2 className="text-2xl font-bold text-white mt-8 mb-4">Seasons</h2>
-            <button className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC]">
+            <button
+              className={`bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] ${isSeason1Selected ? 'border-2 border-[#007A99]' : ''}`}
+              onClick={() => setIsSeason1Selected(true)}
+            >
               Season 1
             </button>
             <p className="text-gray-300 mt-6">{anime.description}</p>
@@ -123,14 +148,14 @@ const AnimeDetailPage: React.FC = () => {
 
           {/* Right Column */}
           <div>
-            <h2 className="text-2xl font-bold text-white mb-4">Episodes</h2>
+            <h2 className="text-3xl font-extrabold text-white mb-4">Episodes</h2>
             <div className="grid gap-3">
               {Array.from({ length: anime.episodes }, (_, i) => (
                 <button
                   key={i}
                   className="w-full p-4 bg-[#2B0144] rounded-lg text-white hover:bg-[#6B00B3]/20 transition-colors flex items-center justify-between group"
                 >
-                  <span>Season 1 Episode {i + 1}</span>
+                  <span className="text-lg">Season 1 Episode {i + 1}</span>
                   <Play className="h-5 w-5 text-white" />
                 </button>
               ))}
