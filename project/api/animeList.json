@@ -1,6 +1,6 @@
 [
   {
-    "id": 1,
+    "id": "1",
     "title": "Attack on Titan",
     "coverImage": "https://example.com/attack-on-titan.jpg",
     "description": "Humanity's fight against Titans.",
@@ -12,7 +12,7 @@
     "studio": "Wit Studio"
   },
   {
-    "id": 2,
+    "id": "2",
     "title": "Naruto",
     "coverImage": "https://example.com/naruto.jpg",
     "description": "A young ninja's journey to become Hokage.",
@@ -24,7 +24,7 @@
     "studio": "Pierrot"
   },
   {
-    "id": 3,
+    "id": "3",
     "title": "One Piece",
     "coverImage": "https://example.com/one-piece.jpg",
     "description": "Pirates searching for the ultimate treasure.",
@@ -36,7 +36,7 @@
     "studio": "Toei Animation"
   },
   {
-    "id": 4,
+    "id": "4",
     "title": "Demon Slayer",
     "coverImage": "https://example.com/demon-slayer.jpg",
     "description": "A boy fights demons to save his sister.",
@@ -48,7 +48,7 @@
     "studio": "ufotable"
   },
   {
-    "id": 5,
+    "id": "5",
     "title": "My Hero Academia",
     "coverImage": "https://example.com/my-hero-academia.jpg",
     "description": "Superheroes in training.",

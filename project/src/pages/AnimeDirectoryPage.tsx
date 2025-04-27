@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import animeList from '../../api/animeList.json';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
 
@@ -16,7 +15,7 @@ const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Sho
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
 
 const AnimeDirectoryPage: React.FC = () => {
-  const [animeList, setAnimeList] = useState<Anime[]>([]);
+  const [animeListState, setAnimeListState] = useState<Anime[]>(animeList);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -24,34 +23,6 @@ const AnimeDirectoryPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedStudio, setSelectedStudio] = useState("All Studios");
   const [sortBy, setSortBy] = useState("newest");
-
-  useEffect(() => {
-    const fetchAnimeList = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'anime'));
-        const fetchedAnime = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title || '',
-            coverImage: data.coverImage || '',
-            description: data.description || '',
-            episodes: data.episodes || 0,
-            genres: data.genres || [],
-            rating: data.rating || 0,
-            releaseYear: data.releaseYear || 0,
-            status: data.status || '',
-            studio: data.studio || ''
-          } as Anime;
-        });
-        setAnimeList(fetchedAnime);
-      } catch (error) {
-        console.error('Error fetching anime list:', error);
-      }
-    };
-
-    fetchAnimeList();
-  }, []);
 
   const toggleGenre = (genre: string) => {
     if (selectedGenres.includes(genre)) {
@@ -70,7 +41,7 @@ const AnimeDirectoryPage: React.FC = () => {
   };
 
   // Filter logic
-  const filteredAnime = animeList.filter(anime => {
+  const filteredAnime = animeListState.filter(anime => {
     // Search term filter
     if (searchTerm && !anime.title.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
@@ -249,7 +220,7 @@ const AnimeDirectoryPage: React.FC = () => {
         
         {/* Results Count */}
         <div className="mb-6 text-gray-400">
-          Showing {sortedAnime.length} of {animeList.length} titles
+          Showing {sortedAnime.length} of {animeListState.length} titles
         </div>
         
         {/* Anime Grid */}
