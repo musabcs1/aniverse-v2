@@ -4,11 +4,13 @@ import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
+import { Play } from 'lucide-react';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [showSeasons, setShowSeasons] = useState(false);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', id],
@@ -46,6 +48,10 @@ const AnimeDetailPage: React.FC = () => {
 
   const handleSeasonSelect = (season: number) => {
     setSelectedSeason(season);
+  };
+
+  const handleWatchClick = () => {
+    setShowSeasons(true);
   };
 
   if (isLoading) {
@@ -101,7 +107,7 @@ const AnimeDetailPage: React.FC = () => {
           <div>
             <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
             <p className="text-gray-400 mb-4">{anime.description}</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Status</h3>
                 <p className="text-gray-400">{anime.status}</p>
@@ -119,7 +125,7 @@ const AnimeDetailPage: React.FC = () => {
                 <p className="text-gray-400">{anime.rating.toFixed(1)}</p>
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-4 mb-6">
               <h3 className="text-lg font-semibold text-white mb-2">Genres</h3>
               <div className="flex flex-wrap gap-2">
                 {anime.genres.map((genre: string, index: number) => (
@@ -132,41 +138,52 @@ const AnimeDetailPage: React.FC = () => {
                 ))}
               </div>
             </div>
+            <button
+              onClick={handleWatchClick}
+              className="btn-primary flex items-center space-x-2 py-3 px-6"
+            >
+              <Play className="h-5 w-5" />
+              <span>Watch Now</span>
+            </button>
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-4">Seasons</h2>
-          <div className="flex space-x-4">
-            {episodes.map((seasonData, index) => (
-              <button
-                key={index}
-                className={`px-4 py-2 rounded-lg text-white ${
-                  selectedSeason === seasonData.season ? 'bg-secondary' : 'bg-surface-light hover:bg-surface'
-                }`}
-                onClick={() => handleSeasonSelect(seasonData.season)}
-              >
-                Season {seasonData.season}
-              </button>
-            ))}
-          </div>
-        </div>
+        {showSeasons && (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-white mb-4">Seasons</h2>
+              <div className="flex space-x-4">
+                {episodes.map((seasonData, index) => (
+                  <button
+                    key={index}
+                    className={`px-4 py-2 rounded-lg text-white ${
+                      selectedSeason === seasonData.season ? 'bg-secondary' : 'bg-surface-light hover:bg-surface'
+                    }`}
+                    onClick={() => handleSeasonSelect(seasonData.season)}
+                  >
+                    Season {seasonData.season}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {episodes
-              .find((seasonData) => seasonData.season === selectedSeason)
-              ?.episodes.map((episode, index) => (
-                <div
-                  key={index}
-                  className="bg-surface-light p-4 rounded-lg text-white shadow-md hover:bg-surface transition-colors cursor-pointer"
-                >
-                  <h3 className="font-medium">{episode}</h3>
-                </div>
-              ))}
-          </div>
-        </div>
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {episodes
+                  .find((seasonData) => seasonData.season === selectedSeason)
+                  ?.episodes.map((episode, index) => (
+                    <div
+                      key={index}
+                      className="bg-surface-light p-4 rounded-lg text-white shadow-md hover:bg-surface transition-colors cursor-pointer"
+                    >
+                      <h3 className="font-medium">{episode}</h3>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
