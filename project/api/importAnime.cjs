@@ -1,6 +1,6 @@
 "use strict";
 const { initializeApp } = require("firebase/app");
-const { getFirestore, collection, doc, setDoc } = require("firebase/firestore");
+const { getFirestore, collection, doc, setDoc, deleteDoc, getDocs } = require("firebase/firestore");
 const fs = require("fs");
 const path = require("path");
 
@@ -28,34 +28,47 @@ const generateDocId = (anime) => {
     .replace(/^-|-$/g, '');
 };
 
-const syncAnimeListToFirestore = async () => {
+const updateAnimeCollection = async () => {
   try {
     const animeList = JSON.parse(fs.readFileSync(animeListPath, 'utf-8'));
     const animeCollection = collection(db, 'anime');
 
+    // Fetch existing documents to clean up old data
+    const existingDocs = await getDocs(animeCollection);
+    for (const docSnapshot of existingDocs.docs) {
+      await deleteDoc(doc(animeCollection, docSnapshot.id));
+      console.log(`Deleted old document: ${docSnapshot.id}`);
+    }
+
+    // Add updated documents
     for (const anime of animeList) {
       const docId = generateDocId(anime);
       const animeDoc = doc(animeCollection, docId);
       const animeData = {
-        ...anime,
         id: docId, // Use the same ID for both document ID and data
+        title: anime.title,
+        description: anime.description,
+        coverImage: anime.coverImage,
+        bannerImage: anime.bannerImage || null,
+        episodes: anime.episodes,
+        genres: anime.genres,
+        rating: anime.rating,
+        releaseYear: anime.releaseYear,
+        status: anime.status,
+        studio: anime.studio,
+        voiceActors: anime.voiceActors || [],
+        seasons: anime.seasons || 1,
+        episodesPerSeason: anime.episodesPerSeason || 12,
       };
 
       await setDoc(animeDoc, animeData);
-      console.log(`Synced anime: ${anime.title}`);
+      console.log(`Updated anime: ${anime.title}`);
     }
 
-    console.log('Anime list synced successfully.');
+    console.log('Anime collection updated successfully.');
   } catch (error) {
-    console.error('Error syncing anime list:', error);
+    console.error('Error updating anime collection:', error);
   }
 };
 
-// Watch for changes in animeList.json
-fs.watchFile(animeListPath, { interval: 1000 }, (curr, prev) => {
-  console.log('Detected changes in animeList.json. Syncing to Firestore...');
-  syncAnimeListToFirestore();
-});
-
-// Initial sync
-syncAnimeListToFirestore();
+updateAnimeCollection();
