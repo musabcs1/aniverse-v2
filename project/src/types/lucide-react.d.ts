@@ -12,7 +12,7 @@ declare module 'lucide-react' {
   export const ClockIcon: React.FC<IconProps>;
   export const UsersIcon: React.FC<IconProps>;
   export const BookmarkPlus: React.FC<IconProps>;
-  export const ShareNetwork: React.FC<IconProps>;
+  export const Share2: React.FC<IconProps>;
   export const ChevronRight: React.FC<IconProps>;
   export const ArrowRight: React.FC<IconProps>;
   export const ArrowLeft: React.FC<IconProps>;
