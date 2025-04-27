@@ -8,4 +8,12 @@ declare module 'lucide-react' {
   export const SlidersHorizontal: React.FC<IconProps>;
   export const ChevronDownIcon: React.FC<IconProps>;
   export const StarIcon: React.FC<IconProps>;
+  export const CalendarIcon: React.FC<IconProps>;
+  export const UsersIcon: React.FC<IconProps>;
+  export const ClockIcon: React.FC<IconProps>;
+  export const BookmarkIcon: React.FC<IconProps>;
+  export const Share2Icon: React.FC<IconProps>;
+  export const MessageSquare: React.FC<IconProps>;
+  export const ChevronRight: React.FC<IconProps>;
+  export const BookmarkPlus: React.FC<IconProps>;
 }

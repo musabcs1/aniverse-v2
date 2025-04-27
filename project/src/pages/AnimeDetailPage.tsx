@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play } from 'lucide-react';
+import { Play, StarIcon } from 'lucide-react';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [showSeasons, setShowSeasons] = useState(false);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', id],
@@ -29,41 +27,15 @@ const AnimeDetailPage: React.FC = () => {
     retry: false,
   });
 
-  const episodes = React.useMemo(() => {
-    if (!anime) return [];
-    
-    const totalSeasons = anime.seasons || 1;
-    const allEpisodes = [];
-    for (let season = 1; season <= totalSeasons; season++) {
-      allEpisodes.push({
-        season,
-        episodes: Array.from(
-          { length: anime.episodesPerSeason || 12 }, 
-          (_, i) => `Season ${season} Episode ${i + 1}`
-        ),
-      });
-    }
-    return allEpisodes;
-  }, [anime]);
-
-  const handleSeasonSelect = (season: number) => {
-    setSelectedSeason(season);
-  };
-
-  const handleWatchClick = () => {
-    setShowSeasons(true);
-  };
-
   if (isLoading) {
     return (
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           <div className="animate-pulse">
-            <div className="flex flex-col md:flex-row items-center md:items-start mb-8">
-              <div className="w-64 h-96 bg-surface-light rounded-lg mb-4 md:mb-0 md:mr-8"></div>
+            <div className="flex gap-8">
+              <div className="w-64 h-96 bg-surface-light rounded-lg"></div>
               <div className="flex-1">
                 <div className="h-10 bg-surface-light rounded w-3/4 mb-4"></div>
-                <div className="h-4 bg-surface-light rounded w-full mb-2"></div>
                 <div className="h-4 bg-surface-light rounded w-full mb-2"></div>
                 <div className="h-4 bg-surface-light rounded w-3/4"></div>
               </div>
@@ -95,40 +67,32 @@ const AnimeDetailPage: React.FC = () => {
 
   if (!anime) return null;
 
+  const episodes = Array.from(
+    { length: anime.episodes || 26 }, 
+    (_, i) => `Episode ${i + 1}`
+  );
+
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center md:items-start mb-8">
-          <img
-            src={anime.coverImage}
-            alt={anime.title}
-            className="w-64 h-96 object-cover rounded-lg shadow-lg mb-4 md:mb-0 md:mr-8"
-          />
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
-            <p className="text-gray-400 mb-4">{anime.description}</p>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">Status</h3>
-                <p className="text-gray-400">{anime.status}</p>
+        <div className="flex gap-8">
+          {/* Left Side - Anime Info */}
+          <div className="w-[300px] flex-shrink-0">
+            <img
+              src={anime.coverImage}
+              alt={anime.title}
+              className="w-full aspect-[2/3] object-cover rounded-lg shadow-lg mb-6"
+            />
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 text-gray-400">
+                <StarIcon className="h-5 w-5 text-secondary" />
+                <span>{anime.rating.toFixed(1)} Rating</span>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">Studio</h3>
-                <p className="text-gray-400">{anime.studio}</p>
+              <div className="text-gray-400">
+                {anime.episodes} Episodes
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">Release Year</h3>
-                <p className="text-gray-400">{anime.releaseYear}</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">Rating</h3>
-                <p className="text-gray-400">{anime.rating.toFixed(1)}</p>
-              </div>
-            </div>
-            <div className="mt-4 mb-6">
-              <h3 className="text-lg font-semibold text-white mb-2">Genres</h3>
               <div className="flex flex-wrap gap-2">
-                {anime.genres.map((genre: string, index: number) => (
+                {anime.genres.map((genre, index) => (
                   <span 
                     key={index}
                     className="px-3 py-1 text-sm rounded-full bg-primary/30 text-white"
@@ -137,53 +101,32 @@ const AnimeDetailPage: React.FC = () => {
                   </span>
                 ))}
               </div>
+              <button className="btn-primary w-full flex items-center justify-center space-x-2 py-3">
+                <Play className="h-5 w-5" />
+                <span>Watch Now</span>
+              </button>
             </div>
-            <button
-              onClick={handleWatchClick}
-              className="btn-primary flex items-center space-x-2 py-3 px-6"
-            >
-              <Play className="h-5 w-5" />
-              <span>Watch Now</span>
-            </button>
+          </div>
+
+          {/* Right Side - Episodes */}
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
+            <p className="text-gray-400 mb-8">{anime.description}</p>
+
+            <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
+            <div className="grid gap-3">
+              {episodes.map((episode, index) => (
+                <button
+                  key={index}
+                  className="bg-[#1f1f3a] w-full p-4 rounded-lg text-white hover:bg-[#2a2a4a] transition-colors flex items-center justify-between group"
+                >
+                  <span className="font-medium">{episode}</span>
+                  <Play className="h-5 w-5 text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-
-        {showSeasons && (
-          <>
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-white mb-4">Seasons</h2>
-              <div className="flex space-x-4">
-                {episodes.map((seasonData, index) => (
-                  <button
-                    key={index}
-                    className={`px-4 py-2 rounded-lg text-white ${
-                      selectedSeason === seasonData.season ? 'bg-secondary' : 'bg-surface-light hover:bg-surface'
-                    }`}
-                    onClick={() => handleSeasonSelect(seasonData.season)}
-                  >
-                    Season {seasonData.season}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {episodes
-                  .find((seasonData) => seasonData.season === selectedSeason)
-                  ?.episodes.map((episode, index) => (
-                    <div
-                      key={index}
-                      className="bg-surface-light p-4 rounded-lg text-white shadow-md hover:bg-surface transition-colors cursor-pointer"
-                    >
-                      <h3 className="font-medium">{episode}</h3>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
