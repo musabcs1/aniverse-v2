@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play, BookmarkPlus, Share2Icon, StarIcon, CalendarIcon, ClockIcon, UsersIcon } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [showSeasons, setShowSeasons] = useState(false);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', id],
@@ -27,16 +29,44 @@ const AnimeDetailPage: React.FC = () => {
     retry: false,
   });
 
+  const episodes = React.useMemo(() => {
+    if (!anime) return [];
+    
+    const totalSeasons = anime.seasons || 1;
+    const allEpisodes = [];
+    for (let season = 1; season <= totalSeasons; season++) {
+      allEpisodes.push({
+        season,
+        episodes: Array.from(
+          { length: anime.episodesPerSeason || 12 }, 
+          (_, i) => `Season ${season} Episode ${i + 1}`
+        ),
+      });
+    }
+    return allEpisodes;
+  }, [anime]);
+
+  const handleSeasonSelect = (season: number) => {
+    setSelectedSeason(season);
+  };
+
+  const handleWatchClick = () => {
+    setShowSeasons(true);
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
+      <div className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <div className="animate-pulse flex gap-8">
-            <div className="w-[300px] h-[450px] bg-[#2B0144] rounded-lg"></div>
-            <div className="flex-1">
-              <div className="h-8 w-1/2 bg-[#2B0144] rounded mb-4"></div>
-              <div className="h-4 w-full bg-[#2B0144] rounded mb-2"></div>
-              <div className="h-4 w-3/4 bg-[#2B0144] rounded"></div>
+          <div className="animate-pulse">
+            <div className="flex flex-col md:flex-row items-center md:items-start mb-8">
+              <div className="w-64 h-96 bg-surface-light rounded-lg mb-4 md:mb-0 md:mr-8"></div>
+              <div className="flex-1">
+                <div className="h-10 bg-surface-light rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-surface-light rounded w-full mb-2"></div>
+                <div className="h-4 bg-surface-light rounded w-full mb-2"></div>
+                <div className="h-4 bg-surface-light rounded w-3/4"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -44,101 +74,116 @@ const AnimeDetailPage: React.FC = () => {
     );
   }
 
-  if (error || !anime) {
+  if (error) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
+      <div className="pt-24 pb-16">
         <div className="container mx-auto px-4 text-center">
           <div className="text-red-500 mb-4">
             {error instanceof Error ? error.message : 'Error loading anime details'}
           </div>
+          <p className="text-gray-400 mb-4">Redirecting to anime directory...</p>
           <button 
             onClick={() => navigate('/anime')}
-            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
+            className="btn-primary"
           >
-            Back to Anime List
+            Go to Anime Directory
           </button>
         </div>
       </div>
     );
   }
 
+  if (!anime) return null;
+
   return (
-    <div className="min-h-screen bg-[#0D0D1A] pt-20">
+    <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
-        <div className="flex gap-8">
-          {/* Left Column */}
-          <div className="w-[300px] flex-shrink-0">
-            <div className="sticky top-24">
-              <img
-                src={anime.coverImage}
-                alt={anime.title}
-                className="w-full aspect-[2/3] object-cover rounded-lg shadow-xl mb-6"
-              />
-              <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
-              <div className="flex items-center gap-4 text-gray-300 mb-4">
-                <div className="flex items-center gap-2">
-                  <StarIcon className="h-5 w-5 text-[#00FF85]" />
-                  <span>{anime.rating.toFixed(1)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-white" />
-                  <span>{anime.releaseYear}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ClockIcon className="h-5 w-5 text-white" />
-                  <span>{anime.episodes} Episodes</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <UsersIcon className="h-5 w-5 text-white" />
-                  <span>{anime.studio}</span>
-                </div>
+        <div className="flex flex-col md:flex-row items-center md:items-start mb-8">
+          <img
+            src={anime.coverImage}
+            alt={anime.title}
+            className="w-64 h-96 object-cover rounded-lg shadow-lg mb-4 md:mb-0 md:mr-8"
+          />
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
+            <p className="text-gray-400 mb-4">{anime.description}</p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Status</h3>
+                <p className="text-gray-400">{anime.status}</p>
               </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {anime.genres.map((genre, index) => (
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Studio</h3>
+                <p className="text-gray-400">{anime.studio}</p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Release Year</h3>
+                <p className="text-gray-400">{anime.releaseYear}</p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Rating</h3>
+                <p className="text-gray-400">{anime.rating.toFixed(1)}</p>
+              </div>
+            </div>
+            <div className="mt-4 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-2">Genres</h3>
+              <div className="flex flex-wrap gap-2">
+                {anime.genres.map((genre: string, index: number) => (
                   <span 
                     key={index}
-                    className="px-3 py-1 text-sm rounded-full bg-[#6B00B3] text-white"
+                    className="px-3 py-1 text-sm rounded-full bg-primary/30 text-white"
                   >
                     {genre}
                   </span>
                 ))}
               </div>
-              <p className="text-gray-300 mb-6">{anime.description}</p>
-              <button className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC] mb-4">
-                <Play className="h-5 w-5" />
-                Watch Now
-              </button>
-              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] mb-4">
-                <BookmarkPlus className="h-5 w-5" />
-                Add to List
-              </button>
-              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A]">
-                <Share2Icon className="h-5 w-5" />
-                Share
-              </button>
-              <h2 className="text-2xl font-bold text-white mt-8 mb-4">Seasons</h2>
-              <button className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC]">
-                Season 1
-              </button>
             </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-white mb-4">Episodes</h2>
-            <div className="grid gap-3">
-              {Array.from({ length: anime.episodes }, (_, i) => (
-                <button
-                  key={i}
-                  className="w-full p-4 bg-[#2B0144] rounded-lg text-white hover:bg-[#6B00B3]/20 transition-colors flex items-center justify-between group"
-                >
-                  <span>Season 1 Episode {i + 1}</span>
-                  <Play className="h-5 w-5 text-white" />
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={handleWatchClick}
+              className="btn-primary flex items-center space-x-2 py-3 px-6"
+            >
+              <Play className="h-5 w-5" />
+              <span>Watch Now</span>
+            </button>
           </div>
         </div>
+
+        {showSeasons && (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-white mb-4">Seasons</h2>
+              <div className="flex space-x-4">
+                {episodes.map((seasonData, index) => (
+                  <button
+                    key={index}
+                    className={`px-4 py-2 rounded-lg text-white ${
+                      selectedSeason === seasonData.season ? 'bg-secondary' : 'bg-surface-light hover:bg-surface'
+                    }`}
+                    onClick={() => handleSeasonSelect(seasonData.season)}
+                  >
+                    Season {seasonData.season}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-4">Episodes</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {episodes
+                  .find((seasonData) => seasonData.season === selectedSeason)
+                  ?.episodes.map((episode, index) => (
+                    <div
+                      key={index}
+                      className="bg-surface-light p-4 rounded-lg text-white shadow-md hover:bg-surface transition-colors cursor-pointer"
+                    >
+                      <h3 className="font-medium">{episode}</h3>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
