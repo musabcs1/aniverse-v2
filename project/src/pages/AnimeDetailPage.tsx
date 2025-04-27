@@ -4,7 +4,7 @@ import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, UsersIcon } from 'lucide-react';
+import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard } from 'lucide-react';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -94,19 +94,19 @@ const AnimeDetailPage: React.FC = () => {
             <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
             <div className="flex items-center gap-4 text-gray-300 mb-4">
               <div className="flex items-center gap-2">
-                <StarIcon className="h-5 w-5 text-blue-500" />
+                <StarIcon className="h-5 w-5 text-[#0DFFFF]" />
                 <span>{anime.rating.toFixed(1)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-blue-500" />
+                <CalendarIcon className="h-5 w-5 text-[#0DFFFF]" />
                 <span>{anime.releaseYear}</span>
               </div>
               <div className="flex items-center gap-2">
-                <ClockIcon className="h-5 w-5 text-blue-500" />
+                <ClockIcon className="h-5 w-5 text-[#0DFFFF]" />
                 <span>{anime.episodes} Episodes</span>
               </div>
               <div className="flex items-center gap-2">
-                <UsersIcon className="h-5 w-5 text-blue-500" />
+                <Clapperboard className="h-5 w-5 text-[#0DFFFF]" />
                 <span>{anime.studio}</span>
               </div>
             </div>
@@ -114,25 +114,27 @@ const AnimeDetailPage: React.FC = () => {
               {anime.genres.map((genre, index) => (
                 <span 
                   key={index}
-                  className="px-3 py-1 text-sm rounded-full bg-[#6B00B3] text-white"
+                  className="px-3 py-1 text-sm rounded-full bg-[#31055A] text-white"
                 >
                   {genre}
                 </span>
               ))}
             </div>
             <p className="text-gray-300 mb-6">{anime.description}</p>
-            <button className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC] mb-4">
-              <Play className="h-5 w-5" />
-              Watch Now
-            </button>
-            <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform mb-4">
-              <BookmarkPlus className="h-5 w-5" />
-              Add to List
-            </button>
-            <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
-              <Share2 className="h-5 w-5" />
-              Share
-            </button>
+            <div className="space-y-4">
+              <button className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC]">
+                <Play className="h-5 w-5" />
+                Watch Now
+              </button>
+              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
+                <BookmarkPlus className="h-5 w-5" />
+                Add to List
+              </button>
+              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
+                <Share2 className="h-5 w-5" />
+                Share
+              </button>
+            </div>
             <h2 className="text-2xl font-bold text-white mt-8 mb-4">Seasons</h2>
             <button
               className={`bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] ${isSeason1Selected ? 'border-2 border-[#007A99]' : ''}`}
