@@ -1,77 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [anime, setAnime] = useState<Anime | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [episodes, setEpisodes] = useState<{ season: number; episodes: string[] }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnime = async () => {
       if (!id) {
-        setError('No ID provided in the URL.');
+        setError('Invalid URL. Redirecting to anime directory...');
+        setTimeout(() => navigate('/anime'), 2000);
         return;
       }
 
       try {
-        // First try to get the anime by direct ID
+        setIsLoading(true);
         const animeDoc = doc(db, 'anime', id);
         const animeSnapshot = await getDoc(animeDoc);
         
         if (animeSnapshot.exists()) {
-          const animeData = animeSnapshot.data() as Anime;
+          const animeData = { ...animeSnapshot.data(), id: animeSnapshot.id } as Anime;
           setAnime(animeData);
-        } else {
-          // If not found by ID, try to find by numeric ID
-          const animeQuery = query(
-            collection(db, 'anime'),
-            where('id', '==', Number(id))
-          );
-          const querySnapshot = await getDocs(animeQuery);
-          
-          if (!querySnapshot.empty) {
-            const animeData = querySnapshot.docs[0].data() as Anime;
-            setAnime(animeData);
-          } else {
-            setError('Anime not found.');
-            return;
-          }
-        }
 
-        // After successfully finding the anime, set up episodes
-        const totalSeasons = anime?.seasons || 1;
-        const allEpisodes = [];
-        for (let season = 1; season <= totalSeasons; season++) {
-          allEpisodes.push({
-            season,
-            episodes: Array.from({ length: anime?.episodesPerSeason || 12 }, (_, i) => `Season ${season} Episode ${i + 1}`),
-          });
+          const totalSeasons = animeData.seasons || 1;
+          const allEpisodes = [];
+          for (let season = 1; season <= totalSeasons; season++) {
+            allEpisodes.push({
+              season,
+              episodes: Array.from({ length: animeData.episodesPerSeason || 12 }, (_, i) => `Season ${season} Episode ${i + 1}`),
+            });
+          }
+          setEpisodes(allEpisodes);
+          setError(null);
+        } else {
+          setError('Anime not found. Redirecting to anime directory...');
+          setTimeout(() => navigate('/anime'), 2000);
         }
-        setEpisodes(allEpisodes);
       } catch (error) {
-        setError('Error fetching anime data. Please try again later.');
+        setError('Error loading anime details. Please try again later.');
         console.error('Error fetching anime:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchAnime();
-  }, [id]);
+  }, [id, navigate]);
 
   const handleSeasonSelect = (season: number) => {
     setSelectedSeason(season);
   };
 
+  if (isLoading) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4 text-center">
+          <div className="animate-pulse">
+            <div className="h-96 w-64 bg-surface-light rounded-lg mb-4 mx-auto"></div>
+            <div className="h-8 bg-surface-light rounded w-3/4 mx-auto mb-4"></div>
+            <div className="h-4 bg-surface-light rounded w-1/2 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
-    return <div className="pt-24 pb-16 text-center text-red-500">{error}</div>;
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4 text-center">
+          <div className="text-red-500 mb-4">{error}</div>
+          <button 
+            onClick={() => navigate('/anime')}
+            className="btn-primary"
+          >
+            Go to Anime Directory
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!anime) {
-    return <div className="pt-24 pb-16 text-center">Loading...</div>;
+    return null;
   }
 
   return (

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchIcon, SlidersHorizontal, ChevronDownIcon } from 'lucide-react';
-import animeList from '../../api/animeList.json';
 import AnimeCard from '../components/ui/AnimeCard';
 import { Anime } from '../types';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 const genres = [
   "Action", "Adventure", "Comedy", "Drama", "Fantasy", "Historical", 
@@ -15,10 +16,8 @@ const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Sho
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
 
 const AnimeDirectoryPage: React.FC = () => {
-  const [animeListState] = useState<Anime[]>(animeList.map(anime => ({
-    ...anime,
-    status: anime.status as 'Completed' | 'Ongoing' | 'Upcoming',
-  })));
+  const [animeListState, setAnimeListState] = useState<Anime[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -26,6 +25,25 @@ const AnimeDirectoryPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedStudio, setSelectedStudio] = useState("All Studios");
   const [sortBy, setSortBy] = useState("newest");
+
+  useEffect(() => {
+    const fetchAnime = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'anime'));
+        const animeData = querySnapshot.docs.map(doc => ({ 
+          ...doc.data(),
+          id: doc.id
+        })) as Anime[];
+        setAnimeListState(animeData);
+      } catch (error) {
+        console.error('Error fetching anime:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnime();
+  }, []);
 
   const toggleGenre = (genre: string) => {
     if (selectedGenres.includes(genre)) {
@@ -227,7 +245,11 @@ const AnimeDirectoryPage: React.FC = () => {
         </div>
         
         {/* Anime Grid */}
-        {sortedAnime.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-xl text-gray-400">Loading anime...</p>
+          </div>
+        ) : sortedAnime.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {sortedAnime.map(anime => (
               <AnimeCard key={anime.id} anime={anime} />
