@@ -7,4 +7,5 @@ declare module 'lucide-react' {
   export const SearchIcon: React.FC<IconProps>;
   export const SlidersHorizontal: React.FC<IconProps>;
   export const ChevronDownIcon: React.FC<IconProps>;
+  export const StarIcon: React.FC<IconProps>;
 }

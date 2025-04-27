@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Play } from 'lucide-react';
+import { StarIcon, Play } from 'lucide-react';
 import { Anime } from '../../types';
 
 interface AnimeCardProps {
@@ -32,7 +32,7 @@ const AnimeCard: React.FC<AnimeCardProps> = ({ anime, featured = false }) => {
               </span>
             ))}
             <div className="flex items-center ml-auto text-xs space-x-1 text-secondary">
-              <Star className="h-3 w-3 fill-secondary text-secondary" />
+              <StarIcon className="h-3 w-3 fill-secondary text-secondary" />
               <span>{anime.rating.toFixed(1)}</span>
             </div>
           </div>
