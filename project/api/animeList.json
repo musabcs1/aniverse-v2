@@ -91,5 +91,24 @@
       { "name": "Season 4", "episodes": 25 },
       { "name": "Season 5", "episodes": 25 }
     ]
+  },
+  {
+    "id": "6",
+    "title": "My Hero Academia",
+    "coverImage": "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    "description": "Superheroes in training.",
+    "episodes": 113,
+    "genres": ["Action", "Comedy", "Superhero"],
+    "rating": 8.5,
+    "releaseYear": 2016,
+    "status": "Ongoing",
+    "studio": "Bones",
+    "seasons": [
+      { "name": "Season 1", "episodes": 13 },
+      { "name": "Season 2", "episodes": 25 },
+      { "name": "Season 3", "episodes": 25 },
+      { "name": "Season 4", "episodes": 25 },
+      { "name": "Season 5", "episodes": 25 }
+    ]
   }
 ]
