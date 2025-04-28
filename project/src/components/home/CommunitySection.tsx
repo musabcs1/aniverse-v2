@@ -1,44 +1,77 @@
-import React from 'react';
-import { ChevronRight, MessageSquare, Users, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { User, ChevronRight, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ForumThreadCard from '../ui/ForumThreadCard';
-import { ForumThread } from '../../types';
+import { ForumThread } from '../../types'; // Ensure ForumThread type is imported
 
-// Sample data
-const forumThreads: ForumThread[] = [
-  {
-    id: 1,
-    title: "Celestial Legends Episode 10 Discussion [SPOILERS]",
-    content: "That plot twist at the end was incredible! I never saw it coming. What do you think about the reveal of Kaito's true identity?",
-    authorId: 1,
-    authorName: "AnimeExplorer",
-    authorAvatar: "https://i.pravatar.cc/150?img=33",
-    category: "Anime",
-    createdAt: "2025-04-16T15:32:00",
-    updatedAt: "2025-04-16T15:32:00",
-    replies: 47,
-    upvotes: 89,
-    downvotes: 2,
-    tags: ["celestial-legends", "discussion", "theories"]
-  },
-  {
-    id: 2,
-    title: "Top 10 Underrated Anime of 2024 That Deserve More Attention",
-    content: "We all know the big hitters, but let's talk about some hidden gems that flew under the radar last year. Here's my list of underappreciated anime...",
-    authorId: 2,
-    authorName: "OtakuSensei",
-    authorAvatar: "https://i.pravatar.cc/150?img=11",
-    category: "General",
-    createdAt: "2025-04-15T09:17:00",
-    updatedAt: "2025-04-15T12:45:00",
-    replies: 23,
-    upvotes: 56,
-    downvotes: 3,
-    tags: ["underrated", "recommendations", "2024"]
-  }
-];
+// Define a type for the community data
+interface CommunityData {
+  forumThreads: ForumThread[];
+  stats: {
+    activeMembers: number;
+    discussions: number;
+    postsThisMonth: number;
+  };
+  contributors: {
+    avatar: string;
+    name: string;
+    level: number;
+    posts: number;
+  }[];
+}
 
 const CommunitySection: React.FC = () => {
+  const [communityData, setCommunityData] = useState<CommunityData>({
+    forumThreads: [],
+    stats: {
+      activeMembers: 0,
+      discussions: 0,
+      postsThisMonth: 0
+    },
+    contributors: []
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data: CommunityData = {
+        forumThreads: [
+          {
+            id: "1",
+            title: "Sample Thread",
+            content: "Sample content",
+            authorId: "user1",
+            authorName: "User1",
+            authorAvatar: "https://i.pravatar.cc/150?img=1",
+            category: "General",
+            createdAt: new Date("2025-04-28T12:00:00"),
+            updatedAt: new Date("2025-04-28T12:00:00"),
+            replies: 10,
+            upvotes: ["user2", "user3"],
+            downvotes: ["user4"],
+            tags: ["sample", "discussion"],
+            comments: []
+          }
+        ],
+        stats: {
+          activeMembers: 1000,
+          discussions: 200,
+          postsThisMonth: 500
+        },
+        contributors: [
+          {
+            avatar: "https://i.pravatar.cc/40?img=2",
+            name: "Contributor1",
+            level: 10,
+            posts: 50
+          }
+        ]
+      };
+      setCommunityData(data);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <section className="py-16 bg-background-light">
       <div className="container mx-auto px-4">
@@ -49,17 +82,16 @@ const CommunitySection: React.FC = () => {
             </h2>
             <p className="text-gray-400">Connect with fellow anime enthusiasts</p>
           </div>
-          
           <Link to="/forum" className="flex items-center space-x-1 text-accent hover:text-accent-light transition-colors">
             <span>Join discussions</span>
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <h3 className="text-xl font-semibold mb-4">Trending Discussions</h3>
-            {forumThreads.map(thread => (
+            {communityData.forumThreads.map((thread: ForumThread) => (
               <ForumThreadCard key={thread.id} thread={thread} />
             ))}
             <div className="flex justify-center mt-8">
@@ -68,61 +100,59 @@ const CommunitySection: React.FC = () => {
               </Link>
             </div>
           </div>
-          
+
           <div className="space-y-6">
             <div className="card p-5">
               <h3 className="text-xl font-semibold mb-4">Community Stats</h3>
               <div className="space-y-4">
                 <div className="flex items-center">
                   <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
-                    <Users className="h-6 w-6 text-primary" />
+                    <User className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">24,815</div>
+                    <div className="text-2xl font-bold">{communityData.stats.activeMembers}</div>
                     <div className="text-sm text-gray-400">Active Members</div>
                   </div>
                 </div>
-                
                 <div className="flex items-center">
                   <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center mr-4">
                     <MessageSquare className="h-6 w-6 text-secondary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">3,427</div>
+                    <div className="text-2xl font-bold">{communityData.stats.discussions}</div>
                     <div className="text-sm text-gray-400">Discussions</div>
                   </div>
                 </div>
-                
                 <div className="flex items-center">
                   <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center mr-4">
-                    <TrendingUp className="h-6 w-6 text-accent" />
+                    <ChevronRight className="h-6 w-6 text-accent" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">42,968</div>
+                    <div className="text-2xl font-bold">{communityData.stats.postsThisMonth}</div>
                     <div className="text-sm text-gray-400">Posts This Month</div>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="card p-5">
               <h3 className="text-xl font-semibold mb-4">Top Contributors</h3>
               <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map(i => (
+                {communityData.contributors.map((contributor: any, i: number) => (
                   <div key={i} className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
                       <img 
-                        src={`https://i.pravatar.cc/40?img=${20 + i}`} 
+                        src={contributor.avatar} 
                         alt={`Top user ${i}`} 
                         className="h-10 w-10 rounded-full"
                       />
                     </div>
                     <div className="flex-grow">
-                      <div className="font-medium">AnimeUser{i}00{i}</div>
-                      <div className="text-xs text-gray-400">Level {30 - i * 2}</div>
+                      <div className="font-medium">{contributor.name}</div>
+                      <div className="text-xs text-gray-400">Level {contributor.level}</div>
                     </div>
                     <div className="text-xs px-2 py-1 bg-primary/30 rounded-full">
-                      {150 - i * 12} posts
+                      {contributor.posts} posts
                     </div>
                   </div>
                 ))}
