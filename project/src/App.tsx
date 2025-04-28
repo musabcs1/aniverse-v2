@@ -35,6 +35,7 @@ function App() {
             <Route path="/forum" element={<ForumPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<AdminPage />} />

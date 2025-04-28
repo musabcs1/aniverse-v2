@@ -6,7 +6,7 @@ import {
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnimeCard from '../components/ui/AnimeCard';
