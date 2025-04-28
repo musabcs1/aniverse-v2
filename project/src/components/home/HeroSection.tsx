@@ -1,24 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const latestAnime = [
-  {
-    id: "6",
-    title: "hm Hero Academia",
-    bannerImage:"https://static1.cbrimages.com/wordpress/wp-content/uploads/2021/03/my-hero-academia-banner.jpg?q=70&fit=contain&w=1200&h=628&dpr=1",
-    coverImage: "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
-    description: "Superheroes in training.",
-    genres: ["Action", "Comedy", "Superhero"],
-    rating: 8.5,
-    releaseYear: 2016,
-    status: "Ongoing",
-    studio: "Bones",
-  },
-];
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 
 const HeroSection: React.FC = () => {
+  const [latestAnime, setLatestAnime] = useState<any[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const fetchLatestAnime = async () => {
+      try {
+        const animeCollection = collection(db, 'anime');
+        const querySnapshot = await getDocs(animeCollection);
+
+        const animeList = querySnapshot.docs
+          .map((doc) => ({ id: parseInt(doc.id, 10), ...doc.data() }))
+          .sort((a, b) => b.id - a.id) // Sort by id in descending order
+          .slice(0, 3); // Take the top 3
+
+        setLatestAnime(animeList);
+      } catch (error) {
+        console.error('Error fetching latest anime:', error);
+      }
+    };
+
+    fetchLatestAnime();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prevIndex) => (prevIndex + 1) % latestAnime.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, [latestAnime]);
 
   return (
     <section className="relative h-[80vh] overflow-hidden">
