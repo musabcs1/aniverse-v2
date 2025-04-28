@@ -94,8 +94,9 @@
   },
   {
     "id": "6",
-    "title": "my Hero Academia",
-    "coverImage": "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    "title": "jujutsu kaisen",
+    "bannerImage": "https://5.imimg.com/data5/ANDROID/Default/2023/4/298334358/UV/IR/QX/15232517/product-jpeg-500x500.jpg",
+    "coverImage": "https://5.imimg.com/data5/ANDROID/Default/2023/4/298334358/UV/IR/QX/15232517/product-jpeg-500x500.jpg",
     "description": "Superheroes in training.",
     "episodes": 113,
     "genres": ["Action", "Comedy", "Superhero"],
