@@ -195,7 +195,7 @@ const ProfilePage: React.FC = () => {
     return null;
   }
 
-  const isOwnProfile = auth.currentUser?.displayName === username;
+  const isOwnProfile = auth.currentUser?.uid === userData?.id;
 
   return (
     <div className="pt-24 pb-16">
