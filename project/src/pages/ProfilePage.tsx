@@ -40,16 +40,23 @@ const ProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
 
   useEffect(() => {
-    const fetchUserDataByUsername = async () => {
+    const fetchUserData = async () => {
       try {
-        if (!username) {
-          console.error('Username parameter is missing');
+        let targetUsername = username;
+
+        // If no username is provided in the URL, use the logged-in user's username
+        if (!targetUsername && auth.currentUser) {
+          targetUsername = auth.currentUser.displayName || '';
+        }
+
+        if (!targetUsername) {
+          console.error('No username available to fetch profile data');
           setLoading(false);
           return;
         }
 
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', username));
+        const q = query(usersRef, where('username', '==', targetUsername));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
@@ -85,9 +92,7 @@ const ProfilePage: React.FC = () => {
       }
     };
 
-    if (username) {
-      fetchUserDataByUsername();
-    }
+    fetchUserData();
   }, [username, navigate]);
 
   useEffect(() => {
