@@ -88,6 +88,26 @@ const ProfilePage: React.FC = () => {
     return () => unsubscribe();
   }, [navigate]);
 
+  useEffect(() => {
+    const fetchWatchlist = async () => {
+      if (!auth.currentUser) return;
+
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userSnapshot = await getDoc(userDocRef);
+
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          setUserData(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching watchlist:', error);
+      }
+    };
+
+    fetchWatchlist();
+  }, []);
+
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
       alert('Please provide a valid avatar URL.');
@@ -305,9 +325,17 @@ const ProfilePage: React.FC = () => {
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userData.watchlist && userData.watchlist.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {userData.watchlist.map((animeId: string) => (
+                      <div key={animeId} className="bg-surface-light rounded-lg p-4">
+                        <p className="text-white">Anime ID: {animeId}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                   <p className="text-gray-400">No items in your watchlist yet.</p>
-                </div>
+                )}
                 
                 <div className="mt-10">
                   <div className="flex justify-between items-center mb-6">

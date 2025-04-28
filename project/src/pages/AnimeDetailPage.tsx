@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard } from 'lucide-react';
+import { auth } from '../firebaseConfig';
 
 const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,29 @@ const AnimeDetailPage: React.FC = () => {
     enabled: !!id,
     retry: false,
   });
+
+  const handleAddToList = async () => {
+    if (!auth.currentUser) {
+      alert('Please log in to add this anime to your list.');
+      return;
+    }
+
+    if (!anime) {
+      alert('Anime details are not available. Please try again later.');
+      return;
+    }
+
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, {
+        watchlist: arrayUnion(anime.id),
+      });
+      alert(`${anime.title} has been added to your watchlist.`);
+    } catch (error) {
+      console.error('Error adding to watchlist:', error);
+      alert('Failed to add to watchlist. Please try again.');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -126,7 +150,10 @@ const AnimeDetailPage: React.FC = () => {
                 <Play className="h-5 w-5" />
                 Watch Now
               </button>
-              <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
+              <button 
+                className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform"
+                onClick={handleAddToList}
+              >
                 <BookmarkPlus className="h-5 w-5" />
                 Add to List
               </button>

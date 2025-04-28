@@ -24,6 +24,13 @@ declare module 'lucide-react' {
   export const Check: React.FC<IconProps>;
   export const ThumbsDown: React.FC<IconProps>;
   export const ThumbsUp: React.FC<IconProps>;
+  export const User: React.FC<IconProps>;
+  export const Settings: React.FC<IconProps>;
+  export const Heart: React.FC<IconProps>;
+  export const BookOpen: React.FC<IconProps>;
+  export const MessageSquare: React.FC<IconProps>;
+  export const Clock: React.FC<IconProps>;
+  export const Award: React.FC<IconProps>;
   export declare const Menu: LucideIcon;
   export declare const Search: LucideIcon;
   export declare const Bell: LucideIcon;
