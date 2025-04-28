@@ -4,43 +4,43 @@ import { Link } from 'react-router-dom';
 import AnimeCard from '../ui/AnimeCard';
 import { Anime } from '../../types';
 
-// Sample data
+// Updated AniversePicks to include the top 3 animes with the highest "id" values from animeList.json
 const AniversePicks: Anime[] = [
   {
-    id: "7", // Converted to string
-    title: "Astral Knights",
-    coverImage: "https://images.pexels.com/photos/6771600/pexels-photo-6771600.jpeg",
-    description: "Seven legendary warriors from across the galaxy unite to battle an ancient cosmic entity threatening to consume all of creation.",
-    episodes: 13,
-    genres: ["Space Opera", "Action"],
-    rating: 9.5,
-    releaseYear: 2025,
+    id: "6",
+    title: "jujutsu kaisen",
+    coverImage: "https://5.imimg.com/data5/ANDROID/Default/2023/4/298334358/UV/IR/QX/15232517/product-jpeg-500x500.jpg",
+    description: "Superheroes in training.",
+    episodes: 113,
+    genres: ["Action", "Comedy", "Superhero"],
+    rating: 8.5,
+    releaseYear: 2016,
     status: "Ongoing",
-    studio: "Galactic Studios"
+    studio: "Bones"
   },
   {
-    id: "8", // Converted to string
-    title: "Garden of Memories",
-    coverImage: "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg",
-    description: "A beautiful, emotional journey about a girl who can see people's memories by touching the flowers they've grown.",
-    episodes: 12,
-    genres: ["Drama", "Slice of Life"],
-    rating: 9.3,
-    releaseYear: 2024,
-    status: "Completed",
-    studio: "Bloom Animation"
+    id: "5",
+    title: "My Hero Academia",
+    coverImage: "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    description: "Superheroes in training.",
+    episodes: 113,
+    genres: ["Action", "Comedy", "Superhero"],
+    rating: 8.5,
+    releaseYear: 2016,
+    status: "Ongoing",
+    studio: "Bones"
   },
   {
-    id: "9", // Converted to string
-    title: "Midnight Protocol",
-    coverImage: "https://images.pexels.com/photos/2694037/pexels-photo-2694037.jpeg",
-    description: "In a world where hackers fight for digital freedom, one brilliant coder discovers a conspiracy that threatens global security.",
-    episodes: 24,
-    genres: ["Techno-Thriller", "Mystery"],
-    rating: 9.0,
-    releaseYear: 2023,
-    status: "Completed",
-    studio: "Dark Code Productions"
+    id: "4",
+    title: "Demon Slayer",
+    coverImage: "https://m.media-amazon.com/images/M/MV5BMWU1OGEwNmQtNGM3MS00YTYyLThmYmMtN2FjYzQzNzNmNTE0XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    description: "A boy fights demons to save his sister.",
+    episodes: 26,
+    genres: ["Action", "Adventure", "Supernatural"],
+    rating: 8.7,
+    releaseYear: 2019,
+    status: "Ongoing",
+    studio: "ufotable"
   }
 ];
 
