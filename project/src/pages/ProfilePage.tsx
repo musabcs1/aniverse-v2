@@ -42,6 +42,12 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     const fetchUserDataByUsername = async () => {
       try {
+        if (!username) {
+          console.error('Username parameter is missing');
+          setLoading(false);
+          return;
+        }
+
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('username', '==', username));
         const querySnapshot = await getDocs(q);
