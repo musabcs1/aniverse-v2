@@ -10,7 +10,12 @@
     "releaseYear": 2013,
     "status": "Completed",
     "studio": "Wit Studio",
-    "seasons": ["Season 1", "Season 2", "Season 3", "Final Season"]
+    "seasons": [
+      { "name": "Season 1", "episodes": 25 },
+      { "name": "Season 2", "episodes": 12 },
+      { "name": "Season 3", "episodes": 24 },
+      { "name": "Final Season", "episodes": 14 }
+    ]
   },
   {
     "id": "2",
@@ -23,7 +28,11 @@
     "releaseYear": 2002,
     "status": "Completed",
     "studio": "Pierrot",
-    "seasons": ["Season 1", "Season 2", "Season 3"]
+    "seasons": [
+      { "name": "Season 1", "episodes": 57 },
+      { "name": "Season 2", "episodes": 83 },
+      { "name": "Season 3", "episodes": 80 }
+    ]
   },
   {
     "id": "3",
@@ -36,7 +45,16 @@
     "releaseYear": 1999,
     "status": "Ongoing",
     "studio": "Toei Animation",
-    "seasons": ["East Blue", "Alabasta", "Skypiea", "Water 7", "Thriller Bark", "Marineford", "Dressrosa", "Wano"]
+    "seasons": [
+      { "name": "East Blue", "episodes": 61 },
+      { "name": "Alabasta", "episodes": 74 },
+      { "name": "Skypiea", "episodes": 43 },
+      { "name": "Water 7", "episodes": 35 },
+      { "name": "Thriller Bark", "episodes": 45 },
+      { "name": "Marineford", "episodes": 33 },
+      { "name": "Dressrosa", "episodes": 118 },
+      { "name": "Wano", "episodes": 120 }
+    ]
   },
   {
     "id": "4",
@@ -49,7 +67,11 @@
     "releaseYear": 2019,
     "status": "Ongoing",
     "studio": "ufotable",
-    "seasons": ["Season 1", "Mugen Train", "Entertainment District"]
+    "seasons": [
+      { "name": "Season 1", "episodes": 26 },
+      { "name": "Mugen Train", "episodes": 7 },
+      { "name": "Entertainment District", "episodes": 11 }
+    ]
   },
   {
     "id": "5",
@@ -62,6 +84,12 @@
     "releaseYear": 2016,
     "status": "Ongoing",
     "studio": "Bones",
-    "seasons": ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5"]
+    "seasons": [
+      { "name": "Season 1", "episodes": 13 },
+      { "name": "Season 2", "episodes": 25 },
+      { "name": "Season 3", "episodes": 25 },
+      { "name": "Season 4", "episodes": 25 },
+      { "name": "Season 5", "episodes": 25 }
+    ]
   }
 ]

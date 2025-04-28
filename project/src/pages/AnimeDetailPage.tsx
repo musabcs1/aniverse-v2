@@ -13,6 +13,7 @@ const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState<{ name: string; episodes: number } | null>(null);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', id],
@@ -54,6 +55,13 @@ const AnimeDetailPage: React.FC = () => {
 
     checkWatchlist();
   }, [anime]);
+
+  useEffect(() => {
+    if (selectedSeason) {
+      // Automatically update the episodes section when a season is selected
+      console.log(`Displaying episodes for ${selectedSeason.name}`);
+    }
+  }, [selectedSeason]);
 
   const handleToggleWatchlist = async () => {
     if (!auth.currentUser) {
@@ -208,13 +216,13 @@ const AnimeDetailPage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-white mb-4">Seasons</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {anime.seasons && Array.isArray(anime.seasons) ? (
-                    anime.seasons.map((season: string, index: number) => (
+                    anime.seasons.map((season: { name: string; episodes: number }, index: number) => (
                       <button
                         key={index}
                         className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] transition-colors"
-                        onClick={() => console.log(`Selected: ${season}`)}
+                        onClick={() => setSelectedSeason(season)}
                       >
-                        {season}
+                        {season.name}
                       </button>
                     ))
                   ) : (
@@ -232,26 +240,28 @@ const AnimeDetailPage: React.FC = () => {
                 left: '960px'
               }}
             >
-              <h2 className="text-3xl font-extrabold text-white mb-4">Episodes</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {Array.from({ length: anime.episodes }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Play className="h-5 w-5 text-blue-500" />
-                      <span className="text-lg">Episode {i + 1}</span>
+                {selectedSeason && (
+                  <h2 className="text-2xl font-bold text-white mb-4">Episodes in {selectedSeason.name}</h2>
+                )}
+                {selectedSeason &&
+                  Array.from({ length: selectedSeason.episodes }, (_, i) => (
+                    <div
+                      key={i}
+                      className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Play className="h-5 w-5 text-blue-500" />
+                        <span className="text-lg">Episode {i + 1}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </div>
         </div>
       </div>
       <div className="absolute bottom-0 left-0 right-0">
-        <button className="btn-primary w-full py-3">Load More</button>
       </div>
       <ToastContainer />
     </div>

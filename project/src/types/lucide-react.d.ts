@@ -14,6 +14,9 @@ declare module 'lucide-react' {
   export const BookmarkPlus: React.FC<IconProps>;
   export const Share2: React.FC<IconProps>;
   export const ChevronRight: React.FC<IconProps>;
+  export const ChevronLeft: React.FC<IconProps>;
+  export const ChevronUp: React.FC<IconProps>;
+  export const ChevronDown: React.FC<IconProps>;
   export const ArrowRight: React.FC<IconProps>;
   export const ArrowLeft: React.FC<IconProps>;
   export const X: React.FC<IconProps>;
