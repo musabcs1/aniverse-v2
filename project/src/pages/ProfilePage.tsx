@@ -37,39 +37,41 @@ const ProfilePage: React.FC = () => {
     xp: 0,
   });
   const navigate = useNavigate();
+  const { username } = useParams<{ username: string }>();
 
   useEffect(() => {
-    const fetchUserDataAndStats = async (uid: string) => {
+    const fetchUserDataByUsername = async () => {
       try {
-        const userDocRef = doc(db, 'users', uid);
-        const userSnapshot = await getDoc(userDocRef);
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', username));
+        const querySnapshot = await getDocs(q);
 
-        if (!userSnapshot.exists()) {
-          console.error('User document not found');
-          navigate('/auth');
-          return;
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+          setUserData(userData);
+          setAvatarURL(userData.avatar || '');
+
+          const watchingCount = userData.watchlist?.length || 0;
+          const completedCount = userData.completed?.length || 0;
+
+          const commentsSnapshot = await getDocs(query(collection(db, 'comments'), where('userId', '==', userDoc.id)));
+          const reviewsSnapshot = await getDocs(query(collection(db, 'reviews'), where('userId', '==', userDoc.id)));
+          const threadsSnapshot = await getDocs(query(collection(db, 'forumThreads'), where('authorId', '==', userDoc.id)));
+
+          setStats({
+            watching: watchingCount,
+            completed: completedCount,
+            comments: commentsSnapshot.size,
+            reviews: reviewsSnapshot.size,
+            threads: threadsSnapshot.size,
+            level: userData.level || 0,
+            xp: userData.xp || 0,
+          });
+        } else {
+          console.error('User not found');
+          navigate('/404');
         }
-
-        const userData = userSnapshot.data();
-        setUserData(userData);
-        setAvatarURL(userData.avatar || '');
-
-        const watchingCount = userData.watchlist?.length || 0;
-        const completedCount = userData.completed?.length || 0;
-
-        const commentsSnapshot = await getDocs(query(collection(db, 'comments'), where('userId', '==', uid)));
-        const reviewsSnapshot = await getDocs(query(collection(db, 'reviews'), where('userId', '==', uid)));
-        const threadsSnapshot = await getDocs(query(collection(db, 'forumThreads'), where('authorId', '==', uid)));
-
-        setStats({
-          watching: watchingCount,
-          completed: completedCount,
-          comments: commentsSnapshot.size,
-          reviews: reviewsSnapshot.size,
-          threads: threadsSnapshot.size,
-          level: userData.level || 0,
-          xp: userData.xp || 0,
-        });
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -77,17 +79,10 @@ const ProfilePage: React.FC = () => {
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchUserDataAndStats(user.uid);
-      } else {
-        navigate('/auth');
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [navigate]);
+    if (username) {
+      fetchUserDataByUsername();
+    }
+  }, [username, navigate]);
 
   useEffect(() => {
     const fetchWatchlist = async () => {
