@@ -1,31 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import animeList from '../../../api/animeList.json';
 
 const HeroSection: React.FC = () => {
   const [latestAnime, setLatestAnime] = useState<any[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    const fetchLatestAnime = async () => {
-      try {
-        const animeCollection = collection(db, 'anime');
-        const querySnapshot = await getDocs(animeCollection);
+    // Sort anime by id in descending order and take the top 3
+    const sortedAnime = animeList
+      .map((anime) => ({ ...anime, id: parseInt(anime.id, 10) }))
+      .sort((a, b) => b.id - a.id)
+      .slice(0, 4);
 
-        const animeList = querySnapshot.docs
-          .map((doc) => ({ id: parseInt(doc.id, 10), ...doc.data() }))
-          .sort((a, b) => b.id - a.id) // Sort by id in descending order
-          .slice(0, 3); // Take the top 3
-
-        setLatestAnime(animeList);
-      } catch (error) {
-        console.error('Error fetching latest anime:', error);
-      }
-    };
-
-    fetchLatestAnime();
+    setLatestAnime(sortedAnime);
   }, []);
 
   useEffect(() => {
