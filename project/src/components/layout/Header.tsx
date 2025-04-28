@@ -3,8 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import Logo from '../ui/Logo';
 import { Notification } from '../../types';
-import { onSnapshot, collection, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { onSnapshot, collection, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface HeaderProps {
   toggleMobileMenu: () => void;
@@ -21,24 +22,27 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const checkAuth = () => {
-      const storedUserData = localStorage.getItem('userData');
-      if (storedUserData) {
-        try {
-          const parsedData = JSON.parse(storedUserData);
-          setUserData(parsedData);
-        } catch {
-          localStorage.removeItem('userData');
-          setUserData(null);
+    const fetchUserData = async (uid: string) => {
+      try {
+        const userDocRef = doc(db, 'users', uid);
+        const userSnapshot = await getDoc(userDocRef);
+        if (userSnapshot.exists()) {
+          setUserData(userSnapshot.data());
         }
-      } else {
-        setUserData(null);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
     };
 
-    checkAuth();
-    window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchUserData(user.uid);
+      } else {
+        setUserData(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

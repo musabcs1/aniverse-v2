@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -148,6 +148,37 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
       console.error('Error updating avatar:', error);
       alert('Failed to update avatar. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleUsernameUpdate = async () => {
+    if (!userData.username.trim()) {
+      alert('Please provide a valid username.');
+      return;
+    }
+    try {
+      setUpdating(true);
+
+      // Update username in Firestore
+      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+      await updateDoc(userDocRef, { username: userData.username });
+
+      // Update display name in Firebase Authentication
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: userData.username });
+      }
+
+      // Update localStorage
+      const updatedUserData = { ...userData, username: userData.username };
+      localStorage.setItem('userData', JSON.stringify(updatedUserData));
+      setUserData(updatedUserData);
+
+      alert('Username updated successfully!');
+    } catch (error) {
+      console.error('Error updating username:', error);
+      alert('Failed to update username. Please try again.');
     } finally {
       setUpdating(false);
     }
@@ -425,7 +456,15 @@ const ProfilePage: React.FC = () => {
                           type="text" 
                           className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                           value={userData.username}
+                          onChange={(e) => setUserData((prev: any) => ({ ...prev, username: e.target.value }))}
                         />
+                        <button 
+                          className="btn-primary py-2 px-4 mt-2"
+                          onClick={handleUsernameUpdate}
+                          disabled={updating}
+                        >
+                          {updating ? 'Applying...' : 'Apply Changes'}
+                        </button>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
