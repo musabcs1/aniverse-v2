@@ -195,6 +195,8 @@ const ProfilePage: React.FC = () => {
     return null;
   }
 
+  const isOwnProfile = auth.currentUser?.displayName === username;
+
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
@@ -437,7 +439,7 @@ const ProfilePage: React.FC = () => {
               </div>
             )}
             
-            {activeTab === 'settings' && (
+            {activeTab === 'settings' && isOwnProfile && (
               <div className="bg-surface rounded-xl p-6">
                 <h2 className="text-2xl font-semibold mb-6">Account Settings</h2>
                 
