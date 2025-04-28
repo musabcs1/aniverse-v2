@@ -246,7 +246,7 @@ const AnimeDirectoryPage: React.FC = () => {
         
         {/* Anime Grid */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 animate-pulse">
             <p className="text-xl text-gray-400">Loading anime...</p>
           </div>
         ) : sortedAnime.length > 0 ? (
@@ -259,7 +259,7 @@ const AnimeDirectoryPage: React.FC = () => {
           <div className="text-center py-12">
             <p className="text-xl text-gray-400">No anime found matching your criteria</p>
             <button 
-              className="btn-primary mt-4"
+              className="btn-primary mt-4 hover:scale-105 transition-transform"
               onClick={resetFilters}
             >
               Reset Filters

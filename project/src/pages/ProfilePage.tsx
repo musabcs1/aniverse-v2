@@ -9,6 +9,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import AnimeCard from '../components/ui/AnimeCard';
 
 interface UserStats {
   watching: number;
@@ -107,6 +108,31 @@ const ProfilePage: React.FC = () => {
 
     fetchWatchlist();
   }, []);
+
+  useEffect(() => {
+    const fetchWatchlistDetails = async () => {
+      if (!auth.currentUser || !userData?.watchlist) return;
+
+      try {
+        const animeDetails = await Promise.all(
+          userData.watchlist.map(async (animeId: string) => {
+            const animeDocRef = doc(db, 'anime', animeId);
+            const animeSnapshot = await getDoc(animeDocRef);
+            return animeSnapshot.exists() ? { id: animeId, ...animeSnapshot.data() } : null;
+          })
+        );
+
+        setUserData((prev: any) => ({
+          ...prev,
+          watchlistDetails: animeDetails.filter((anime) => anime !== null),
+        }));
+      } catch (error) {
+        console.error('Error fetching watchlist details:', error);
+      }
+    };
+
+    fetchWatchlistDetails();
+  }, [userData?.watchlist]);
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
@@ -325,12 +351,10 @@ const ProfilePage: React.FC = () => {
                   </button>
                 </div>
                 
-                {userData.watchlist && userData.watchlist.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {userData.watchlist.map((animeId: string) => (
-                      <div key={animeId} className="bg-surface-light rounded-lg p-4">
-                        <p className="text-white">Anime ID: {animeId}</p>
-                      </div>
+                {userData.watchlistDetails && userData.watchlistDetails.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    {userData.watchlistDetails.map((anime: any) => (
+                      <AnimeCard key={anime.id} anime={anime} />
                     ))}
                   </div>
                 ) : (

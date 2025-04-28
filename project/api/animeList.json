@@ -9,7 +9,8 @@
     "rating": 9.1,
     "releaseYear": 2013,
     "status": "Completed",
-    "studio": "Wit Studio"
+    "studio": "Wit Studio",
+    "seasons": ["Season 1", "Season 2", "Season 3", "Final Season"]
   },
   {
     "id": "2",
@@ -21,7 +22,8 @@
     "rating": 8.3,
     "releaseYear": 2002,
     "status": "Completed",
-    "studio": "Pierrot"
+    "studio": "Pierrot",
+    "seasons": ["Season 1", "Season 2", "Season 3"]
   },
   {
     "id": "3",
@@ -33,7 +35,8 @@
     "rating": 8.9,
     "releaseYear": 1999,
     "status": "Ongoing",
-    "studio": "Toei Animation"
+    "studio": "Toei Animation",
+    "seasons": ["East Blue", "Alabasta", "Skypiea", "Water 7", "Thriller Bark", "Marineford", "Dressrosa", "Wano"]
   },
   {
     "id": "4",
@@ -45,7 +48,8 @@
     "rating": 8.7,
     "releaseYear": 2019,
     "status": "Ongoing",
-    "studio": "ufotable"
+    "studio": "ufotable",
+    "seasons": ["Season 1", "Mugen Train", "Entertainment District"]
   },
   {
     "id": "5",
@@ -57,6 +61,7 @@
     "rating": 8.5,
     "releaseYear": 2016,
     "status": "Ongoing",
-    "studio": "Bones"
+    "studio": "Bones",
+    "seasons": ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5"]
   }
 ]
