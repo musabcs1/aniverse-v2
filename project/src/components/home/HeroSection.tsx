@@ -1,50 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Play, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+
+const latestAnime = [
+  {
+    id: "6",
+    title: "hm Hero Academia",
+    coverImage: "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    description: "Superheroes in training.",
+    genres: ["Action", "Comedy", "Superhero"],
+    rating: 8.5,
+    releaseYear: 2016,
+    status: "Ongoing",
+    studio: "Bones",
+  },
+];
 
 const HeroSection: React.FC = () => {
-  const [latestAnime, setLatestAnime] = useState<any[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const fetchLatestAnime = async () => {
-      try {
-        const animeCollection = collection(db, 'anime');
-        const animeQuery = query(animeCollection, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(animeQuery);
-
-        const animeList = querySnapshot.docs.slice(0, 3).map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setLatestAnime(animeList);
-      } catch (error) {
-        console.error('Error fetching latest anime:', error);
-      }
-    };
-
-    fetchLatestAnime();
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prevIndex: number) => (prevIndex + 1) % latestAnime.length);
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, [latestAnime]);
-
-  if (latestAnime.length === 0) {
-    return (
-      <div className="text-center text-gray-400 py-20">
-        <h2 className="text-2xl">No anime available to display</h2>
-        <p>Please check back later.</p>
-      </div>
-    );
-  }
 
   return (
     <section className="relative h-[80vh] overflow-hidden">
@@ -59,7 +32,7 @@ const HeroSection: React.FC = () => {
             style={{ zIndex: index === activeIndex ? 1 : 0 }}
           >
             <img
-              src={anime.image}
+              src={anime.coverImage}
               alt={anime.title}
               className="absolute inset-0 w-full h-full object-cover"
             />
