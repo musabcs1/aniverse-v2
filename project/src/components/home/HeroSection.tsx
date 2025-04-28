@@ -37,6 +37,15 @@ const HeroSection: React.FC = () => {
     return () => clearInterval(interval);
   }, [latestAnime]);
 
+  if (latestAnime.length === 0) {
+    return (
+      <div className="text-center text-gray-400 py-20">
+        <h2 className="text-2xl">No anime available to display</h2>
+        <p>Please check back later.</p>
+      </div>
+    );
+  }
+
   return (
     <section className="relative h-[80vh] overflow-hidden">
       {/* Background Image and Overlay */}
