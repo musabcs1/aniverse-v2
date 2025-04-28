@@ -6,6 +6,7 @@ const latestAnime = [
   {
     id: "6",
     title: "hm Hero Academia",
+    bannerImage:"https://static1.cbrimages.com/wordpress/wp-content/uploads/2021/03/my-hero-academia-banner.jpg?q=70&fit=contain&w=1200&h=628&dpr=1",
     coverImage: "https://m.media-amazon.com/images/M/MV5BNzgxMzI3NzgtYzE2Zi00MzlmLThlNWEtNWVmZWEyZjNkZWYyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     description: "Superheroes in training.",
     genres: ["Action", "Comedy", "Superhero"],
