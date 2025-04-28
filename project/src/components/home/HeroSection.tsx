@@ -33,7 +33,7 @@ const HeroSection: React.FC = () => {
             style={{ zIndex: index === activeIndex ? 1 : 0 }}
           >
             <img
-              src={anime.coverImage}
+              src={anime.bannerImage || anime.coverImage}
               alt={anime.title}
               className="absolute inset-0 w-full h-full object-cover"
             />
