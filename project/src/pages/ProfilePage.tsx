@@ -206,12 +206,12 @@ const ProfilePage: React.FC = () => {
           watchlist: data.watchlist || []
         }));
         
-        // Update stats
+        // Update stats with correct field paths
         setStats(prev => ({
           ...prev,
           watching: watchlistCount,
-          level: data.stats?.level || 0,
-          xp: data.stats?.xp || 0
+          level: data.level || 0,
+          xp: data.xp || 0
         }));
       }
     });

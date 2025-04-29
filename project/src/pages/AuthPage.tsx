@@ -56,18 +56,11 @@ const AuthPage = () => {
           avatar: 'https://i.pravatar.cc/150?img=33',
           role: 'user',
           badges: defaultBadges,
-          watchlist: [], // Initialize empty watchlist array
-          watchlistDetails: [], // Initialize empty watchlist details array
-          completed: [], // Initialize empty completed array
-          stats: {
-            watching: 0,
-            completed: 0,
-            comments: 0,
-            reviews: 0,
-            threads: 0,
-            level: 0,
-            xp: 0
-          }
+          watchlist: [],
+          watchlistDetails: [],
+          completed: [],
+          level: 0,
+          xp: 0
         };
 
         const userDocRef = doc(db, 'users', userCredential.user.uid);
