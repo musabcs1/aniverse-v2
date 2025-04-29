@@ -29,6 +29,18 @@ export const DEFAULT_BADGES: Record<UserRole, Omit<Badge, 'id'>> = {
       'pin_own_threads'
     ]
   },
+  reviewer: {
+    name: 'reviewer',
+    color: '#8B5CF6',
+    permissions: [
+      'post_reviews',
+      'edit_own_reviews',
+      'delete_own_reviews',
+      'post_comments',
+      'edit_own_comments',
+      'create_threads'
+    ]
+  },
   user: {
     name: 'user',
     color: '#10B981',
