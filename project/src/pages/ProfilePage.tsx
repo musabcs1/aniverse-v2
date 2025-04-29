@@ -3,10 +3,10 @@ import {
   User as UserIcon, Settings, Heart, BookOpen, MessageSquare, 
   Clock, Award, ChevronRight, Edit
 } from 'lucide-react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
 import Badge from '../components/ui/Badge';
 import { UserRole, User, Anime } from '../types';
@@ -186,6 +186,61 @@ const ProfilePage: React.FC = () => {
     };
 
     fetchUserStats();
+  }, []);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const userDocRef = doc(db, 'users', auth.currentUser.uid);
+
+    const unsubscribeUser = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const watchlistCount = data.watchlist?.length || 0;
+        
+        // Update full user data including watchlist
+        setUserData(prev => ({
+          ...prev!,
+          ...data,
+          id: docSnapshot.id,
+          watchlist: data.watchlist || []
+        }));
+        
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          watching: watchlistCount,
+          level: data.stats?.level || 0,
+          xp: data.stats?.xp || 0
+        }));
+      }
+    });
+
+    const threadsQuery = query(
+      collection(db, 'forumThreads'),
+      where('authorId', '==', auth.currentUser.uid)
+    );
+
+    const unsubscribeThreads = onSnapshot(threadsQuery, (querySnapshot) => {
+      const threadsCount = querySnapshot.size;
+      let commentsCount = 0;
+
+      querySnapshot.forEach((doc) => {
+        const threadData = doc.data();
+        commentsCount += threadData.comments?.length || 0;
+      });
+
+      setStats((prevStats) => ({
+        ...prevStats,
+        threads: threadsCount,
+        comments: commentsCount,
+      }));
+    });
+
+    return () => {
+      unsubscribeUser();
+      unsubscribeThreads();
+    };
   }, []);
 
   const handleAvatarUpdate = async () => {

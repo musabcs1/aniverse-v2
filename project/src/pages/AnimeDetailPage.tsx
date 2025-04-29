@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard } from 'lucide-react';
 import { auth } from '../firebaseConfig';
@@ -74,16 +74,20 @@ const AnimeDetailPage: React.FC = () => {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
 
       if (isInWatchlist) {
+        // Remove from watchlist
         await updateDoc(userDocRef, {
           watchlist: arrayRemove(anime.id),
+          'stats.watching': increment(-1)
         });
         toast.success(`${anime.title} has been removed from your watchlist.`, {
           position: "top-right",
           autoClose: 3000,
         });
       } else {
+        // Add to watchlist
         await updateDoc(userDocRef, {
           watchlist: arrayUnion(anime.id),
+          'stats.watching': increment(1)
         });
         toast.success(`${anime.title} has been added to your watchlist.`, {
           position: "top-right",

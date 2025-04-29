@@ -49,14 +49,25 @@ const AuthPage = () => {
         const defaultBadges = await getUserBadges('user');
         
         const userData = {
+          id: userCredential.user.uid,
           username,
           email,
-          level: 0,
           joinDate: new Date().toISOString(),
           avatar: 'https://i.pravatar.cc/150?img=33',
           role: 'user',
           badges: defaultBadges,
-          watchlist: [],
+          watchlist: [], // Initialize empty watchlist array
+          watchlistDetails: [], // Initialize empty watchlist details array
+          completed: [], // Initialize empty completed array
+          stats: {
+            watching: 0,
+            completed: 0,
+            comments: 0,
+            reviews: 0,
+            threads: 0,
+            level: 0,
+            xp: 0
+          }
         };
 
         const userDocRef = doc(db, 'users', userCredential.user.uid);
