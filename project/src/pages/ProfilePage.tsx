@@ -151,13 +151,37 @@ const ProfilePage: React.FC = () => {
 
         if (userSnapshot.exists()) {
           const userStats = userSnapshot.data().stats;
-          setStats((prevStats) => ({
-            ...prevStats,
-            ...userStats,
-          }));
+          setStats(userStats || {
+            watching: 0,
+            completed: 0,
+            comments: 0,
+            reviews: 0,
+            threads: 0,
+            level: 0,
+            xp: 0,
+          });
+        } else {
+          setStats({
+            watching: 0,
+            completed: 0,
+            comments: 0,
+            reviews: 0,
+            threads: 0,
+            level: 0,
+            xp: 0,
+          });
         }
       } catch (error) {
         console.error('Error fetching user stats:', error);
+        setStats({
+          watching: 0,
+          completed: 0,
+          comments: 0,
+          reviews: 0,
+          threads: 0,
+          level: 0,
+          xp: 0,
+        });
       }
     };
 
