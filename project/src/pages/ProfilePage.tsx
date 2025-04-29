@@ -8,8 +8,8 @@ import { auth, db } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
 import { useNavigate, useParams } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
-import { useUserBadges } from '../hooks/useUserBadges';
 import Badge from '../components/ui/Badge';
+import { UserRole } from '../types';
 
 interface UserStats {
   watching: number;
@@ -36,7 +36,6 @@ const ProfilePage: React.FC = () => {
     level: 0,
     xp: 0,
   });
-  const { badges } = useUserBadges();
   const navigate = useNavigate();
   const { username } = useParams<{ username: string }>();
 
@@ -227,8 +226,16 @@ const ProfilePage: React.FC = () => {
             <div className="mt-10 md:mt-0 md:ml-28">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
-                {badges.map((badge) => (
-                  <Badge key={badge.id} badge={badge} size="sm" />
+                {userData.badges && userData.badges.map((badgeData: { id: string; name: string; color: string; permissions?: string[] }) => (
+                  <Badge 
+                    key={badgeData.id} 
+                    badge={{
+                      ...badgeData,
+                      name: badgeData.name as UserRole,
+                      permissions: badgeData.permissions || []
+                    }} 
+                    size="sm" 
+                  />
                 ))}
               </div>
               <div className="flex items-center text-gray-400 text-sm mt-1">
