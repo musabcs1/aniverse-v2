@@ -47,9 +47,22 @@ const ProfilePage: React.FC = () => {
       try {
         let targetUsername = username;
 
-        // If no username is provided in the URL, use the logged-in user's username
+        // If no username is provided in the URL, use the logged-in user's UID
         if (!targetUsername && auth.currentUser) {
-          targetUsername = auth.currentUser.displayName || '';
+          const userDocRef = doc(db, 'users', auth.currentUser.uid);
+          const userSnapshot = await getDoc(userDocRef);
+
+          if (userSnapshot.exists()) {
+            const userData = userSnapshot.data() as User;
+            setUserData(userData);
+            setAvatarURL(userData.avatar || '');
+            setLoading(false);
+            return;
+          } else {
+            setError('User not found');
+            setLoading(false);
+            return;
+          }
         }
 
         if (!targetUsername) {
@@ -67,28 +80,8 @@ const ProfilePage: React.FC = () => {
           const userData = { id: userDoc.id, ...userDoc.data() } as User;
           setUserData(userData);
           setAvatarURL(userData.avatar || '');
-
-          const watchingCount = userData.watchlist?.length || 0;
-          const completedCount = userData.completed?.length || 0;
-
-          const [commentsSnapshot, reviewsSnapshot, threadsSnapshot] = await Promise.all([
-            getDocs(query(collection(db, 'comments'), where('userId', '==', userDoc.id))),
-            getDocs(query(collection(db, 'reviews'), where('userId', '==', userDoc.id))),
-            getDocs(query(collection(db, 'forumThreads'), where('authorId', '==', userDoc.id)))
-          ]);
-
-          setStats({
-            watching: watchingCount,
-            completed: completedCount,
-            comments: commentsSnapshot.size,
-            reviews: reviewsSnapshot.size,
-            threads: threadsSnapshot.size,
-            level: userData.level || 0,
-            xp: userData.xp || 0,
-          });
         } else {
           setError('User not found');
-          navigate('/404');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -99,7 +92,7 @@ const ProfilePage: React.FC = () => {
     };
 
     fetchUserData();
-  }, [username, navigate]);
+  }, [username]);
 
   useEffect(() => {
     const fetchWatchlist = async () => {
