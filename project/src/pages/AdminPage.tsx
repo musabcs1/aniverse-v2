@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { Mail, Lock } from 'lucide-react';
 import { query, where } from 'firebase/firestore';
 import { ForumThread } from '../types';
@@ -20,6 +20,9 @@ const AdminPage: React.FC = () => {
   const [reportedThreads, setReportedThreads] = useState<ForumThread[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingThreads, setLoadingThreads] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [badgeType, setBadgeType] = useState('');
+  const [assigning, setAssigning] = useState(false);
 
   // Check if the user is an admin
   useEffect(() => {
@@ -66,6 +69,27 @@ const AdminPage: React.FC = () => {
     fetchReportedThreads();
   }, []);
 
+  const handleAssignBadge = async () => {
+    if (!selectedUserId || !badgeType) {
+      alert('Please select a user and a badge type.');
+      return;
+    }
+
+    try {
+      setAssigning(true);
+      const userDocRef = doc(db, 'users', selectedUserId);
+      await updateDoc(userDocRef, {
+        badges: arrayUnion({ id: `${badgeType}-${Date.now()}`, type: badgeType }),
+      });
+      alert('Badge assigned successfully!');
+    } catch (error) {
+      console.error('Error assigning badge:', error);
+      alert('Failed to assign badge. Please try again.');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   // If the user is not an admin, show nothing
   if (!isAdmin) {
     return null;
@@ -75,6 +99,43 @@ const AdminPage: React.FC = () => {
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8">Admin Panel</h1>
+
+        {/* Badge Assignment Section */}
+        <div className="bg-surface rounded-xl p-6 mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Assign Badge</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">User ID</label>
+              <input
+                type="text"
+                className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                placeholder="Enter user ID"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Badge Type</label>
+              <select
+                className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                value={badgeType}
+                onChange={(e) => setBadgeType(e.target.value)}
+              >
+                <option value="">Select a badge</option>
+                <option value="reviewer">Reviewer</option>
+                <option value="writer">Writer</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button
+              className="btn-primary py-2 px-4"
+              onClick={handleAssignBadge}
+              disabled={assigning}
+            >
+              {assigning ? 'Assigning...' : 'Assign Badge'}
+            </button>
+          </div>
+        </div>
 
         <h2 className="text-2xl font-semibold mb-4">Users</h2>
         {loadingUsers ? (

@@ -32,15 +32,25 @@ export interface Episode {
   releaseDate: string;
 }
 
+export type UserRole = 'admin' | 'writer' | 'user';
+
+export interface Badge {
+  id: string;
+  name: UserRole;
+  color: string;
+  permissions: string[];
+}
+
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   avatar: string;
   joinDate: string;
-  watchlist: number[];
+  role: UserRole;
+  watchlist: string[];
   level: number;
-  badges: string[];
+  badges: Badge[];
 }
 
 export type ForumCategory = 'General' | 'Anime' | 'Theory' | 'Memes' | 'Reviews';

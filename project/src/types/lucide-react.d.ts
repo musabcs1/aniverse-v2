@@ -34,6 +34,12 @@ declare module 'lucide-react' {
   export const MessageSquare: React.FC<IconProps>;
   export const Clock: React.FC<IconProps>;
   export const Award: React.FC<IconProps>;
+  export const MailIcon: React.FC<IconProps>;
+  export const LockIcon: React.FC<IconProps>;
+  export const EyeIcon: React.FC<IconProps>;
+  export const EyeOffIcon: React.FC<IconProps>;
+  export const Mail: React.FC<IconProps>;
+  export const Lock: React.FC<IconProps>;
   export declare const Menu: LucideIcon;
   export declare const Search: LucideIcon;
   export declare const Bell: LucideIcon;

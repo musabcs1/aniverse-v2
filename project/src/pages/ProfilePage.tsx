@@ -5,11 +5,11 @@ import {
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
-import { onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { updateProfile } from 'firebase/auth';
 import { useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import AnimeCard from '../components/ui/AnimeCard';
+import { useUserBadges } from '../hooks/useUserBadges';
+import Badge from '../components/ui/Badge';
 
 interface UserStats {
   watching: number;
@@ -36,6 +36,7 @@ const ProfilePage: React.FC = () => {
     level: 0,
     xp: 0,
   });
+  const { badges } = useUserBadges();
   const navigate = useNavigate();
   const { username } = useParams<{ username: string }>();
 
@@ -224,7 +225,12 @@ const ProfilePage: React.FC = () => {
             </div>
 
             <div className="mt-10 md:mt-0 md:ml-28">
-              <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
+                {badges.map((badge) => (
+                  <Badge key={badge.id} badge={badge} size="sm" />
+                ))}
+              </div>
               <div className="flex items-center text-gray-400 text-sm mt-1">
                 <Clock className="h-4 w-4 mr-1" />
                 <span>Member since {new Date(userData.joinDate).toLocaleDateString()}</span>
@@ -444,9 +450,13 @@ const ProfilePage: React.FC = () => {
                 <p className="text-gray-400 mb-6">
                   Share your thoughts on anime by writing reviews.
                 </p>
-                <button className="btn-primary py-2 px-4">
-                  Write a Review
-                </button>
+                {userData?.badges?.some((badge: { type: string }) => badge.type === 'reviewer' || userData.role === 'admin') ? (
+                  <button className="btn-primary py-2 px-4">
+                    Write a Review
+                  </button>
+                ) : (
+                  <p className="text-sm text-gray-400">Earn the Reviewer badge to write reviews</p>
+                )}
               </div>
             )}
             

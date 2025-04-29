@@ -3,8 +3,9 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import Logo from '../components/ui/Logo';
+import { initializeBadges, getUserBadges } from '../services/badges';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -40,15 +41,22 @@ const AuthPage = () => {
         navigate('/profile');
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Initialize badges if needed
+        await initializeBadges();
+        
+        // Get default user badge
+        const defaultBadges = await getUserBadges('user');
+        
         const userData = {
           username,
           email,
           level: 0,
           joinDate: new Date().toISOString(),
           avatar: 'https://i.pravatar.cc/150?img=33',
-          badges: [],
-          watchlist: [],
           role: 'user',
+          badges: defaultBadges,
+          watchlist: [],
         };
 
         const userDocRef = doc(db, 'users', userCredential.user.uid);
@@ -89,7 +97,7 @@ const AuthPage = () => {
             </div>
           )}
           <div className="relative mb-4">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <MailIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
             <input
               type="email"
               placeholder="Enter your email"
@@ -100,7 +108,7 @@ const AuthPage = () => {
             />
           </div>
           <div className="relative mb-4">
-            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <LockIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
             <input
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
@@ -114,7 +122,7 @@ const AuthPage = () => {
               className="absolute right-3 top-3.5 text-gray-400"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
             </button>
           </div>
           <button
