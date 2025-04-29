@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  User, Settings, Heart, BookOpen, MessageSquare, 
+  User as UserIcon, Settings, Heart, BookOpen, MessageSquare, 
   Clock, Award, ChevronRight, Edit
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -9,7 +9,7 @@ import { updateProfile } from 'firebase/auth';
 import { useNavigate, useParams } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
 import Badge from '../components/ui/Badge';
-import { UserRole } from '../types';
+import { UserRole, User, Anime } from '../types';
 
 interface UserStats {
   watching: number;
@@ -23,7 +23,7 @@ interface UserStats {
 
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
-  const [userData, setUserData] = useState<any | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [avatarURL, setAvatarURL] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -36,11 +36,14 @@ const ProfilePage: React.FC = () => {
     level: 0,
     xp: 0,
   });
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { username } = useParams<{ username: string }>();
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         let targetUsername = username;
 
@@ -50,7 +53,7 @@ const ProfilePage: React.FC = () => {
         }
 
         if (!targetUsername) {
-          console.error('No username available to fetch profile data');
+          setError('No username available to fetch profile data');
           setLoading(false);
           return;
         }
@@ -61,16 +64,18 @@ const ProfilePage: React.FC = () => {
 
         if (!querySnapshot.empty) {
           const userDoc = querySnapshot.docs[0];
-          const userData = userDoc.data();
+          const userData = { id: userDoc.id, ...userDoc.data() } as User;
           setUserData(userData);
           setAvatarURL(userData.avatar || '');
 
           const watchingCount = userData.watchlist?.length || 0;
           const completedCount = userData.completed?.length || 0;
 
-          const commentsSnapshot = await getDocs(query(collection(db, 'comments'), where('userId', '==', userDoc.id)));
-          const reviewsSnapshot = await getDocs(query(collection(db, 'reviews'), where('userId', '==', userDoc.id)));
-          const threadsSnapshot = await getDocs(query(collection(db, 'forumThreads'), where('authorId', '==', userDoc.id)));
+          const [commentsSnapshot, reviewsSnapshot, threadsSnapshot] = await Promise.all([
+            getDocs(query(collection(db, 'comments'), where('userId', '==', userDoc.id))),
+            getDocs(query(collection(db, 'reviews'), where('userId', '==', userDoc.id))),
+            getDocs(query(collection(db, 'forumThreads'), where('authorId', '==', userDoc.id)))
+          ]);
 
           setStats({
             watching: watchingCount,
@@ -82,11 +87,12 @@ const ProfilePage: React.FC = () => {
             xp: userData.xp || 0,
           });
         } else {
-          console.error('User not found');
+          setError('User not found');
           navigate('/404');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setError('Failed to load profile data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -104,7 +110,7 @@ const ProfilePage: React.FC = () => {
         const userSnapshot = await getDoc(userDocRef);
 
         if (userSnapshot.exists()) {
-          const userData = userSnapshot.data();
+          const userData = userSnapshot.data() as User;
           setUserData(userData);
         }
       } catch (error) {
@@ -124,12 +130,12 @@ const ProfilePage: React.FC = () => {
           userData.watchlist.map(async (animeId: string) => {
             const animeDocRef = doc(db, 'anime', animeId);
             const animeSnapshot = await getDoc(animeDocRef);
-            return animeSnapshot.exists() ? { id: animeId, ...animeSnapshot.data() } : null;
+            return animeSnapshot.exists() ? { id: animeId, ...animeSnapshot.data() } as Anime : null;
           })
         );
 
-        setUserData((prev: any) => ({
-          ...prev,
+        setUserData((prev) => ({
+          ...prev!,
           watchlistDetails: animeDetails.filter((anime) => anime !== null),
         }));
       } catch (error) {
@@ -149,7 +155,7 @@ const ProfilePage: React.FC = () => {
       setUpdating(true);
       const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
       await updateDoc(userDocRef, { avatar: avatarURL });
-      setUserData((prev: any) => ({ ...prev, avatar: avatarURL }));
+      setUserData((prev) => ({ ...prev!, avatar: avatarURL }));
       alert('Avatar updated successfully!');
     } catch (error) {
       console.error('Error updating avatar:', error);
@@ -160,7 +166,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleUsernameUpdate = async () => {
-    if (!userData.username.trim()) {
+    if (!userData?.username.trim()) {
       alert('Please provide a valid username.');
       return;
     }
@@ -192,10 +198,24 @@ const ProfilePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="pt-24 pb-16">
+      <div className="pt-24 pb-16 min-h-screen bg-background">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <h1 className="text-2xl font-bold text-gray-400 mt-4">Loading profile...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-400">Loading...</h1>
+            <h1 className="text-2xl font-bold text-red-500 mb-4">Error</h1>
+            <p className="text-gray-400">{error}</p>
           </div>
         </div>
       </div>
@@ -203,7 +223,15 @@ const ProfilePage: React.FC = () => {
   }
 
   if (!userData) {
-    return null;
+    return (
+      <div className="pt-24 pb-16 min-h-screen bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-400">No profile data available</h1>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const isOwnProfile = auth.currentUser?.uid === userData?.id;
@@ -226,7 +254,7 @@ const ProfilePage: React.FC = () => {
             <div className="mt-10 md:mt-0 md:ml-28">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
-                {userData.badges && userData.badges.map((badgeData: { id: string; name: string; color: string; permissions?: string[] }) => (
+                {userData.badges && userData.badges.map((badgeData) => (
                   <Badge 
                     key={badgeData.id} 
                     badge={{
@@ -405,7 +433,7 @@ const ProfilePage: React.FC = () => {
                 
                 {userData.watchlistDetails && userData.watchlistDetails.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {userData.watchlistDetails.map((anime: any) => (
+                    {userData.watchlistDetails.map((anime) => (
                       <AnimeCard key={anime.id} anime={anime} />
                     ))}
                   </div>
@@ -423,7 +451,7 @@ const ProfilePage: React.FC = () => {
                   </div>
                   
                   <div className="bg-surface-light rounded-lg p-8 text-center">
-                    <User className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                    <UserIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
                     <h3 className="text-xl font-medium mb-2">No completed anime yet</h3>
                     <p className="text-gray-400 mb-6">
                       Start marking shows as completed to track your anime journey.
@@ -457,7 +485,7 @@ const ProfilePage: React.FC = () => {
                 <p className="text-gray-400 mb-6">
                   Share your thoughts on anime by writing reviews.
                 </p>
-                {userData?.badges?.some((badge: { type: string }) => badge.type === 'reviewer' || userData.role === 'admin') ? (
+                {userData?.badges?.some((badge) => badge.name === 'reviewer' || userData.role === 'admin') ? (
                   <button className="btn-primary py-2 px-4">
                     Write a Review
                   </button>
@@ -481,7 +509,7 @@ const ProfilePage: React.FC = () => {
                           type="text" 
                           className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                           value={userData.username}
-                          onChange={(e) => setUserData((prev: any) => ({ ...prev, username: e.target.value }))}
+                          onChange={(e) => setUserData((prev) => ({ ...prev!, username: e.target.value }))}
                         />
                         <button 
                           className="btn-primary py-2 px-4 mt-2"

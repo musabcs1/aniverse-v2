@@ -32,7 +32,7 @@ export interface Episode {
   releaseDate: string;
 }
 
-export type UserRole = 'admin' | 'writer' | 'user';
+export type UserRole = 'admin' | 'writer' | 'user' | 'reviewer';
 
 export interface Badge {
   id: string;
@@ -49,7 +49,10 @@ export interface User {
   joinDate: string;
   role: UserRole;
   watchlist: string[];
+  watchlistDetails?: Anime[]; // Optional array of anime details
+  completed?: string[]; // Optional array of completed anime IDs
   level: number;
+  xp: number;
   badges: Badge[];
 }
 
