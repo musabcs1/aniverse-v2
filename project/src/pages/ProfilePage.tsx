@@ -57,6 +57,15 @@ const ProfilePage: React.FC = () => {
                 const userData = userSnapshot.data() as User;
                 setUserData(userData);
                 setAvatarURL(userData.avatar || '');
+                setStats({
+                  watching: userData.watchlist?.length || 0,
+                  completed: userData.completed?.length || 0,
+                  comments: 0,
+                  reviews: 0,
+                  threads: 0,
+                  level: userData.level || 0,
+                  xp: userData.xp || 0,
+                });
                 setLoading(false);
                 return;
               } else {
@@ -75,6 +84,15 @@ const ProfilePage: React.FC = () => {
               const userData = { id: userDoc.id, ...userDoc.data() } as User;
               setUserData(userData);
               setAvatarURL(userData.avatar || '');
+              setStats({
+                watching: userData.watchlist?.length || 0,
+                completed: userData.completed?.length || 0,
+                comments: 0,
+                reviews: 0,
+                threads: 0,
+                level: userData.level || 0,
+                xp: userData.xp || 0,
+              });
             } else {
               setError('User not found');
             }
@@ -196,20 +214,22 @@ const ProfilePage: React.FC = () => {
     const unsubscribeUser = onSnapshot(userDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
-        const watchlistCount = data.watchlist?.length || 0;
         
-        // Update full user data including watchlist
+        // Update user data
         setUserData(prev => ({
           ...prev!,
           ...data,
           id: docSnapshot.id,
-          watchlist: data.watchlist || []
+          watchlist: data.watchlist || [],
+          level: data.level || 0,
+          xp: data.xp || 0
         }));
         
-        // Update stats with correct field paths
+        // Update stats
         setStats(prev => ({
           ...prev,
-          watching: watchlistCount,
+          watching: data.watchlist?.length || 0,
+          completed: data.completed?.length || 0,
           level: data.level || 0,
           xp: data.xp || 0
         }));

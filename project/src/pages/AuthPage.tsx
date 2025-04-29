@@ -36,7 +36,14 @@ const AuthPage = () => {
           return;
         }
 
-        const userData = userDoc.data();
+        const userData = {
+          id: userDoc.id,
+          ...userDoc.data(),
+          watchlist: userDoc.data().watchlist || [],
+          level: userDoc.data().level || 0,
+          xp: userDoc.data().xp || 0
+        };
+        
         localStorage.setItem('userData', JSON.stringify(userData));
         navigate('/profile');
       } else {
