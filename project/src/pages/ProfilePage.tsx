@@ -27,7 +27,7 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [avatarURL, setAvatarURL] = useState('');
   const [updating, setUpdating] = useState(false);
-  const [stats, setStats] = useState<UserStats>({
+  const [stats] = useState<UserStats>({
     watching: 0,
     completed: 0,
     comments: 0,
@@ -37,7 +37,6 @@ const ProfilePage: React.FC = () => {
     xp: 0,
   });
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const { username } = useParams<{ username: string }>();
 
   useEffect(() => {
