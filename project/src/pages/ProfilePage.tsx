@@ -221,6 +221,7 @@ const ProfilePage: React.FC = () => {
           ...data,
           id: docSnapshot.id,
           watchlist: data.watchlist || [],
+          completed: data.completed || [],
           level: data.level || 0,
           xp: data.xp || 0
         }));
@@ -257,9 +258,24 @@ const ProfilePage: React.FC = () => {
       }));
     });
 
+    const reviewsQuery = query(
+      collection(db, 'reviews'),
+      where('authorId', '==', auth.currentUser.uid)
+    );
+
+    const unsubscribeReviews = onSnapshot(reviewsQuery, (querySnapshot) => {
+      const reviewsCount = querySnapshot.size;
+
+      setStats((prevStats) => ({
+        ...prevStats,
+        reviews: reviewsCount,
+      }));
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeThreads();
+      unsubscribeReviews();
     };
   }, []);
 
