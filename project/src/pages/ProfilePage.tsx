@@ -40,57 +40,60 @@ const ProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        let targetUsername = username;
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        const fetchUserData = async () => {
+          setLoading(true);
+          setError(null);
+          try {
+            let targetUsername = username;
 
-        // If no username is provided in the URL, use the logged-in user's UID
-        if (!targetUsername && auth.currentUser) {
-          const userDocRef = doc(db, 'users', auth.currentUser.uid);
-          const userSnapshot = await getDoc(userDocRef);
+            // If no username is provided in the URL, use the logged-in user's UID
+            if (!targetUsername) {
+              const userDocRef = doc(db, 'users', user.uid);
+              const userSnapshot = await getDoc(userDocRef);
 
-          if (userSnapshot.exists()) {
-            const userData = userSnapshot.data() as User;
-            setUserData(userData);
-            setAvatarURL(userData.avatar || '');
+              if (userSnapshot.exists()) {
+                const userData = userSnapshot.data() as User;
+                setUserData(userData);
+                setAvatarURL(userData.avatar || '');
+                setLoading(false);
+                return;
+              } else {
+                setError('User not found');
+                setLoading(false);
+                return;
+              }
+            }
+
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('username', '==', targetUsername));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+              const userDoc = querySnapshot.docs[0];
+              const userData = { id: userDoc.id, ...userDoc.data() } as User;
+              setUserData(userData);
+              setAvatarURL(userData.avatar || '');
+            } else {
+              setError('User not found');
+            }
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+            setError('Failed to load profile data. Please try again later.');
+          } finally {
             setLoading(false);
-            return;
-          } else {
-            setError('User not found');
-            setLoading(false);
-            return;
           }
-        }
+        };
 
-        if (!targetUsername) {
-          setError('No username available to fetch profile data');
-          setLoading(false);
-          return;
-        }
-
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', targetUsername));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0];
-          const userData = { id: userDoc.id, ...userDoc.data() } as User;
-          setUserData(userData);
-          setAvatarURL(userData.avatar || '');
-        } else {
-          setError('User not found');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setError('Failed to load profile data. Please try again later.');
-      } finally {
+        fetchUserData();
+      } else {
+        setError('No user is logged in');
         setLoading(false);
       }
-    };
+    });
 
-    fetchUserData();
+    return () => unsubscribe();
   }, [username]);
 
   useEffect(() => {
