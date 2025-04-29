@@ -27,7 +27,7 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [avatarURL, setAvatarURL] = useState('');
   const [updating, setUpdating] = useState(false);
-  const [stats] = useState<UserStats>({
+  const [stats, setStats] = useState<UserStats>({
     watching: 0,
     completed: 0,
     comments: 0,
@@ -140,6 +140,29 @@ const ProfilePage: React.FC = () => {
 
     fetchWatchlistDetails();
   }, [userData?.watchlist]);
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (!auth.currentUser) return;
+
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userSnapshot = await getDoc(userDocRef);
+
+        if (userSnapshot.exists()) {
+          const userStats = userSnapshot.data().stats;
+          setStats((prevStats) => ({
+            ...prevStats,
+            ...userStats,
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching user stats:', error);
+      }
+    };
+
+    fetchUserStats();
+  }, []);
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
