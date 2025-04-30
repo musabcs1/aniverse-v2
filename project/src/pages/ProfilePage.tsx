@@ -57,15 +57,6 @@ const ProfilePage: React.FC = () => {
                 const userData = userSnapshot.data() as User;
                 setUserData(userData);
                 setAvatarURL(userData.avatar || '');
-                setStats({
-                  watching: userData.watchlist?.length || 0,
-                  completed: userData.completed?.length || 0,
-                  comments: 0,
-                  reviews: 0,
-                  threads: 0,
-                  level: userData.level || 0,
-                  xp: userData.xp || 0,
-                });
                 setLoading(false);
                 return;
               } else {
@@ -84,15 +75,6 @@ const ProfilePage: React.FC = () => {
               const userData = { id: userDoc.id, ...userDoc.data() } as User;
               setUserData(userData);
               setAvatarURL(userData.avatar || '');
-              setStats({
-                watching: userData.watchlist?.length || 0,
-                completed: userData.completed?.length || 0,
-                comments: 0,
-                reviews: 0,
-                threads: 0,
-                level: userData.level || 0,
-                xp: userData.xp || 0,
-              });
             } else {
               setError('User not found');
             }
@@ -167,26 +149,28 @@ const ProfilePage: React.FC = () => {
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
         const userSnapshot = await getDoc(userDocRef);
 
-        let userStats = userSnapshot.exists() ? userSnapshot.data().stats : null;
-
-        // Fetch thread count
-        const threadsQuery = query(
-          collection(db, 'forumThreads'),
-          where('authorId', '==', auth.currentUser.uid)
-        );
-        const threadsSnapshot = await getDocs(threadsQuery);
-        const threadsCount = threadsSnapshot.size;
-
-        // Update stats with thread count
-        setStats({
-          watching: userStats?.watching || 0,
-          completed: userStats?.completed || 0,
-          comments: userStats?.comments || 0,
-          reviews: userStats?.reviews || 0,
-          threads: threadsCount,
-          level: userStats?.level || 0,
-          xp: userStats?.xp || 0,
-        });
+        if (userSnapshot.exists()) {
+          const userStats = userSnapshot.data().stats;
+          setStats(userStats || {
+            watching: 0,
+            completed: 0,
+            comments: 0,
+            reviews: 0,
+            threads: 0,
+            level: 0,
+            xp: 0,
+          });
+        } else {
+          setStats({
+            watching: 0,
+            completed: 0,
+            comments: 0,
+            reviews: 0,
+            threads: 0,
+            level: 0,
+            xp: 0,
+          });
+        }
       } catch (error) {
         console.error('Error fetching user stats:', error);
         setStats({
@@ -212,25 +196,22 @@ const ProfilePage: React.FC = () => {
     const unsubscribeUser = onSnapshot(userDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
+        const watchlistCount = data.watchlist?.length || 0;
         
-        // Update user data
+        // Update full user data including watchlist
         setUserData(prev => ({
           ...prev!,
           ...data,
           id: docSnapshot.id,
-          watchlist: data.watchlist || [],
-          completed: data.completed || [],
-          level: data.level || 0,
-          xp: data.xp || 0
+          watchlist: data.watchlist || []
         }));
         
         // Update stats
         setStats(prev => ({
           ...prev,
-          watching: data.watchlist?.length || 0,
-          completed: data.completed?.length || 0,
-          level: data.level || 0,
-          xp: data.xp || 0
+          watching: watchlistCount,
+          level: data.stats?.level || 0,
+          xp: data.stats?.xp || 0
         }));
       }
     });
@@ -256,24 +237,9 @@ const ProfilePage: React.FC = () => {
       }));
     });
 
-    const reviewsQuery = query(
-      collection(db, 'reviews'),
-      where('authorId', '==', auth.currentUser.uid)
-    );
-
-    const unsubscribeReviews = onSnapshot(reviewsQuery, (querySnapshot) => {
-      const reviewsCount = querySnapshot.size;
-
-      setStats((prevStats) => ({
-        ...prevStats,
-        reviews: reviewsCount,
-      }));
-    });
-
     return () => {
       unsubscribeUser();
       unsubscribeThreads();
-      unsubscribeReviews();
     };
   }, []);
 

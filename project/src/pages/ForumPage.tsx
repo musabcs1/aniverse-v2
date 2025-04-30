@@ -92,10 +92,9 @@ const ForumPage: React.FC = () => {
         tags: [],
       });
 
-      // Update user's XP and thread count in Firestore
+      // Update user's XP in Firestore
       await updateDoc(userDocRef, {
         xp: increment(10), // Increment XP by 10
-        'stats.threads': increment(1), // Increment thread count
       });
 
       setShowNewThreadForm(false);
