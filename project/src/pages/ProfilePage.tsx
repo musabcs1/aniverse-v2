@@ -167,28 +167,26 @@ const ProfilePage: React.FC = () => {
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
         const userSnapshot = await getDoc(userDocRef);
 
-        if (userSnapshot.exists()) {
-          const userStats = userSnapshot.data().stats;
-          setStats(userStats || {
-            watching: 0,
-            completed: 0,
-            comments: 0,
-            reviews: 0,
-            threads: 0,
-            level: 0,
-            xp: 0,
-          });
-        } else {
-          setStats({
-            watching: 0,
-            completed: 0,
-            comments: 0,
-            reviews: 0,
-            threads: 0,
-            level: 0,
-            xp: 0,
-          });
-        }
+        let userStats = userSnapshot.exists() ? userSnapshot.data().stats : null;
+
+        // Fetch thread count
+        const threadsQuery = query(
+          collection(db, 'forumThreads'),
+          where('authorId', '==', auth.currentUser.uid)
+        );
+        const threadsSnapshot = await getDocs(threadsQuery);
+        const threadsCount = threadsSnapshot.size;
+
+        // Update stats with thread count
+        setStats({
+          watching: userStats?.watching || 0,
+          completed: userStats?.completed || 0,
+          comments: userStats?.comments || 0,
+          reviews: userStats?.reviews || 0,
+          threads: threadsCount,
+          level: userStats?.level || 0,
+          xp: userStats?.xp || 0,
+        });
       } catch (error) {
         console.error('Error fetching user stats:', error);
         setStats({
