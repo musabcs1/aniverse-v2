@@ -10,6 +10,7 @@ import { useParams } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
 import Badge from '../components/ui/Badge';
 import { UserRole, User, Anime } from '../types';
+import { useUserBadges } from '../hooks/useUserBadges';
 
 interface UserStats {
   watching: number;
@@ -51,6 +52,7 @@ const ProfilePage: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const { username } = useParams<{ username: string }>();
+  const { badges, loading: badgesLoading } = useUserBadges();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -398,17 +400,13 @@ const ProfilePage: React.FC = () => {
             <div className="mt-10 md:mt-0 md:ml-28">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
-                {userData.badges && userData.badges.map((badgeData) => (
+                {!badgesLoading && badges.map((badge) => (
                   <Badge 
-                    key={badgeData.id} 
-                    badge={{
-                      ...badgeData,
-                      name: badgeData.name as UserRole,
-                      permissions: badgeData.permissions || []
-                    }} 
+                    key={badge.id} 
+                    badge={badge} 
                     size="sm"
                   >
-                    {getBadgeIcon(badgeData.name as UserRole)}
+                    {getBadgeIcon(badge.name as UserRole)}
                   </Badge>
                 ))}
               </div>

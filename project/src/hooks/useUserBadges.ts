@@ -23,8 +23,10 @@ export const useUserBadges = () => {
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          const userRole = userData.role as UserRole;
-          const userBadges = await getUserBadges(userRole);
+          const userBadges = userData.badges.map((badge: any) => ({
+            ...badge,
+            name: badge.type, // Map 'type' to 'name' to match the Badge interface
+          }));
           setBadges(userBadges);
         }
       } catch (err) {
