@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import Logo from '../ui/Logo';
 import { Notification } from '../../types';
-import { onSnapshot, collection, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { onSnapshot, collection, doc, getDoc, query, where } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -55,16 +55,30 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   }, []);
 
   useEffect(() => {
-    const notificationsRef = collection(db, 'notifications');
-    const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
-      const updatedNotifications = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        title: doc.data().title || 'Untitled',
-        message: doc.data().message || 'No message',
-        createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
-        read: doc.data().read || false,
-      }));
-      setNotifications(updatedNotifications);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const notificationsRef = query(
+          collection(db, 'notifications'),
+          where('userId', '==', user.uid)
+        );
+        
+        const notificationsUnsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+          const updatedNotifications = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            title: doc.data().title || 'Notification',
+            message: doc.data().message || '',
+            createdAt: doc.data().createdAt?.toDate() || new Date(),
+            read: doc.data().read || false
+          })) as Notification[];
+          setNotifications(updatedNotifications);
+        });
+
+        return () => {
+          notificationsUnsubscribe();
+        };
+      } else {
+        setNotifications([]);
+      }
     });
 
     return () => unsubscribe();
