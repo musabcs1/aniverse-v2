@@ -55,78 +55,68 @@ const ProfilePage: React.FC = () => {
   const { badges, loading: badgesLoading } = useUserBadges();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        const fetchUserData = async () => {
-          setLoading(true);
-          setError(null);
-          try {
-            let targetUsername = username;
+    const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
 
-            // If no username is provided in the URL, use the logged-in user's UID
-            if (!targetUsername) {
-              const userDocRef = doc(db, 'users', user.uid);
-              const userSnapshot = await getDoc(userDocRef);
-
-              if (userSnapshot.exists()) {
-                const userData = userSnapshot.data() as User;
-                setUserData(userData);
-                setAvatarURL(userData.avatar || '');
-                setStats({
-                  watching: userData.watchlist?.length || 0,
-                  completed: userData.completed?.length || 0,
-                  comments: 0,
-                  reviews: 0,
-                  threads: 0,
-                  level: userData.level || 0,
-                  xp: userData.xp || 0,
-                });
-                setLoading(false);
-                return;
-              } else {
-                setError('User not found');
-                setLoading(false);
-                return;
-              }
+      try {
+        const waitForAuth = new Promise<void>((resolve) => {
+          const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+              unsubscribe();
+              resolve();
             }
+          });
+        });
 
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('username', '==', targetUsername));
-            const querySnapshot = await getDocs(q);
+        await waitForAuth;
 
-            if (!querySnapshot.empty) {
-              const userDoc = querySnapshot.docs[0];
-              const userData = { id: userDoc.id, ...userDoc.data() } as User;
-              setUserData(userData);
-              setAvatarURL(userData.avatar || '');
-              setStats({
-                watching: userData.watchlist?.length || 0,
-                completed: userData.completed?.length || 0,
-                comments: 0,
-                reviews: 0,
-                threads: 0,
-                level: userData.level || 0,
-                xp: userData.xp || 0,
-              });
-            } else {
-              setError('User not found');
-            }
-          } catch (error) {
-            console.error('Error fetching user data:', error);
-            setError('Failed to load profile data. Please try again later.');
-          } finally {
-            setLoading(false);
-          }
-        };
+        if (!auth.currentUser) {
+          setError('No user is logged in');
+          setLoading(false);
+          return;
+        }
 
-        fetchUserData();
-      } else {
-        setError('No user is logged in');
+        const targetUsername = username || auth.currentUser.displayName;
+
+        if (!targetUsername) {
+          setError('User not found');
+          setLoading(false);
+          return;
+        }
+
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', targetUsername));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = { id: userDoc.id, ...userDoc.data() } as User;
+          setUserData(userData);
+          setAvatarURL(userData.avatar || '');
+
+          // Update stats based on Firestore data
+          setStats({
+            watching: userData.watchlist?.length || 0, // Number of animes in My Watchlist
+            completed: userData.stats?.completed || 0, // Number of completed animes
+            comments: userData.stats?.comments || 0, // Number of comments from stats array
+            reviews: userData.stats?.reviews || 0, // Number of reviews from stats array
+            threads: userData.stats?.threads || 0, // Number of threads from stats array
+            level: userData.level || 0, // User's level
+            xp: userData.xp || 0, // User's XP
+          });
+        } else {
+          setError('User not found');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setError('Failed to load profile data. Please try again later.');
+      } finally {
         setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    fetchUserData();
   }, [username]);
 
   useEffect(() => {

@@ -42,6 +42,7 @@ export interface Badge {
 }
 
 export interface User {
+  stats: any;
   id: string;
   username: string;
   email: string;
