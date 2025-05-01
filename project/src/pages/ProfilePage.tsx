@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User as UserIcon, Settings, Heart, BookOpen, MessageSquare, 
-  Clock, Award, ChevronRight, Edit
+  Clock, Award, ChevronRight, Edit, Shield, UserRound
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
@@ -20,6 +20,19 @@ interface UserStats {
   level: number;
   xp: number;
 }
+
+const getBadgeIcon = (role: UserRole) => {
+  switch (role) {
+    case 'admin':
+      return <Shield className="h-5 w-5 text-primary" />;
+    case 'reviewer':
+      return <Award className="h-5 w-5 text-yellow-400" />;
+    case 'user':
+      return <UserRound className="h-5 w-5 text-secondary" />;
+    default:
+      return null;
+  }
+};
 
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("watchlist");
@@ -393,8 +406,10 @@ const ProfilePage: React.FC = () => {
                       name: badgeData.name as UserRole,
                       permissions: badgeData.permissions || []
                     }} 
-                    size="sm" 
-                  />
+                    size="sm"
+                  >
+                    {getBadgeIcon(badgeData.name as UserRole)}
+                  </Badge>
                 ))}
               </div>
               <div className="flex items-center text-gray-400 text-sm mt-1">
