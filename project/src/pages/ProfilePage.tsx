@@ -6,7 +6,7 @@ import {
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
 import Badge from '../components/ui/Badge';
 import { UserRole, User, Anime } from '../types';
@@ -55,6 +55,7 @@ const ProfilePage: React.FC = () => {
     xp: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const [completedAnime, setCompletedAnime] = useState<Anime[]>([]);
   const { username } = useParams<{ username: string }>();
   const { badges, loading: badgesLoading } = useUserBadges();
 
@@ -300,6 +301,28 @@ const ProfilePage: React.FC = () => {
       unsubscribeReviews();
     };
   }, []);
+
+  useEffect(() => {
+    const fetchCompletedAnime = async () => {
+      if (!auth.currentUser || !userData?.completed) return;
+
+      try {
+        const animeDetails = await Promise.all(
+          userData.completed.map(async (animeId: string) => {
+            const animeDocRef = doc(db, 'anime', animeId);
+            const animeSnapshot = await getDoc(animeDocRef);
+            return animeSnapshot.exists() ? { id: animeId, ...animeSnapshot.data() } as Anime : null;
+          })
+        );
+
+        setCompletedAnime(animeDetails.filter((anime): anime is Anime => anime !== null));
+      } catch (error) {
+        console.error('Error fetching completed anime details:', error);
+      }
+    };
+
+    fetchCompletedAnime();
+  }, [userData?.completed]);
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
@@ -613,16 +636,24 @@ const ProfilePage: React.FC = () => {
                     </button>
                   </div>
                   
-                  <div className="bg-surface-light rounded-lg p-8 text-center">
-                    <UserIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium mb-2">No completed anime yet</h3>
-                    <p className="text-gray-400 mb-6">
-                      Start marking shows as completed to track your anime journey.
-                    </p>
-                    <button className="btn-primary py-2 px-4">
-                      Browse Anime
-                    </button>
-                  </div>
+                  {completedAnime.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                      {completedAnime.slice(0, 6).map((anime) => (
+                        <AnimeCard key={anime.id} anime={anime} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-surface-light rounded-lg p-8 text-center">
+                      <UserIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-medium mb-2">No completed anime yet</h3>
+                      <p className="text-gray-400 mb-6">
+                        Start marking shows as completed to track your anime journey.
+                      </p>
+                      <Link to="/anime" className="btn-primary py-2 px-4 inline-block">
+                        Browse Anime
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

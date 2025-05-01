@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc } from 'firebase/firestore';
 import { Mail, Lock } from 'lucide-react';
 import { query, where } from 'firebase/firestore';
-import { ForumThread } from '../types';
+import { ForumThread, UserRole } from '../types';
+import { useUserBadges } from '../hooks/useUserBadges';
+import { DEFAULT_BADGES } from '../services/badges';
 
 interface User {
   id: string;
@@ -16,6 +18,7 @@ interface User {
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [reportedThreads, setReportedThreads] = useState<ForumThread[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -23,16 +26,84 @@ const AdminPage: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [badgeType, setBadgeType] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const { badges, loading: badgesLoading } = useUserBadges();
 
-  // Check if the user is an admin
+  // Check if the user has admin access
   useEffect(() => {
-    const adminData = localStorage.getItem('adminData');
-    if (adminData) {
-      setIsAdmin(true);
-    } else {
-      navigate('/admin-login'); // Redirect to admin login page if not authenticated
-    }
-  }, [navigate]);
+    let isSubscribed = true;
+
+    const checkAdminAccess = async () => {
+      console.log('Checking admin access...');
+      
+      if (!auth.currentUser || badgesLoading) {
+        console.log('Waiting for auth or badges to load:', { 
+          hasUser: !!auth.currentUser, 
+          badgesLoading 
+        });
+        return;
+      }
+
+      try {
+        // Get user document to check role
+        const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        const userData = userDoc.data();
+        console.log('User data loaded:', { 
+          uid: auth.currentUser.uid,
+          role: userData?.role,
+          hasBadges: !!userData?.badges
+        });
+
+        if (!isSubscribed) return;
+
+        // Check for admin access through badges
+        const hasAdminBadge = badges.some(badge => badge.name === 'admin');
+        console.log('Checking badges:', {
+          badgesCount: badges.length,
+          badges: badges.map(b => b.name),
+          hasAdminBadge
+        });
+
+        // Check for admin role in user data
+        const isAdminRole = userData?.role === 'admin';
+        console.log('Admin access check:', { hasAdminBadge, isAdminRole });
+
+        if (hasAdminBadge || isAdminRole) {
+          console.log('Admin access granted');
+          setIsAdmin(true);
+          setIsCheckingAdmin(false);
+          return;
+        }
+
+        // Legacy admin check
+        const adminData = localStorage.getItem('adminData');
+        console.log('Checking legacy admin data:', { hasAdminData: !!adminData });
+        
+        if (adminData) {
+          console.log('Admin access granted via legacy data');
+          setIsAdmin(true);
+          setIsCheckingAdmin(false);
+          return;
+        }
+
+        // No admin access found
+        console.log('No admin access found, redirecting to login');
+        setIsCheckingAdmin(false);
+        navigate('/admin-login');
+      } catch (error) {
+        console.error('Error checking admin access:', error);
+        if (isSubscribed) {
+          setIsCheckingAdmin(false);
+          navigate('/admin-login');
+        }
+      }
+    };
+
+    checkAdminAccess();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [navigate, badges, badgesLoading]);
 
   // Fetch users from Firestore
   const fetchUsers = async () => {
@@ -78,8 +149,17 @@ const AdminPage: React.FC = () => {
     try {
       setAssigning(true);
       const userDocRef = doc(db, 'users', selectedUserId);
+      
+      // Get default permissions for the badge type from DEFAULT_BADGES
+      const defaultBadgeData = DEFAULT_BADGES[badgeType as UserRole];
+      
       await updateDoc(userDocRef, {
-        badges: arrayUnion({ id: `${badgeType}-${Date.now()}`, type: badgeType }),
+        badges: arrayUnion({
+          id: `${badgeType}-${Date.now()}`,
+          name: badgeType, // Using name instead of type for consistency
+          color: defaultBadgeData?.color || '#000000',
+          permissions: defaultBadgeData?.permissions || []
+        })
       });
       alert('Badge assigned successfully!');
     } catch (error) {
@@ -89,6 +169,20 @@ const AdminPage: React.FC = () => {
       setAssigning(false);
     }
   };
+
+  // Show loading state while checking admin access
+  if (isCheckingAdmin) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <h1 className="text-2xl font-bold text-gray-400 ml-4">Checking access...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If the user is not an admin, show nothing
   if (!isAdmin) {

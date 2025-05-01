@@ -14,7 +14,13 @@ export const useUserBadges = () => {
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-      setUserId(user?.uid || null);
+      if (user?.uid) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+        setBadges([]);
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();
@@ -23,8 +29,6 @@ export const useUserBadges = () => {
   // Subscribe to real-time badge updates
   useEffect(() => {
     if (!userId) {
-      setBadges([]);
-      setLoading(false);
       return;
     }
 
@@ -34,17 +38,37 @@ export const useUserBadges = () => {
     const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
         const userData = docSnapshot.data();
+        const userBadges: Badge[] = [];
+
+        // Handle badges array if it exists
         if (userData.badges && Array.isArray(userData.badges)) {
-          const userBadges = userData.badges.map((badge: any) => ({
-            id: badge.id || '',
-            name: badge.type || badge.name || '',
-            color: badge.color || '#000000',
-            permissions: badge.permissions || []
-          }));
-          setBadges(userBadges);
-        } else {
-          setBadges([]);
+          userData.badges.forEach((badge: any) => {
+            const badgeName = badge.type || badge.name;
+            if (badgeName) {
+              userBadges.push({
+                id: badge.id || `${badgeName}-${Date.now()}`,
+                name: badgeName,
+                color: badge.color || '#000000',
+                permissions: badge.permissions || []
+              });
+            }
+          });
         }
+
+        // Always add the user's role as a badge if it exists
+        if (userData.role) {
+          const existingRoleBadge = userBadges.find(b => b.name === userData.role);
+          if (!existingRoleBadge) {
+            userBadges.push({
+              id: `role-${userData.role}-${Date.now()}`,
+              name: userData.role,
+              color: '#000000',
+              permissions: []
+            });
+          }
+        }
+
+        setBadges(userBadges);
       } else {
         setBadges([]);
       }

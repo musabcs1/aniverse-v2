@@ -4,7 +4,7 @@ import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard } from 'lucide-react';
+import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard, Check } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,6 +13,7 @@ const AnimeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<{ name: string; episodes: number } | null>(null);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
@@ -33,13 +34,9 @@ const AnimeDetailPage: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      console.error('User is not logged in.');
-      return;
-    }
-    if (!anime) return;
+    if (!auth.currentUser || !anime) return;
 
-    const checkWatchlist = async () => {
+    const checkUserStatus = async () => {
       try {
         const userDocRef = doc(db, 'users', auth.currentUser!.uid);
         const userSnapshot = await getDoc(userDocRef);
@@ -47,13 +44,14 @@ const AnimeDetailPage: React.FC = () => {
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
           setIsInWatchlist(userData.watchlist?.includes(anime.id));
+          setIsCompleted(userData.completed?.includes(anime.id));
         }
       } catch (error) {
-        console.error('Error checking watchlist:', error);
+        console.error('Error checking user status:', error);
       }
     };
 
-    checkWatchlist();
+    checkUserStatus();
   }, [anime]);
 
   useEffect(() => {
@@ -102,6 +100,63 @@ const AnimeDetailPage: React.FC = () => {
         position: "top-right",
         autoClose: 3000,
       });
+    }
+  };
+
+  const handleMarkAsCompleted = async () => {
+    if (!auth.currentUser || !anime) {
+      console.error('User is not logged in or anime not found');
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const userSnapshot = await getDoc(userDocRef);
+      
+      if (!userSnapshot.exists()) {
+        toast.error('User data not found');
+        return;
+      }
+
+      const userData = userSnapshot.data();
+      
+      if (isCompleted) {
+        // Remove from completed list
+        await updateDoc(userDocRef, {
+          completed: arrayRemove(anime.id),
+          'stats.completed': increment(-1)
+        });
+        
+        toast.success(`${anime.title} removed from completed list`);
+      } else {
+        // Add to completed list
+        const updatedData: any = {
+          completed: arrayUnion(anime.id),
+          'stats.completed': increment(1),
+          xp: increment(20) // Give XP for completing an anime
+        };
+
+        // Remove from watchlist if it's there
+        if (isInWatchlist) {
+          updatedData.watchlist = arrayRemove(anime.id);
+          setIsInWatchlist(false);
+        }
+
+        await updateDoc(userDocRef, updatedData);
+
+        // Update user level based on new XP
+        const newXP = (userData.xp || 0) + 20;
+        await updateDoc(userDocRef, {
+          level: Math.floor(newXP / 1000) + 1
+        });
+
+        toast.success(`${anime.title} marked as completed! (+20 XP)`);
+      }
+
+      setIsCompleted(!isCompleted);
+    } catch (error) {
+      console.error('Error updating completed status:', error);
+      toast.error('Failed to update completed status');
     }
   };
 
@@ -212,6 +267,13 @@ const AnimeDetailPage: React.FC = () => {
                     >
                       <BookmarkPlus className="h-5 w-5" />
                       {isInWatchlist ? 'Remove from List' : 'Add to List'}
+                    </button>
+                    <button 
+                      className={`bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform ${isCompleted ? 'bg-green-600' : ''}`}
+                      onClick={handleMarkAsCompleted}
+                    >
+                      <Check className="h-5 w-5" />
+                      {isCompleted ? 'Completed!' : 'Mark as Completed'}
                     </button>
                     <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
                       <Share2 className="h-5 w-5" />
