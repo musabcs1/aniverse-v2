@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc } from 'firebase/firestore';
-import { Mail, Lock } from 'lucide-react';
-import { query, where } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where } from 'firebase/firestore';
+import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { ForumThread, UserRole } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
 import { DEFAULT_BADGES } from '../services/badges';
@@ -13,6 +12,25 @@ interface User {
   username: string;
   email: string;
   avatar?: string;
+  role?: string;
+  banned?: boolean;
+  xp?: number;
+  level?: number;
+  stats?: {
+    threads?: number;
+    comments?: number;
+    reviews?: number;
+  };
+  lastActive?: string;
+}
+
+interface AdminStats {
+  totalUsers: number;
+  totalThreads: number;
+  totalComments: number;
+  totalReviews: number;
+  activeUsers: number;
+  reportedContent: number;
 }
 
 const AdminPage: React.FC = () => {
@@ -26,7 +44,21 @@ const AdminPage: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [badgeType, setBadgeType] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { badges, loading: badgesLoading } = useUserBadges();
+  const [stats, setStats] = useState<AdminStats>({
+    totalUsers: 0,
+    totalThreads: 0,
+    totalComments: 0,
+    totalReviews: 0,
+    activeUsers: 0,
+    reportedContent: 0
+  });
+  const [reportedContentSearch, setReportedContentSearch] = useState('');
+  const [reportedContentFilter, setReportedContentFilter] = useState<'all' | 'pending' | 'resolved'>('pending');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<'username' | 'level' | 'xp' | 'threads'>('username');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Check if the user has admin access
   useEffect(() => {
@@ -44,7 +76,6 @@ const AdminPage: React.FC = () => {
       }
 
       try {
-        // Get user document to check role
         const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
         const userData = userDoc.data();
         console.log('User data loaded:', { 
@@ -55,7 +86,6 @@ const AdminPage: React.FC = () => {
 
         if (!isSubscribed) return;
 
-        // Check for admin access through badges
         const hasAdminBadge = badges.some(badge => badge.name === 'admin');
         console.log('Checking badges:', {
           badgesCount: badges.length,
@@ -63,7 +93,6 @@ const AdminPage: React.FC = () => {
           hasAdminBadge
         });
 
-        // Check for admin role in user data
         const isAdminRole = userData?.role === 'admin';
         console.log('Admin access check:', { hasAdminBadge, isAdminRole });
 
@@ -74,7 +103,6 @@ const AdminPage: React.FC = () => {
           return;
         }
 
-        // Legacy admin check
         const adminData = localStorage.getItem('adminData');
         console.log('Checking legacy admin data:', { hasAdminData: !!adminData });
         
@@ -85,7 +113,6 @@ const AdminPage: React.FC = () => {
           return;
         }
 
-        // No admin access found
         console.log('No admin access found, redirecting to login');
         setIsCheckingAdmin(false);
         navigate('/admin-login');
@@ -105,12 +132,57 @@ const AdminPage: React.FC = () => {
     };
   }, [navigate, badges, badgesLoading]);
 
+  // Fetch platform statistics
+  const fetchStats = async () => {
+    try {
+      const usersCount = users.length;
+      
+      const threadsRef = collection(db, 'forumThreads');
+      const threadsSnapshot = await getDocs(threadsRef);
+      const totalThreads = threadsSnapshot.size;
+      
+      const reportedQuery = query(threadsRef, where('reported', '==', true));
+      const reportedSnapshot = await getDocs(reportedQuery);
+      const reportedCount = reportedSnapshot.size;
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const activeUsers = users.filter(user => {
+        const lastActive = user.lastActive ? new Date(user.lastActive) : null;
+        return lastActive && lastActive > sevenDaysAgo;
+      }).length;
+
+      let totalComments = 0;
+      let totalReviews = 0;
+      
+      users.forEach(user => {
+        totalComments += user.stats?.comments || 0;
+        totalReviews += user.stats?.reviews || 0;
+      });
+
+      setStats({
+        totalUsers: usersCount,
+        totalThreads,
+        totalComments,
+        totalReviews,
+        activeUsers,
+        reportedContent: reportedCount
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
   // Fetch users from Firestore
   const fetchUsers = async () => {
     try {
       const usersCollection = collection(db, 'users');
       const userDocs = await getDocs(usersCollection);
-      const usersData = userDocs.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      const usersData = userDocs.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      } as User));
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -119,7 +191,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Fetch reported threads from Firestore
+  // Fetch reported threads
   const fetchReportedThreads = async () => {
     try {
       const threadsRef = collection(db, 'forumThreads');
@@ -134,11 +206,76 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Fetch users and reported threads when the component mounts
+  // Load initial data
   useEffect(() => {
-    fetchUsers();
-    fetchReportedThreads();
-  }, []);
+    if (isAdmin) {
+      fetchUsers();
+      fetchReportedThreads();
+    }
+  }, [isAdmin]);
+
+  // Update stats when users array changes
+  useEffect(() => {
+    if (users.length > 0) {
+      fetchStats();
+    }
+  }, [users]);
+
+  // Handle user management actions
+  const handleBanUser = async (userId: string, isBanned: boolean) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        banned: !isBanned
+      });
+
+      // Send notification to user
+      const notificationsRef = collection(db, 'notifications');
+      await addDoc(notificationsRef, {
+        userId,
+        message: !isBanned 
+          ? 'Your account has been suspended by an administrator.' 
+          : 'Your account suspension has been lifted.',
+        createdAt: serverTimestamp(),
+        read: false,
+        type: 'system'
+      });
+
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? { ...user, banned: !isBanned } : user
+      ));
+
+      alert(isBanned ? 'User unbanned successfully.' : 'User banned successfully.');
+    } catch (error) {
+      console.error('Error updating user ban status:', error);
+      alert('Failed to update user ban status.');
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // Delete user's content
+      const threadsRef = collection(db, 'forumThreads');
+      const threadsQuery = query(threadsRef, where('authorId', '==', userId));
+      const threadsSnapshot = await getDocs(threadsQuery);
+      
+      const deletePromises = threadsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      // Delete user document
+      await deleteDoc(doc(db, 'users', userId));
+      
+      setUsers(prev => prev.filter(user => user.id !== userId));
+      alert('User deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Failed to delete user.');
+    }
+  };
 
   const handleAssignBadge = async () => {
     if (!selectedUserId || !badgeType) {
@@ -148,20 +285,32 @@ const AdminPage: React.FC = () => {
 
     try {
       setAssigning(true);
-      const userDocRef = doc(db, 'users', selectedUserId);
+      const userRef = doc(db, 'users', selectedUserId);
       
-      // Get default permissions for the badge type from DEFAULT_BADGES
       const defaultBadgeData = DEFAULT_BADGES[badgeType as UserRole];
       
-      await updateDoc(userDocRef, {
+      await updateDoc(userRef, {
         badges: arrayUnion({
           id: `${badgeType}-${Date.now()}`,
-          name: badgeType, // Using name instead of type for consistency
+          name: badgeType,
           color: defaultBadgeData?.color || '#000000',
           permissions: defaultBadgeData?.permissions || []
         })
       });
+
+      // Send notification to user
+      const notificationsRef = collection(db, 'notifications');
+      await addDoc(notificationsRef, {
+        userId: selectedUserId,
+        message: `You have been awarded the ${badgeType} badge!`,
+        createdAt: serverTimestamp(),
+        read: false,
+        type: 'badge'
+      });
+
       alert('Badge assigned successfully!');
+      setSelectedUserId('');
+      setBadgeType('');
     } catch (error) {
       console.error('Error assigning badge:', error);
       alert('Failed to assign badge. Please try again.');
@@ -170,7 +319,151 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Show loading state while checking admin access
+  // Handle reported content
+  const handleResolveReport = async (threadId: string) => {
+    try {
+      const threadRef = doc(db, 'forumThreads', threadId);
+      await updateDoc(threadRef, {
+        reported: false
+      });
+
+      setReportedThreads(prev => prev.filter(t => t.id !== threadId));
+      alert('Report resolved successfully.');
+    } catch (error) {
+      console.error('Error resolving report:', error);
+      alert('Failed to resolve report.');
+    }
+  };
+
+  const handleDeleteThread = async (thread: ForumThread) => {
+    if (!window.confirm('Are you sure you want to delete this thread?')) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'forumThreads', thread.id));
+      setReportedThreads(prev => prev.filter(t => t.id !== thread.id));
+
+      // Deduct XP and update user stats
+      const userRef = doc(db, 'users', thread.authorId);
+      await updateDoc(userRef, {
+        xp: increment(-10),
+        'stats.threads': increment(-1)
+      });
+
+      // Send notification
+      const notificationsRef = collection(db, 'notifications');
+      await addDoc(notificationsRef, {
+        userId: thread.authorId,
+        message: `Your thread "${thread.title}" has been removed by an administrator.`,
+        createdAt: serverTimestamp(),
+        read: false,
+        type: 'warning'
+      });
+
+      alert('Thread deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      alert('Failed to delete thread.');
+    }
+  };
+
+  // Add sort function
+  const sortUsers = (users: User[]) => {
+    return [...users].sort((a, b) => {
+      let valueA, valueB;
+      
+      switch (sortField) {
+        case 'level':
+          valueA = a.level || 0;
+          valueB = b.level || 0;
+          break;
+        case 'xp':
+          valueA = a.xp || 0;
+          valueB = b.xp || 0;
+          break;
+        case 'threads':
+          valueA = a.stats?.threads || 0;
+          valueB = b.stats?.threads || 0;
+          break;
+        default:
+          valueA = a.username.toLowerCase();
+          valueB = b.username.toLowerCase();
+      }
+
+      if (sortDirection === 'asc') {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
+      }
+    });
+  };
+
+  // Add bulk actions
+  const handleBulkAction = async (action: 'ban' | 'unban' | 'delete') => {
+    if (selectedUsers.length === 0) {
+      alert('Please select users first');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to ${action} ${selectedUsers.length} users?`)) {
+      return;
+    }
+
+    try {
+      const promises = selectedUsers.map(userId => {
+        const userRef = doc(db, 'users', userId);
+        
+        switch (action) {
+          case 'ban':
+          case 'unban':
+            return updateDoc(userRef, { banned: action === 'ban' });
+          case 'delete':
+            return deleteDoc(userRef);
+        }
+      });
+
+      await Promise.all(promises);
+
+      // Update UI state
+      switch (action) {
+        case 'ban':
+        case 'unban':
+          setUsers(prev => prev.map(user => 
+            selectedUsers.includes(user.id) 
+              ? { ...user, banned: action === 'ban' } 
+              : user
+          ));
+          break;
+        case 'delete':
+          setUsers(prev => prev.filter(user => !selectedUsers.includes(user.id)));
+          break;
+      }
+
+      setSelectedUsers([]);
+      alert(`Successfully ${action}ed ${selectedUsers.length} users`);
+    } catch (error) {
+      console.error(`Error performing bulk ${action}:`, error);
+      alert(`Failed to ${action} users. Please try again.`);
+    }
+  };
+
+  // Update filtered users to include sorting
+  const filteredUsers = sortUsers(users.filter(user => 
+    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  ));
+
+  // Filter reported content
+  const filteredReportedThreads = reportedThreads.filter(thread => {
+    const matchesSearch = thread.title.toLowerCase().includes(reportedContentSearch.toLowerCase()) ||
+                         thread.content.toLowerCase().includes(reportedContentSearch.toLowerCase());
+    const matchesFilter = reportedContentFilter === 'all' || 
+                         (reportedContentFilter === 'pending' && thread.reported) ||
+                         (reportedContentFilter === 'resolved' && !thread.reported);
+    return matchesSearch && matchesFilter;
+  });
+
   if (isCheckingAdmin) {
     return (
       <div className="pt-24 pb-16">
@@ -184,7 +477,6 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  // If the user is not an admin, show nothing
   if (!isAdmin) {
     return null;
   }
@@ -193,6 +485,66 @@ const AdminPage: React.FC = () => {
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8">Admin Panel</h1>
+
+        {/* Statistics Dashboard */}
+        <div className="bg-surface rounded-xl p-6 mb-8">
+          <h2 className="text-2xl font-semibold mb-6">Platform Statistics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-surface-light p-4 rounded-lg">
+              <div className="flex items-center">
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                  <div className="text-sm text-gray-400">Total Users</div>
+                </div>
+              </div>
+              <div className="mt-2 text-sm text-gray-400">
+                {stats.activeUsers} active in last 7 days
+              </div>
+            </div>
+
+            <div className="bg-surface-light p-4 rounded-lg">
+              <div className="flex items-center">
+                <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center mr-4">
+                  <MessageSquare className="h-6 w-6 text-secondary" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.totalThreads}</div>
+                  <div className="text-sm text-gray-400">Total Threads</div>
+                </div>
+              </div>
+              <div className="mt-2 text-sm text-gray-400">
+                {stats.totalComments} comments
+              </div>
+            </div>
+
+            <div className="bg-surface-light p-4 rounded-lg">
+              <div className="flex items-center">
+                <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center mr-4">
+                  <Award className="h-6 w-6 text-accent" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.totalReviews}</div>
+                  <div className="text-sm text-gray-400">Total Reviews</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-light p-4 rounded-lg">
+              <div className="flex items-center">
+                <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center mr-4">
+                  <Shield className="h-6 w-6 text-red-500" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.reportedContent}</div>
+                  <div className="text-sm text-gray-400">Reported Content</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Badge Assignment Section */}
         <div className="bg-surface rounded-xl p-6 mb-8">
@@ -231,166 +583,207 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-4">Users</h2>
-        {loadingUsers ? (
-          <p>Loading users...</p>
-        ) : users.length === 0 ? (
-          <p>No users found.</p>
-        ) : (
-          <div className="space-y-4">
-            {users.map(user => (
-              <div
-                key={user.id}
-                className="flex items-center bg-surface p-4 rounded-lg shadow-lg"
-              >
-                <img
-                  src={user.avatar || 'https://via.placeholder.com/150'}
-                  alt={user.username}
-                  className="w-16 h-16 rounded-full mr-4"
-                />
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold">{user.username}</h2>
-                  <p className="text-gray-400">{user.email}</p>
+        {/* User Management Section */}
+        <div className="bg-surface rounded-xl p-6 mb-8">
+          <div className="flex flex-col space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">User Management</h2>
+              <div className="flex gap-4 items-center">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    className="bg-surface-dark py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary pr-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <h2 className="text-2xl font-semibold mb-4">Reported Threads</h2>
-        {loadingThreads ? (
-          <p>Loading reported threads...</p>
-        ) : reportedThreads.length === 0 ? (
-          <p>No reported threads found.</p>
-        ) : (
-          <div className="space-y-4">
-            {reportedThreads.map(thread => (
-              <div key={thread.id} className="p-4 bg-surface rounded-lg">
-                <h3 className="text-lg font-bold">{thread.title}</h3>
-                <p className="text-gray-400">{thread.content}</p>
-                <button
-                  onClick={async () => {
-                    if (window.confirm('Are you sure you want to delete this thread?')) {
-                      try {
-                        await deleteDoc(doc(db, 'forumThreads', thread.id));
-                        setReportedThreads(prev => prev.filter(t => t.id !== thread.id));
-
-                        // Deduct 10 XP from the thread owner
-                        const userDocRef = doc(db, 'users', thread.authorId);
-                        await updateDoc(userDocRef, {
-                          xp: increment(-10), // Deduct 10 XP
-                        });
-
-                        // Send notification to the thread owner
-                        const notificationsRef = collection(db, 'notifications');
-                        await addDoc(notificationsRef, {
-                          userId: thread.authorId,
-                          message: `Your thread titled "${thread.title}" has been deleted by an admin.`,
-                          createdAt: serverTimestamp(),
-                          read: false,
-                        });
-
-                        alert('Thread deleted successfully. 10 XP has been deducted from the owner.');
-                      } catch (error) {
-                        console.error('Error deleting thread:', error);
-                        alert('Failed to delete thread. Please try again.');
-                      }
-                    }
-                  }}
-                  className="text-red-500 hover:text-red-700 text-sm mt-2"
+                <select
+                  className="bg-surface-dark py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                  value={sortField}
+                  onChange={(e) => setSortField(e.target.value as 'username' | 'level' | 'xp' | 'threads')}
                 >
-                  Delete Thread
+                  <option value="username">Sort by Name</option>
+                  <option value="level">Sort by Level</option>
+                  <option value="xp">Sort by XP</option>
+                  <option value="threads">Sort by Threads</option>
+                </select>
+                <button
+                  onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 rounded-lg bg-surface-dark hover:bg-surface-light transition-colors"
+                >
+                  {sortDirection === 'asc' ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                 </button>
               </div>
-            ))}
+            </div>
+
+            {selectedUsers.length > 0 && (
+              <div className="flex items-center gap-4 p-4 bg-surface-dark rounded-lg">
+                <span className="text-sm text-gray-400">{selectedUsers.length} users selected</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleBulkAction('ban')}
+                    className="btn-danger py-1 px-3 text-sm"
+                  >
+                    Ban Selected
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction('unban')}
+                    className="btn-secondary py-1 px-3 text-sm"
+                  >
+                    Unban Selected
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction('delete')}
+                    className="btn-danger py-1 px-3 text-sm"
+                  >
+                    Delete Selected
+                  </button>
+                  <button
+                    onClick={() => setSelectedUsers([])}
+                    className="btn-secondary py-1 px-3 text-sm"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {loadingUsers ? (
+            <div className="flex justify-center mt-6">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <p className="text-gray-400 mt-6">No users found.</p>
+          ) : (
+            <div className="grid gap-4 mt-6">
+              {filteredUsers.map(user => (
+                <div
+                  key={user.id}
+                  className={`flex items-center bg-surface-light p-4 rounded-lg ${
+                    user.banned ? 'opacity-75 border-l-4 border-red-500' : ''
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUsers(prev => [...prev, user.id]);
+                      } else {
+                        setSelectedUsers(prev => prev.filter(id => id !== user.id));
+                      }
+                    }}
+                    className="mr-4 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <img
+                    src={user.avatar || 'https://via.placeholder.com/150'}
+                    alt={user.username}
+                    className="w-16 h-16 rounded-full mr-4"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold">{user.username}</h3>
+                      {user.role === 'admin' && (
+                        <Shield className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    <p className="text-gray-400">{user.email}</p>
+                    <div className="flex gap-4 text-sm text-gray-400 mt-1">
+                      <span>Level {user.level || 1}</span>
+                      <span>{user.xp || 0} XP</span>
+                      <span>{user.stats?.threads || 0} Threads</span>
+                      <span>{user.stats?.comments || 0} Comments</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleBanUser(user.id, user.banned || false)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        user.banned
+                          ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30'
+                          : 'bg-red-500/20 text-red-500 hover:bg-red-500/30'
+                      }`}
+                      title={user.banned ? 'Unban User' : 'Ban User'}
+                    >
+                      {user.banned ? <Check className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+                      title="Delete User"
+                    >
+                      <Trash className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reported Content Section */}
+        <div className="bg-surface rounded-xl p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Reported Content</h2>
+            <div className="flex gap-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search reported content..."
+                  className="bg-surface-dark py-2 pl-9 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                  value={reportedContentSearch}
+                  onChange={(e) => setReportedContentSearch(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              </div>
+              <select
+                className="bg-surface-dark py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                value={reportedContentFilter}
+                onChange={(e) => setReportedContentFilter(e.target.value as 'all' | 'pending' | 'resolved')}
+              >
+                <option value="all">All Reports</option>
+                <option value="pending">Pending</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+          </div>
+
+          {loadingThreads ? (
+            <div className="flex justify-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredReportedThreads.length === 0 ? (
+            <p className="text-gray-400">No reported content found.</p>
+          ) : (
+            <div className="space-y-4">
+              {filteredReportedThreads.map(thread => (
+                <div key={thread.id} className="bg-surface-light p-4 rounded-lg">
+                  <h3 className="text-lg font-bold mb-2">{thread.title}</h3>
+                  <p className="text-gray-400 mb-4">{thread.content}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleResolveReport(thread.id)}
+                      className="btn-secondary py-1 px-3 text-sm"
+                    >
+                      Resolve
+                    </button>
+                    <button
+                      onClick={() => handleDeleteThread(thread)}
+                      className="btn-danger py-1 px-3 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default AdminPage;
-
-const AdminLoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      // Query the `admins` collection for the entered email
-      const adminsRef = collection(db, 'admins');
-      const q = query(adminsRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        setError('Invalid email or password.');
-        return;
-      }
-
-      const adminData = querySnapshot.docs[0].data();
-
-      // Password validation
-      if (adminData.password !== password) {
-        setError('Invalid email or password.');
-        return;
-      }
-
-      // Save admin data to localStorage and navigate to the admin panel
-      localStorage.setItem('adminData', JSON.stringify(adminData));
-      navigate('/admin');
-    } catch (err) {
-      console.error('Error during admin login:', err);
-      setError((err instanceof Error ? err.message : 'An error occurred. Please try again.'));
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-background text-white">
-      <div className="w-full max-w-md bg-surface p-8 rounded-lg shadow-lg">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">Admin Login</h2>
-          <p className="text-gray-400 mt-2">Sign in to access the admin panel</p>
-        </div>
-        <form onSubmit={handleLogin}>
-          <div className="relative mb-4">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full bg-surface-light py-3 pl-10 pr-4 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="relative mb-4">
-            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full bg-surface-light py-3 pl-10 pr-4 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          <button
-            type="submit"
-            className="w-full bg-primary py-3 rounded-lg text-white font-medium hover:bg-primary-dark transition-colors"
-          >
-            Sign In
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export { AdminLoginPage };

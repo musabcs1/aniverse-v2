@@ -65,21 +65,16 @@ export interface ForumThread {
   content: string;
   authorId: string;
   authorName: string;
-  authorAvatar: string;
+  authorAvatar?: string;
   createdAt: Date;
   updatedAt: Date;
   category: ForumCategory;
-  replies: number;
-  upvotes: string[]; // Changed from number to string[]
-  downvotes: string[]; // Changed from number to string[]
   tags: string[];
-  comments: Array<{
-    id: string;
-    content: string;
-    authorId: string;
-    authorName: string;
-    createdAt: Date;
-  }>;
+  upvotes: string[];
+  downvotes: string[];
+  comments: Comment[];
+  replies: number;
+  reported?: boolean; // Add reported flag
 }
 
 export interface NewsArticle {
