@@ -23,13 +23,17 @@ interface UserStats {
 }
 
 const getBadgeIcon = (role: UserRole) => {
+  const iconClass = "transition-transform duration-300 group-hover:scale-125";
+  
   switch (role) {
     case 'admin':
-      return <Shield className="h-5 w-5 text-primary" />;
+      return <Shield className={`h-5 w-5 text-primary ${iconClass}`} />;
     case 'reviewer':
-      return <Award className="h-5 w-5 text-yellow-400" />;
+      return <Award className={`h-5 w-5 text-yellow-400 ${iconClass}`} />;
+    case 'writer':
+      return <MessageSquare className={`h-5 w-5 text-blue-400 ${iconClass}`} />;
     case 'user':
-      return <UserRound className="h-5 w-5 text-secondary" />;
+      return <UserRound className={`h-5 w-5 text-secondary ${iconClass}`} />;
     default:
       return null;
   }
@@ -409,15 +413,18 @@ const ProfilePage: React.FC = () => {
                   {badgesLoading ? (
                     <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
                   ) : badges && badges.length > 0 ? (
-                    badges.map((badge) => (
-                      <Badge 
-                        key={badge.id || badge.name} 
-                        badge={badge} 
-                        size="sm"
-                      >
-                        {getBadgeIcon(badge.name as UserRole)}
-                      </Badge>
-                    ))
+                    <div className="flex gap-2 items-center">
+                      {badges.map((badge) => (
+                        <div key={badge.id || badge.name} className="group">
+                          <Badge 
+                            badge={badge} 
+                            size="sm"
+                          >
+                            {getBadgeIcon(badge.name as UserRole)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
                   ) : null}
                 </div>
               </div>
