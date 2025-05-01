@@ -77,7 +77,7 @@ const AnimeDetailPage: React.FC = () => {
         // Remove from watchlist
         await updateDoc(userDocRef, {
           watchlist: arrayRemove(anime.id),
-          'stats.watching': increment(-1)
+          watching: increment(-1)
         });
         toast.success(`${anime.title} has been removed from your watchlist.`, {
           position: "top-right",
@@ -87,7 +87,7 @@ const AnimeDetailPage: React.FC = () => {
         // Add to watchlist
         await updateDoc(userDocRef, {
           watchlist: arrayUnion(anime.id),
-          'stats.watching': increment(1)
+          watching: increment(1)
         });
         toast.success(`${anime.title} has been added to your watchlist.`, {
           position: "top-right",

@@ -38,6 +38,8 @@ declare module 'lucide-react' {
   export const LockIcon: React.FC<IconProps>;
   export const EyeIcon: React.FC<IconProps>;
   export const EyeOffIcon: React.FC<IconProps>;
+  export const TrendingUp: React.FC<IconProps>;
+  export const Users: React.FC<IconProps>;
   export const Mail: React.FC<IconProps>;
   export const Lock: React.FC<IconProps>;
   export declare const Menu: LucideIcon;

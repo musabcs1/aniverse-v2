@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -26,7 +26,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
+      <BrowserRouter>
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -44,7 +44,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Layout>
-      </Router>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
