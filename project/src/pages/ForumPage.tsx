@@ -72,7 +72,6 @@ const ForumPage: React.FC = () => {
     }
 
     try {
-      // Fetch the correct avatar URL from the user profile database
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.exists() ? userDoc.data() : {};
@@ -83,19 +82,20 @@ const ForumPage: React.FC = () => {
         ...newThread,
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.displayName || 'Anonymous',
-        authorAvatar, // Use the fetched avatar URL
+        authorAvatar,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         replies: 0,
-        upvotes: 0,
-        downvotes: 0,
+        upvotes: [],
+        downvotes: [],
         tags: [],
       });
 
-      // Update user's XP and thread count in Firestore
+      // Update user's XP and stats in Firestore
       await updateDoc(userDocRef, {
-        xp: increment(10), // Increment XP by 10
-        'stats.threads': increment(1), // Increment thread count
+        xp: increment(10),
+        'stats.threads': increment(1),
+        level: Math.floor((userData.xp + 10) / 1000) + 1
       });
 
       setShowNewThreadForm(false);
@@ -120,22 +120,18 @@ const ForumPage: React.FC = () => {
       const threadRef = doc(db, 'forumThreads', thread.id);
       await deleteDoc(threadRef);
 
-      // Deduct 10 XP from the thread owner
+      // Update user's XP and stats in Firestore
       const userDocRef = doc(db, 'users', thread.authorId);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.exists() ? userDoc.data() : {};
+      
       await updateDoc(userDocRef, {
-        xp: increment(-10), // Deduct 10 XP
+        xp: increment(-10),
+        'stats.threads': increment(-1),
+        level: Math.floor((userData.xp - 10) / 1000) + 1
       });
 
-      // Send notification to the thread owner
-      const notificationsRef = collection(db, 'notifications');
-      await addDoc(notificationsRef, {
-        userId: thread.authorId,
-        message: `Your thread titled "${thread.title}" has been deleted.`,
-        createdAt: serverTimestamp(),
-        read: false,
-      });
-
-      alert('Thread deleted successfully. 10 XP has been deducted from the owner.');
+      alert('Thread deleted successfully.');
     } catch (error) {
       console.error('Error deleting thread:', error);
       alert('Failed to delete thread. Please try again.');

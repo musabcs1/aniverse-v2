@@ -77,16 +77,35 @@ const ProfilePage: React.FC = () => {
           return;
         }
 
-        const targetUsername = username || auth.currentUser.displayName;
+        // If no username is provided, use current user's data
+        if (!username) {
+          const userDocRef = doc(db, 'users', auth.currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = { id: userDoc.id, ...userDoc.data() } as User;
+            setUserData(userData);
+            setAvatarURL(userData.avatar || '');
 
-        if (!targetUsername) {
-          setError('User not found');
+            setStats({
+              watching: userData.watchlist?.length || 0,
+              completed: userData.stats?.completed || 0,
+              comments: userData.stats?.comments || 0,
+              reviews: userData.stats?.reviews || 0,
+              threads: userData.stats?.threads || 0,
+              level: userData.level || 0,
+              xp: userData.xp || 0,
+            });
+          } else {
+            setError('User data not found');
+          }
           setLoading(false);
           return;
         }
 
+        // If username is provided, query by username
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', targetUsername));
+        const q = query(usersRef, where('username', '==', username));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
@@ -95,15 +114,14 @@ const ProfilePage: React.FC = () => {
           setUserData(userData);
           setAvatarURL(userData.avatar || '');
 
-          // Update stats based on Firestore data
           setStats({
-            watching: userData.watchlist?.length || 0, // Number of animes in My Watchlist
-            completed: userData.stats?.completed || 0, // Number of completed animes
-            comments: userData.stats?.comments || 0, // Number of comments from stats array
-            reviews: userData.stats?.reviews || 0, // Number of reviews from stats array
-            threads: userData.stats?.threads || 0, // Number of threads from stats array
-            level: userData.level || 0, // User's level
-            xp: userData.xp || 0, // User's XP
+            watching: userData.watchlist?.length || 0,
+            completed: userData.stats?.completed || 0,
+            comments: userData.stats?.comments || 0,
+            reviews: userData.stats?.reviews || 0,
+            threads: userData.stats?.threads || 0,
+            level: userData.level || 0,
+            xp: userData.xp || 0,
           });
         } else {
           setError('User not found');
@@ -172,26 +190,20 @@ const ProfilePage: React.FC = () => {
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
         const userSnapshot = await getDoc(userDocRef);
 
-        let userStats = userSnapshot.exists() ? userSnapshot.data().stats : null;
-
-        // Fetch thread count
-        const threadsQuery = query(
-          collection(db, 'forumThreads'),
-          where('authorId', '==', auth.currentUser.uid)
-        );
-        const threadsSnapshot = await getDocs(threadsQuery);
-        const threadsCount = threadsSnapshot.size;
-
-        // Update stats with thread count
-        setStats({
-          watching: userStats?.watching || 0,
-          completed: userStats?.completed || 0,
-          comments: userStats?.comments || 0,
-          reviews: userStats?.reviews || 0,
-          threads: threadsCount,
-          level: userStats?.level || 0,
-          xp: userStats?.xp || 0,
-        });
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          
+          // Set stats directly from the users collection
+          setStats({
+            watching: userData.watchlist?.length || 0, // from user's watchlist array
+            completed: userData.completed?.length || 0, // Keep this for consistency
+            comments: userData.stats?.comments || 0, // from stats.comments
+            reviews: userData.stats?.reviews || 0, // Keep this for consistency
+            threads: userData.stats?.threads || 0, // from stats.threads
+            level: userData.level || 0, // directly from level field
+            xp: userData.xp || 0, // directly from xp field
+          });
+        }
       } catch (error) {
         console.error('Error fetching user stats:', error);
         setStats({
@@ -229,13 +241,16 @@ const ProfilePage: React.FC = () => {
           xp: data.xp || 0
         }));
         
-        // Update stats
+        // Update stats from users collection fields
         setStats(prev => ({
           ...prev,
-          watching: data.watchlist?.length || 0,
+          watching: data.watchlist?.length || 0, // from watchlist array
           completed: data.completed?.length || 0,
-          level: data.level || 0,
-          xp: data.xp || 0
+          comments: data.stats?.comments || 0, // from stats.comments
+          reviews: data.stats?.reviews || 0,
+          threads: data.stats?.threads || 0, // from stats.threads
+          level: data.level || 0, // from level field
+          xp: data.xp || 0 // from xp field
         }));
       }
     });
@@ -390,15 +405,21 @@ const ProfilePage: React.FC = () => {
             <div className="mt-10 md:mt-0 md:ml-28">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
-                {!badgesLoading && badges.map((badge) => (
-                  <Badge 
-                    key={badge.id} 
-                    badge={badge} 
-                    size="sm"
-                  >
-                    {getBadgeIcon(badge.name as UserRole)}
-                  </Badge>
-                ))}
+                <div className="flex gap-2">
+                  {badgesLoading ? (
+                    <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
+                  ) : badges && badges.length > 0 ? (
+                    badges.map((badge) => (
+                      <Badge 
+                        key={badge.id || badge.name} 
+                        badge={badge} 
+                        size="sm"
+                      >
+                        {getBadgeIcon(badge.name as UserRole)}
+                      </Badge>
+                    ))
+                  ) : null}
+                </div>
               </div>
               <div className="flex items-center text-gray-400 text-sm mt-1">
                 <Clock className="h-4 w-4 mr-1" />
@@ -573,7 +594,8 @@ const ProfilePage: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-gray-400">No items in your watchlist yet.</p>
-                )}
+                )
+                }
                 
                 <div className="mt-10">
                   <div className="flex justify-between items-center mb-6">

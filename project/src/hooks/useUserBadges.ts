@@ -1,43 +1,62 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
-import { Badge, UserRole } from '../types';
-import { getUserBadges, hasPermission } from '../services/badges';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { Badge } from '../types';
+import { hasPermission } from '../services/badges';
 
 export const useUserBadges = () => {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Listen to auth state changes
   useEffect(() => {
-    const fetchUserBadges = async () => {
-      if (!auth.currentUser) {
-        setBadges([]);
-        setLoading(false);
-        return;
-      }
+    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+      setUserId(user?.uid || null);
+    });
 
-      try {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to real-time badge updates
+  useEffect(() => {
+    if (!userId) {
+      setBadges([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const userDocRef = doc(db, 'users', userId);
+    
+    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        if (userData.badges && Array.isArray(userData.badges)) {
           const userBadges = userData.badges.map((badge: any) => ({
-            ...badge,
-            name: badge.type, // Map 'type' to 'name' to match the Badge interface
+            id: badge.id || '',
+            name: badge.type || badge.name || '',
+            color: badge.color || '#000000',
+            permissions: badge.permissions || []
           }));
           setBadges(userBadges);
+        } else {
+          setBadges([]);
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch user badges');
-      } finally {
-        setLoading(false);
+      } else {
+        setBadges([]);
       }
-    };
+      setLoading(false);
+    }, (err) => {
+      console.error('Error in badge subscription:', err);
+      setError(err instanceof Error ? err.message : 'Failed to subscribe to badge updates');
+      setLoading(false);
+    });
 
-    fetchUserBadges();
-  }, []);
+    return () => unsubscribe();
+  }, [userId]);
 
   const checkPermission = (permission: string): boolean => {
     return hasPermission(badges, permission);

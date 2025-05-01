@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ThumbsUp, ThumbsDown, ClockIcon } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, increment, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 
 // Updated the ForumThread type to include comments, upvotes, and downvotes as arrays
@@ -58,13 +58,27 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
       const commentRef = collection(db, 'comments');
       const docRef = await addDoc(commentRef, commentData);
 
+      // Update user's stats and XP in Firebase
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.exists() ? userDoc.data() : {};
+      
+      await updateDoc(userDocRef, {
+        'stats.comments': increment(1), // Increment comments count in stats
+        xp: increment(5), // Give user 5 XP for commenting
+        level: Math.floor((userData.xp + 5) / 1000) + 1 // Update level based on new XP
+      });
+
       setComments([
         ...comments,
         { ...commentData, id: docRef.id, createdAt: new Date() },
       ]);
       setComment('');
+      
+      alert('Comment added successfully! You earned 5 XP.');
     } catch (error) {
       console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
     }
   };
 
