@@ -305,7 +305,7 @@ const AnimeDetailPage: React.FC = () => {
                           anime.seasons.map((season: { name: string; episodes: number }, index: number) => (
                             <button
                               key={index}
-                              className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] transition-colors"
+                              className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] transition-colors px-6"
                               onClick={() => handleSeasonClick(season)}
                             >
                               {season.name}
@@ -324,10 +324,10 @@ const AnimeDetailPage: React.FC = () => {
                   style={{
                     position: 'absolute',
                     top: '116px',
-                    left: '960px'
+                    left: '900px'
                   }}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-0 md:grid-cols-1 gap-1">
                     {selectedSeason && (
                       <div className="mt-6">
                         <h2 className="text-2xl font-bold text-white mb-4">Episodes in {selectedSeason.name}</h2>
@@ -335,7 +335,7 @@ const AnimeDetailPage: React.FC = () => {
                           {Array.from({ length: selectedSeason.episodes }, (_, i) => (
                             <div
                               key={i}
-                              className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group"
+                              className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group px-6"
                             >
                               <div className="flex items-center gap-2">
                                 <Play className="h-5 w-5 text-blue-500" />
