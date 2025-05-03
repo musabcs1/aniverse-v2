@@ -15,6 +15,7 @@ const AnimeDetailPage: React.FC = () => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<{ name: string; episodes: number } | null>(null);
+  const [isSeasonsVisible, setIsSeasonsVisible] = useState(false); // State to control visibility of seasons
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', id],
@@ -161,6 +162,18 @@ const AnimeDetailPage: React.FC = () => {
     }
   };
 
+  const handleSeasonClick = (season: { name: string; episodes: number }) => {
+    setSelectedSeason(season); // Set the selected season
+    setIsSeasonsVisible(true); // Ensure the seasons section remains visible
+  };
+
+  const handleWatchNowClick = () => {
+    setIsSeasonsVisible((prev) => !prev); // Toggle the visibility of the seasons section
+    if (isSeasonsVisible) {
+      setSelectedSeason(null); // Hide the episodes section if seasons are being hidden
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0D0D1A] pt-20">
@@ -258,7 +271,10 @@ const AnimeDetailPage: React.FC = () => {
                   </div>
                   <p className="text-gray-300 mb-6">{anime.description}</p>
                   <div className="space-y-4">
-                    <button className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC]">
+                    <button 
+                      className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC]"
+                      onClick={handleWatchNowClick}
+                    >
                       <Play className="h-5 w-5" />
                       Watch Now
                     </button>
@@ -281,24 +297,26 @@ const AnimeDetailPage: React.FC = () => {
                       Share
                     </button>
                   </div>
-                  <div className="mt-6">
-                    <h2 className="text-2xl font-bold text-white mb-4">Seasons</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {anime.seasons && Array.isArray(anime.seasons) ? (
-                        anime.seasons.map((season: { name: string; episodes: number }, index: number) => (
-                          <button
-                            key={index}
-                            className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] transition-colors"
-                            onClick={() => setSelectedSeason(season)}
-                          >
-                            {season.name}
-                          </button>
-                        ))
-                      ) : (
-                        <p className="text-gray-400">No seasons available.</p>
-                      )}
+                  {isSeasonsVisible && (
+                    <div className="mt-6">
+                      <h2 className="text-2xl font-bold text-white mb-4">Seasons</h2>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {anime.seasons && Array.isArray(anime.seasons) ? (
+                          anime.seasons.map((season: { name: string; episodes: number }, index: number) => (
+                            <button
+                              key={index}
+                              className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] transition-colors"
+                              onClick={() => handleSeasonClick(season)}
+                            >
+                              {season.name}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-gray-400">No seasons available.</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Right Column */}
@@ -311,29 +329,30 @@ const AnimeDetailPage: React.FC = () => {
                 >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {selectedSeason && (
-                      <h2 className="text-2xl font-bold text-white mb-4">Episodes in {selectedSeason.name}</h2>
-                    )}
-                    {selectedSeason &&
-                      Array.from({ length: selectedSeason.episodes }, (_, i) => (
-                        <div
-                          key={i}
-                          className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Play className="h-5 w-5 text-blue-500" />
-                            <span className="text-lg">Episode {i + 1}</span>
-                          </div>
+                      <div className="mt-6">
+                        <h2 className="text-2xl font-bold text-white mb-4">Episodes in {selectedSeason.name}</h2>
+                        <div className="overflow-y-auto max-h-96 space-y-4">
+                          {Array.from({ length: selectedSeason.episodes }, (_, i) => (
+                            <div
+                              key={i}
+                              className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Play className="h-5 w-5 text-blue-500" />
+                                <span className="text-lg">Episode {i + 1}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0">
-          </div>
-          <ToastContainer />
         </div>
+        <ToastContainer />
       </main>
       <footer className="bg-[#0D0D1A] py-6">
         <div className="container mx-auto px-4 text-center text-gray-400">

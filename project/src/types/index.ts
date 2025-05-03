@@ -11,7 +11,7 @@ export interface Anime {
   status: 'Ongoing' | 'Completed' | 'Upcoming';
   studio: string;
   voiceActors?: VoiceActor[];
-  seasons?: number; // Number of seasons available for the anime
+  seasons?: { name: string; episodes: number }[]; // Array of seasons with name and episode count
   episodesPerSeason?: number; // Number of episodes per season
 }
 
