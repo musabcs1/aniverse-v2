@@ -77,10 +77,8 @@ service cloud.firestore {
     }
 
     // Anime collection rules
-    match /anime/{animeId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    match /anime/{document=**} {
+      allow read, write: if true; // Allow all access for testing purposes
     }
 
     // Badges rules

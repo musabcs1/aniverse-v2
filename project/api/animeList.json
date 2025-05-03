@@ -116,5 +116,40 @@
       { "name": "Season 4", "episodes": 25 },
       { "name": "Season 5", "episodes": 25 }
     ]
+  },
+  {
+    "id": "7",
+    "title": "Dragon Ball Z",
+    "bannerImage": "https://images4.alphacoders.com/737/737842.jpg",
+    "coverImage": "https://m.media-amazon.com/images/I/71xd6Q3P5xL._AC_UF894,1000_QL80_.jpg",
+    "description": "Goku defends Earth against powerful foes.",
+    "episodes": 291,
+    "genres": ["Action", "Martial Arts", "Adventure"],
+    "rating": 8.7,
+    "releaseYear": 1989,
+    "status": "Completed",
+    "studio": "Toei Animation",
+    "seasons": [
+      { "name": "Saiyan Saga", "episodes": 35 },
+      { "name": "Frieza Saga", "episodes": 40 },
+      { "name": "Cell Saga", "episodes": 47 },
+      { "name": "Majin Buu Saga", "episodes": 97 }
+    ]
+  },
+  {
+    "id": "8",
+    "title": "Blue Lock",
+    "bannerImage": "https://cdn.wallpapersafari.com/74/87/g6kdQg.jpg",
+    "coverImage": "https://m.media-amazon.com/images/M/MV5BZWI3ZjE2ZTYtZTcxYS00ZGM0LThkYmItMTlhOGI0NDVjMjM3XkEyXkFqcGc@._V1_.jpg",
+    "description": "Japan's search for the ultimate striker.",
+    "episodes": 24,
+    "genres": ["Sports", "Psychological", "Drama"],
+    "rating": 8.4,
+    "releaseYear": 2022,
+    "status": "Ongoing",
+    "studio": "8bit",
+    "seasons": [
+      { "name": "Season 1", "episodes": 24 }
+    ]
   }
 ]
