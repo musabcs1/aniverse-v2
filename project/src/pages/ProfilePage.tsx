@@ -540,6 +540,27 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Badges Section */}
+            <div className="bg-surface rounded-xl p-5 mt-6">
+              <h3 className="text-xl font-semibold mb-4">Badges</h3>
+              {badgesLoading ? (
+                <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
+              ) : badges && badges.length > 0 ? (
+                <div className="space-y-4">
+                  {badges.map((badge) => (
+                    <div key={badge.id || badge.name} className="flex items-center bg-surface-light p-3 rounded-lg">
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center mr-3">
+                        {getBadgeIcon(badge.name as UserRole)}
+                      </div>
+                      <span className="text-white font-medium">{badge.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400">No badges earned yet.</p>
+              )}
+            </div>
           </div>
           
           {/* Main Content */}

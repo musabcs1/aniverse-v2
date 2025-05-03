@@ -124,10 +124,11 @@ const AnimeDetailPage: React.FC = () => {
         // Remove from completed list
         await updateDoc(userDocRef, {
           completed: arrayRemove(anime.id),
-          'stats.completed': increment(-1)
+          'stats.completed': increment(-1),
+          xp: increment(-20) // Deduct XP only when unmarking as completed
         });
-        
-        toast.success(`${anime.title} removed from completed list`);
+
+        toast.success(`${anime.title} removed from completed list (-20 XP)`);
       } else {
         // Add to completed list
         const updatedData: any = {
