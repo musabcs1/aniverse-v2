@@ -163,8 +163,7 @@ const AnimeDetailPage: React.FC = () => {
   };
 
   const handleSeasonClick = (season: { name: string; episodes: number }) => {
-    setSelectedSeason(season); // Set the selected season
-    setIsSeasonsVisible(true); // Ensure the seasons section remains visible
+    navigate(`/anime/${id}/season/${season.name}`); // Navigate to the season's page
   };
 
   const handleWatchNowClick = () => {

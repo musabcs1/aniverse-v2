@@ -11,6 +11,7 @@ import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import NotificationsPage from './pages/NotificationsPage';
 import SearchPage from './pages/SearchPage';
+import AnimeSeasonPage from './pages/AnimeSeasonPage';
 import Layout from './components/layout/Layout';
 
 // Create a client
@@ -32,6 +33,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/anime" element={<AnimeDirectoryPage />} />
             <Route path="/anime/:id" element={<AnimeDetailPage />} />
+            <Route path="/anime/:id/season/:seasonName" element={<AnimeSeasonPage />} />
             <Route path="/forum" element={<ForumPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/profile" element={<ProfilePage />} />

@@ -59,13 +59,21 @@ export interface User {
 
 export type ForumCategory = 'General' | 'Anime' | 'Theory' | 'Memes' | 'Reviews';
 
+export interface Comment {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: Date;
+}
+
 export interface ForumThread {
   id: string;
   title: string;
   content: string;
   authorId: string;
   authorName: string;
-  authorAvatar?: string;
+  authorAvatar: string; // Made this property required
   createdAt: Date;
   updatedAt: Date;
   category: ForumCategory;
