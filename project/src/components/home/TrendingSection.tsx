@@ -1,1 +1,0 @@
-// Removed the TrendingSection component from the site by deleting its file.
