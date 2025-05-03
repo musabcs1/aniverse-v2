@@ -65,16 +65,18 @@
     "bannerImage":"https://wallpaperaccess.com/full/7418018.png",
     "coverImage": "https://m.media-amazon.com/images/M/MV5BMWU1OGEwNmQtNGM3MS00YTYyLThmYmMtN2FjYzQzNzNmNTE0XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
     "description": "A boy fights demons to save his sister.",
-    "episodes": 26,
+    "episodes": 69,
     "genres": ["Action", "Adventure", "Supernatural"],
-    "rating": 8.7,
+    "rating": 8.6,
     "releaseYear": 2019,
     "status": "Ongoing",
     "studio": "ufotable",
     "seasons": [
       { "name": "Season 1", "episodes": 26 },
-      { "name": "Mugen Train", "episodes": 7 },
-      { "name": "Entertainment District", "episodes": 11 }
+      { "name": "Season 2", "episodes": 18 },
+      { "name": "Season 3", "episodes": 11 },
+      { "name": "Season 4", "episodes": 8 },   
+      { "name": "Season 5", "episodes": 6 }   
     ]
   },
   {
