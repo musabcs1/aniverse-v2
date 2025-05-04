@@ -176,14 +176,6 @@ const AnimeSeasonPage: React.FC = () => {
             <button className="bg-green-500 text-white px-4 py-2 rounded">▶</button>
           </div>
           <div className="grid grid-cols-4 gap-4">
-            {Array.from({ length: selectedSeason.episodes }, (_, i) => (
-              <img
-                key={i}
-                src={`https://via.placeholder.com/150?text=Episode+${i + 1}`}
-                alt={`Episode ${i + 1}`}
-                className="w-full h-32 object-cover rounded hover:opacity-80 cursor-pointer"
-              />
-            ))}
           </div>
         </div>
 
