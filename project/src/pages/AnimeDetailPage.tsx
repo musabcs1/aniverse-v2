@@ -10,7 +10,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const AnimeDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { animeId } = useParams<{ animeId: string }>();
   const navigate = useNavigate();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -18,19 +18,25 @@ const AnimeDetailPage: React.FC = () => {
   const [isSeasonsVisible, setIsSeasonsVisible] = useState(false); // State to control visibility of seasons
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
-    queryKey: ['anime', id],
+    queryKey: ['anime', animeId],
     queryFn: async () => {
-      if (!id) throw new Error('No ID provided');
-      const animeDoc = doc(db, 'anime', id);
+      if (!animeId) {
+        console.error('No anime ID provided in URL');
+        throw new Error('No anime ID provided');
+      }
+      console.log('Fetching anime with ID:', animeId);
+      const animeDoc = doc(db, 'anime', animeId);
       const animeSnapshot = await getDoc(animeDoc);
-      
+      console.log('Firestore document snapshot:', animeSnapshot.exists() ? animeSnapshot.data() : 'Document does not exist');
+
       if (!animeSnapshot.exists()) {
+        console.error(`Anime with ID ${animeId} not found in Firestore`);
         throw new Error('Anime not found');
       }
-      
+
       return { ...animeSnapshot.data(), id: animeSnapshot.id } as Anime;
     },
-    enabled: !!id,
+    enabled: !!animeId,
     retry: false,
   });
 
@@ -163,7 +169,9 @@ const AnimeDetailPage: React.FC = () => {
   };
 
   const handleSeasonClick = (season: { name: string; episodes: number }) => {
-    navigate(`/anime/${id}/season/${season.name}`); // Navigate to the season's page
+    // Convert "Season 1" to "season-1"
+    const urlFriendlySeasonName = season.name.toLowerCase().replace(' ', '-');
+    navigate(`/anime/${animeId}/season/${urlFriendlySeasonName}`);
   };
 
   const handleWatchNowClick = () => {
@@ -191,6 +199,7 @@ const AnimeDetailPage: React.FC = () => {
   }
 
   if (error || !anime) {
+    console.error('Error loading anime details:', error);
     return (
       <div className="min-h-screen bg-[#0D0D1A] pt-20">
         <div className="container mx-auto px-4 text-center">

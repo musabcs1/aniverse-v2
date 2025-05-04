@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { X, Home, Film, MessageSquare, Newspaper, User, Bell, Search } from 'lucide-react';
 import Logo from '../ui/Logo';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -23,13 +23,25 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
   }, []);
 
   useEffect(() => {
+    // Only fetch notifications if there's a user logged in
+    if (!auth.currentUser) {
+      setNotificationsCount(0);
+      return;
+    }
+
     const notificationsRef = collection(db, 'notifications');
-    const unsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+    // Query only notifications for the current user
+    const q = query(notificationsRef, where('userId', '==', auth.currentUser.uid));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       setNotificationsCount(snapshot.size);
+    }, (error) => {
+      console.error('Error fetching notifications:', error);
+      setNotificationsCount(0);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth.currentUser]);
 
   const handleLogout = () => {
     localStorage.removeItem('userData');

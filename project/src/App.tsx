@@ -27,13 +27,13 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/anime" element={<AnimeDirectoryPage />} />
-            <Route path="/anime/:id" element={<AnimeDetailPage />} />
-            <Route path="/anime/:id/season/:seasonName" element={<AnimeSeasonPage />} />
+            <Route path="/anime/:animeId" element={<AnimeDetailPage />} />
+            <Route path="/anime/:animeId/season/:seasonName" element={<AnimeSeasonPage />} />
             <Route path="/forum" element={<ForumPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
