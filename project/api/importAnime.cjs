@@ -45,7 +45,7 @@ const updateAnimeCollection = async () => {
       const docId = generateDocId(anime);
       const animeDoc = doc(animeCollection, docId);
       const animeData = {
-        id: docId, // Use the same ID for both document ID and data
+        id: docId,
         title: anime.title,
         description: anime.description,
         coverImage: anime.coverImage,
@@ -57,8 +57,7 @@ const updateAnimeCollection = async () => {
         status: anime.status,
         studio: anime.studio,
         voiceActors: anime.voiceActors || [],
-        seasons: anime.seasons || 1,
-        episodesPerSeason: anime.episodesPerSeason || 12,
+        seasons: anime.seasons || [{ name: 'Season 1', episodes: anime.episodes }],
       };
 
       await setDoc(animeDoc, animeData);
