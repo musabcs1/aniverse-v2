@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Play } from 'lucide-react';
-import { Anime } from '../types';
+import { Anime, AnimeEpisodes } from '../types';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import Header from '../components/layout/Header';
@@ -12,6 +12,9 @@ const AnimeSeasonPage: React.FC = () => {
   const { animeId, seasonName } = useParams<{ animeId: string; seasonName: string }>();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
+  const [episodesData, setEpisodesData] = useState<AnimeEpisodes | null>(null);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [embedCode, setEmbedCode] = useState<string>('');
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen((prev) => !prev);
@@ -26,6 +29,54 @@ const AnimeSeasonPage: React.FC = () => {
       return docSnap.data() as Anime;
     }
   });
+
+  // Fetch episodes data
+  useEffect(() => {
+    if (animeId) {
+      const fetchEpisodesData = async () => {
+        try {
+          setLoadingEpisodes(true);
+          const episodesRef = doc(db, 'anime_episodes', animeId);
+          const episodesDoc = await getDoc(episodesRef);
+          
+          if (episodesDoc.exists()) {
+            setEpisodesData(episodesDoc.data() as AnimeEpisodes);
+          }
+        } catch (error) {
+          console.error('Error fetching episodes data:', error);
+        } finally {
+          setLoadingEpisodes(false);
+        }
+      };
+      
+      fetchEpisodesData();
+    }
+  }, [animeId]);
+
+  // Set embed code when episode is selected
+  useEffect(() => {
+    if (selectedEpisode !== null && episodesData && seasonName) {
+      const formattedSeasonName = 
+        anime?.seasons?.find(season => {
+          const urlFriendlyName = season.name.toLowerCase().replace(' ', '-');
+          return urlFriendlyName === seasonName;
+        })?.name || '';
+      
+      const episodeNumber = String(selectedEpisode + 1);
+      
+      if (
+        formattedSeasonName && 
+        episodesData.seasons[formattedSeasonName] && 
+        episodesData.seasons[formattedSeasonName][episodeNumber]
+      ) {
+        setEmbedCode(episodesData.seasons[formattedSeasonName][episodeNumber].embedCode);
+      } else {
+        setEmbedCode('');
+      }
+    } else {
+      setEmbedCode('');
+    }
+  }, [selectedEpisode, episodesData, seasonName, anime]);
 
   if (isLoading) {
     return (
@@ -105,6 +156,12 @@ const AnimeSeasonPage: React.FC = () => {
     );
   }
 
+  // Check if episodes data is available
+  const hasEpisodesData = 
+    episodesData && 
+    episodesData.seasons[selectedSeason.name] && 
+    Object.keys(episodesData.seasons[selectedSeason.name]).length > 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
@@ -138,6 +195,13 @@ const AnimeSeasonPage: React.FC = () => {
                         } transition-colors`} />
                         <span className={selectedEpisode === i ? 'font-medium' : ''}>
                           Episode {i + 1}
+                          {hasEpisodesData && 
+                           episodesData.seasons[selectedSeason.name][(i + 1).toString()] && 
+                           episodesData.seasons[selectedSeason.name][(i + 1).toString()].title !== `Episode ${i + 1}` && (
+                            <span className="ml-2 text-gray-400 text-sm">
+                              - {episodesData.seasons[selectedSeason.name][(i + 1).toString()].title}
+                            </span>
+                          )}
                         </span>
                       </div>
                     </button>
@@ -150,14 +214,18 @@ const AnimeSeasonPage: React.FC = () => {
           {/* Video Player */}
           <div className="flex-1">
             <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
-              <div className="aspect-video bg-black rounded-t-xl mb-6 flex items-center justify-center">
+              <div className="aspect-video bg-black rounded-t-xl mb-6">
                 {selectedEpisode !== null ? (
-                  <div className="text-center">
-                    <Play className="h-16 w-16 text-secondary mx-auto mb-4 animate-pulse" />
-                    <p className="text-gray-400">Playing Episode {selectedEpisode + 1}</p>
-                  </div>
+                  embedCode ? (
+                    <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: embedCode }} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <Play className="h-16 w-16 text-secondary mx-auto mb-4 animate-pulse" />
+                      <p className="text-gray-400">No embed code available for Episode {selectedEpisode + 1}</p>
+                    </div>
+                  )
                 ) : (
-                  <div className="text-center">
+                  <div className="flex items-center justify-center h-full">
                     <p className="text-gray-400 mb-2">Select an episode to start watching</p>
                     <Play className="h-12 w-12 text-gray-600 mx-auto opacity-50" />
                   </div>

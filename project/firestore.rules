@@ -81,6 +81,11 @@ service cloud.firestore {
     match /anime/{document=**} {
       allow read, write: if true; // Allow all access for testing purposes
     }
+    
+    // Anime episodes collection rules
+    match /anime_episodes/{animeId} {
+      allow read, write: if true; // Allow all operations temporarily for debugging
+    }
 
     // Badges rules
     match /badges/{badgeId} {

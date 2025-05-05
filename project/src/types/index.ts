@@ -13,6 +13,20 @@ export interface Anime {
   voiceActors?: VoiceActor[];
   seasons?: { name: string; episodes: number }[]; // Array of seasons with name and episode count
   episodesPerSeason?: number; // Number of episodes per season
+  hasEpisodesData?: boolean; // Flag to indicate if episodes data is available
+}
+
+// New interface for anime episodes data in Firebase
+export interface AnimeEpisodes {
+  animeId: string;
+  seasons: {
+    [seasonName: string]: {
+      [episodeNumber: string]: {
+        embedCode: string;
+        title?: string;
+      }
+    }
+  }
 }
 
 export interface VoiceActor {

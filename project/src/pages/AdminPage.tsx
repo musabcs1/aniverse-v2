@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebaseConfig';
 import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where, setDoc } from 'firebase/firestore';
-import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown, Film } from 'lucide-react';
-import { ForumThread, UserRole, Anime } from '../types';
+import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown, Film, Edit, X, Info } from 'lucide-react';
+import { ForumThread, UserRole, Anime, AnimeEpisodes } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
 import { DEFAULT_BADGES } from '../services/badges';
 
@@ -60,6 +60,15 @@ const AdminPage: React.FC = () => {
   const [sortField, setSortField] = useState<'username' | 'level' | 'xp' | 'threads'>('username');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showAnimeUpload, setShowAnimeUpload] = useState(false);
+  
+  // New state variables for anime management
+  const [showAnimeManagement, setShowAnimeManagement] = useState(false);
+  const [animes, setAnimes] = useState<Anime[]>([]);
+  const [loadingAnimes, setLoadingAnimes] = useState(false);
+  const [selectedAnime, setSelectedAnime] = useState<Anime | null>(null);
+  const [animeSearchTerm, setAnimeSearchTerm] = useState('');
+  const [editingAnime, setEditingAnime] = useState(false);
+  
   const [newAnime, setNewAnime] = useState<Partial<Anime>>({
     title: '',
     description: '',
@@ -75,6 +84,16 @@ const AdminPage: React.FC = () => {
   });
 
   const [selectedSeason, setSelectedSeason] = useState(0);
+
+  // Add new state variables for episode management
+  const [managingEpisodes, setManagingEpisodes] = useState(false);
+  const [episodesData, setEpisodesData] = useState<AnimeEpisodes | null>(null);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [currentSeason, setCurrentSeason] = useState<string>('');
+  const [currentEpisode, setCurrentEpisode] = useState<string>('');
+  const [embedCode, setEmbedCode] = useState<string>('');
+  const [episodeTitle, setEpisodeTitle] = useState<string>('');
+  const [savingEpisode, setSavingEpisode] = useState(false);
 
   const handleSeasonChange = (index: number, field: 'name' | 'episodes', value: string | number) => {
     const updatedSeasons = [...(newAnime.seasons || [])];
@@ -243,6 +262,79 @@ const AdminPage: React.FC = () => {
       setLoadingThreads(false);
     }
   };
+
+  // Fetch all animes
+  const fetchAnimes = async () => {
+    try {
+      setLoadingAnimes(true);
+      const animesRef = collection(db, 'anime');
+      const querySnapshot = await getDocs(animesRef);
+      const animesData = querySnapshot.docs.map(doc => ({ 
+        ...doc.data() 
+      } as Anime));
+      setAnimes(animesData);
+    } catch (error) {
+      console.error('Error fetching animes:', error);
+    } finally {
+      setLoadingAnimes(false);
+    }
+  };
+  
+  // Update anime
+  const handleUpdateAnime = async (updatedAnime: Anime) => {
+    try {
+      if (!updatedAnime.id) {
+        throw new Error('Anime ID is required');
+      }
+      
+      const animeRef = doc(db, 'anime', updatedAnime.id);
+      await updateDoc(animeRef, {
+        ...updatedAnime,
+        updatedAt: serverTimestamp(),
+      });
+      
+      // Update the anime in the local state
+      setAnimes(prevAnimes => prevAnimes.map(anime => 
+        anime.id === updatedAnime.id ? updatedAnime : anime
+      ));
+      
+      setSelectedAnime(null);
+      setEditingAnime(false);
+      alert('Anime updated successfully!');
+    } catch (error) {
+      console.error('Error updating anime:', error);
+      alert('Failed to update anime');
+    }
+  };
+
+  // Delete anime
+  const handleDeleteAnime = async (animeId: string) => {
+    if (window.confirm('Are you sure you want to delete this anime? This action cannot be undone.')) {
+      try {
+        await deleteDoc(doc(db, 'anime', animeId));
+        
+        // Remove the anime from the local state
+        setAnimes(prevAnimes => prevAnimes.filter(anime => anime.id !== animeId));
+        
+        if (selectedAnime?.id === animeId) {
+          setSelectedAnime(null);
+          setEditingAnime(false);
+        }
+        
+        alert('Anime deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting anime:', error);
+        alert('Failed to delete anime');
+      }
+    }
+  };
+  
+  // Load animes when showing anime management
+  useEffect(() => {
+    if (showAnimeManagement && animes.length === 0) {
+      fetchAnimes();
+    }
+  }, [showAnimeManagement]);
 
   // Load initial data
   useEffect(() => {
@@ -528,6 +620,15 @@ const AdminPage: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Filtered animes based on search term
+  const filteredAnimes = animes.filter(anime => 
+    anime.title.toLowerCase().includes(animeSearchTerm.toLowerCase()) ||
+    anime.studio.toLowerCase().includes(animeSearchTerm.toLowerCase()) ||
+    (anime.genres && anime.genres.some(genre => 
+      genre.toLowerCase().includes(animeSearchTerm.toLowerCase())
+    ))
+  );
+
   const handleAnimeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAnime.title) {
@@ -563,6 +664,129 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // Fetch episodes data for an anime
+  const fetchEpisodesData = async (animeId: string) => {
+    try {
+      setLoadingEpisodes(true);
+      const episodesRef = doc(db, 'anime_episodes', animeId);
+      const episodesDoc = await getDoc(episodesRef);
+      
+      if (episodesDoc.exists()) {
+        setEpisodesData(episodesDoc.data() as AnimeEpisodes);
+      } else {
+        // Initialize with empty structure if no data exists
+        setEpisodesData({
+          animeId,
+          seasons: {}
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching episodes data:', error);
+      alert('Failed to load episodes data');
+    } finally {
+      setLoadingEpisodes(false);
+    }
+  };
+
+  // Save episode data
+  const saveEpisodeData = async () => {
+    if (!selectedAnime || !episodesData || !currentSeason || !currentEpisode || !embedCode) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setSavingEpisode(true);
+      
+      // Create a deep copy of the existing data
+      const updatedData = JSON.parse(JSON.stringify(episodesData)) as AnimeEpisodes;
+      
+      // Initialize the season object if it doesn't exist
+      if (!updatedData.seasons[currentSeason]) {
+        updatedData.seasons[currentSeason] = {};
+      }
+      
+      // Update the episode data
+      updatedData.seasons[currentSeason][currentEpisode] = {
+        embedCode,
+        title: episodeTitle || `Episode ${currentEpisode}`
+      };
+      
+      // Save to Firestore
+      await setDoc(doc(db, 'anime_episodes', selectedAnime.id), updatedData);
+      
+      // Update the local state
+      setEpisodesData(updatedData);
+      
+      // Update the anime to indicate it has episodes data
+      if (!selectedAnime.hasEpisodesData) {
+        const animeRef = doc(db, 'anime', selectedAnime.id);
+        await updateDoc(animeRef, {
+          hasEpisodesData: true
+        });
+        
+        // Update local state
+        setSelectedAnime({
+          ...selectedAnime,
+          hasEpisodesData: true
+        });
+      }
+      
+      alert('Episode data saved successfully');
+      
+      // Clear the form for a new entry
+      setEmbedCode('');
+      setEpisodeTitle('');
+    } catch (error) {
+      console.error('Error saving episode data:', error);
+      alert('Failed to save episode data');
+    } finally {
+      setSavingEpisode(false);
+    }
+  };
+
+  // Delete episode data
+  const deleteEpisodeData = async (seasonName: string, episodeNumber: string) => {
+    if (!selectedAnime || !episodesData) return;
+    
+    if (!window.confirm(`Are you sure you want to delete episode ${episodeNumber} from ${seasonName}?`)) {
+      return;
+    }
+    
+    try {
+      // Create a deep copy of the existing data
+      const updatedData = JSON.parse(JSON.stringify(episodesData)) as AnimeEpisodes;
+      
+      // Delete the episode
+      if (updatedData.seasons[seasonName] && updatedData.seasons[seasonName][episodeNumber]) {
+        delete updatedData.seasons[seasonName][episodeNumber];
+        
+        // Delete the season if it's empty
+        if (Object.keys(updatedData.seasons[seasonName]).length === 0) {
+          delete updatedData.seasons[seasonName];
+        }
+        
+        // Update Firestore
+        await setDoc(doc(db, 'anime_episodes', selectedAnime.id), updatedData);
+        
+        // Update local state
+        setEpisodesData(updatedData);
+        
+        alert('Episode deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting episode:', error);
+      alert('Failed to delete episode');
+    }
+  };
+
+  // Load episodes data when managing episodes
+  useEffect(() => {
+    if (managingEpisodes && selectedAnime) {
+      fetchEpisodesData(selectedAnime.id);
+    }
+  }, [managingEpisodes, selectedAnime]);
+
   if (isCheckingAdmin) {
     return (
       <div className="pt-24 pb-16">
@@ -585,14 +809,27 @@ const AdminPage: React.FC = () => {
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8">Admin Panel</h1>
 
-        {/* Add Anime Upload Button */}
-        <div className="mb-8">
+        {/* Navigation Buttons */}
+        <div className="flex flex-wrap gap-4 mb-8">
           <button
             onClick={() => setShowAnimeUpload(!showAnimeUpload)}
-            className="btn-primary flex items-center space-x-2"
+            className={`btn ${showAnimeUpload ? 'btn-primary' : 'btn-secondary'} flex items-center space-x-2`}
           >
             <Film className="h-5 w-5" />
             <span>{showAnimeUpload ? 'Hide Upload Form' : 'Upload New Anime'}</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              setShowAnimeManagement(!showAnimeManagement);
+              if (!showAnimeManagement && animes.length === 0) {
+                fetchAnimes();
+              }
+            }}
+            className={`btn ${showAnimeManagement ? 'btn-primary' : 'btn-secondary'} flex items-center space-x-2`}
+          >
+            <Film className="h-5 w-5" />
+            <span>Animes</span>
           </button>
         </div>
 
@@ -736,6 +973,553 @@ const AdminPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* Anime Management Section */}
+        {showAnimeManagement && (
+          <div className="bg-surface rounded-xl p-6 mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">Anime Management</h2>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search animes..."
+                  className="bg-surface-dark py-2 pl-9 pr-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                  value={animeSearchTerm}
+                  onChange={(e) => setAnimeSearchTerm(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+            
+            {loadingAnimes ? (
+              <div className="flex justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : filteredAnimes.length === 0 ? (
+              <p className="text-gray-400">No animes found.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredAnimes.map(anime => (
+                  <div key={anime.id} className="bg-surface-light rounded-lg overflow-hidden flex flex-col">
+                    <div className="relative h-40 overflow-hidden">
+                      <img 
+                        src={anime.coverImage || 'https://via.placeholder.com/300x200?text=No+Image'} 
+                        alt={anime.title} 
+                        className="w-full h-full object-cover transition-transform hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
+                        <div className="p-3 w-full">
+                          <h3 className="text-lg font-bold line-clamp-1">{anime.title}</h3>
+                          <div className="flex items-center text-sm text-gray-300">
+                            <span>{anime.releaseYear}</span>
+                            <span className="mx-2">•</span>
+                            <span>{anime.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3 flex-1">
+                      <p className="text-sm text-gray-400 line-clamp-2 mb-2">{anime.description}</p>
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {anime.genres?.slice(0, 3).map((genre, index) => (
+                          <span key={index} className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                            {genre}
+                          </span>
+                        ))}
+                        {anime.genres && anime.genres.length > 3 && (
+                          <span className="text-xs bg-surface-dark px-2 py-0.5 rounded-full">
+                            +{anime.genres.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-3 pt-0 flex gap-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setSelectedAnime(anime);
+                          setEditingAnime(true);
+                        }}
+                        className="p-2 rounded-lg bg-secondary/20 text-secondary hover:bg-secondary/30 transition-colors"
+                        title="Edit Anime"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedAnime(anime)}
+                        className="p-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
+                        title="View Details"
+                      >
+                        <Info className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAnime(anime.id)}
+                        className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+                        title="Delete Anime"
+                      >
+                        <Trash className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Anime Details Modal */}
+            {selectedAnime && (
+              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-auto">
+                <div className="bg-surface rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+                  <div className="flex justify-between items-center p-6 border-b border-gray-700">
+                    <h2 className="text-2xl font-semibold">
+                      {editingAnime ? 'Edit Anime' : managingEpisodes ? 'Manage Episodes' : selectedAnime.title}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        if (managingEpisodes) {
+                          setManagingEpisodes(false);
+                        } else {
+                          setSelectedAnime(null);
+                          setEditingAnime(false);
+                        }
+                      }}
+                      className="p-1 hover:bg-surface-dark rounded-full transition-colors"
+                    >
+                      <X className="h-6 w-6" />
+                    </button>
+                  </div>
+                  
+                  {managingEpisodes ? (
+                    <div className="p-6">
+                      <div className="mb-6 flex justify-between">
+                        <h3 className="text-xl font-semibold">{selectedAnime.title} - Episodes</h3>
+                        <button
+                          onClick={() => setManagingEpisodes(false)}
+                          className="btn-secondary py-1 px-3 text-sm"
+                        >
+                          Back to Anime Details
+                        </button>
+                      </div>
+
+                      <div className="bg-surface-dark p-4 rounded-lg mb-6">
+                        <h4 className="text-lg font-medium mb-4">Add/Edit Episode</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Season</label>
+                            <select
+                              className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={currentSeason}
+                              onChange={(e) => setCurrentSeason(e.target.value)}
+                            >
+                              <option value="">Select Season</option>
+                              {selectedAnime.seasons?.map((season, index) => (
+                                <option key={index} value={season.name}>
+                                  {season.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Episode Number</label>
+                            <input
+                              type="text"
+                              className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              placeholder="e.g. 1"
+                              value={currentEpisode}
+                              onChange={(e) => setCurrentEpisode(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-400 mb-1">Episode Title (Optional)</label>
+                          <input
+                            type="text"
+                            className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                            placeholder="e.g. The Beginning"
+                            value={episodeTitle}
+                            onChange={(e) => setEpisodeTitle(e.target.value)}
+                          />
+                        </div>
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-400 mb-1">Embed Code</label>
+                          <textarea
+                            className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-32 font-mono text-sm"
+                            placeholder="Paste iframe or embed code here"
+                            value={embedCode}
+                            onChange={(e) => setEmbedCode(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            onClick={saveEpisodeData}
+                            disabled={savingEpisode || !currentSeason || !currentEpisode || !embedCode}
+                            className="btn-primary py-2 px-4 flex items-center gap-2"
+                          >
+                            <Check className="h-4 w-4" />
+                            {savingEpisode ? 'Saving...' : 'Save Episode'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <h4 className="text-lg font-medium mb-4">Existing Episodes</h4>
+                        {loadingEpisodes ? (
+                          <div className="flex justify-center p-6">
+                            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        ) : episodesData && Object.keys(episodesData.seasons).length > 0 ? (
+                          <div className="space-y-6">
+                            {Object.entries(episodesData.seasons).map(([seasonName, episodes]) => (
+                              <div key={seasonName} className="bg-surface-light p-4 rounded-lg">
+                                <h5 className="font-semibold mb-3">{seasonName}</h5>
+                                <div className="space-y-2">
+                                  {Object.entries(episodes).map(([episodeNum, episodeData]) => (
+                                    <div key={episodeNum} className="flex items-center justify-between bg-surface-dark p-3 rounded-lg">
+                                      <div>
+                                        <span className="font-medium">Episode {episodeNum}</span>
+                                        {episodeData.title && episodeData.title !== `Episode ${episodeNum}` && (
+                                          <span className="ml-2 text-gray-400">- {episodeData.title}</span>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => {
+                                            setCurrentSeason(seasonName);
+                                            setCurrentEpisode(episodeNum);
+                                            setEpisodeTitle(episodeData.title || '');
+                                            setEmbedCode(episodeData.embedCode);
+                                          }}
+                                          className="p-2 rounded-lg bg-secondary/20 text-secondary hover:bg-secondary/30 transition-colors"
+                                          title="Edit Episode"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => deleteEpisodeData(seasonName, episodeNum)}
+                                          className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+                                          title="Delete Episode"
+                                        >
+                                          <Trash className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-surface-light p-6 rounded-lg text-center">
+                            <p className="text-gray-400 mb-4">No episodes have been added yet.</p>
+                            <p className="text-sm text-gray-500">Use the form above to add episodes.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : editingAnime ? (
+                    <div className="p-6">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (selectedAnime) {
+                            handleUpdateAnime(selectedAnime);
+                          }
+                        }}
+                        className="space-y-6"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Title</label>
+                            <input
+                              type="text"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.title}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, title: e.target.value})}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Cover Image URL</label>
+                            <input
+                              type="url"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.coverImage}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, coverImage: e.target.value})}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Banner Image URL</label>
+                            <input
+                              type="url"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.bannerImage || ''}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, bannerImage: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Studio</label>
+                            <input
+                              type="text"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.studio}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, studio: e.target.value})}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Release Year</label>
+                            <input
+                              type="number"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.releaseYear}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, releaseYear: parseInt(e.target.value)})}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                            <select
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.status}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, status: e.target.value as 'Upcoming' | 'Ongoing' | 'Completed'})}
+                              required
+                            >
+                              <option value="Upcoming">Upcoming</option>
+                              <option value="Ongoing">Ongoing</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Rating</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="10"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.rating}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, rating: parseFloat(e.target.value)})}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Episodes</label>
+                            <input
+                              type="number"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.episodes}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, episodes: parseInt(e.target.value)})}
+                              required
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
+                            <textarea
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-32"
+                              value={selectedAnime.description}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, description: e.target.value})}
+                              required
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Genres (comma-separated)</label>
+                            <input
+                              type="text"
+                              className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              value={selectedAnime.genres?.join(', ')}
+                              onChange={(e) => setSelectedAnime({...selectedAnime, genres: e.target.value.split(',').map(g => g.trim())})}
+                              placeholder="Action, Adventure, Comedy..."
+                              required
+                            />
+                          </div>
+                          
+                          <div className="md:col-span-2">
+                            <div className="flex items-center justify-between mb-4">
+                              <label className="text-sm font-medium text-gray-400">Seasons & Episodes</label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const seasonNumber = (selectedAnime.seasons?.length || 0) + 1;
+                                  setSelectedAnime({
+                                    ...selectedAnime,
+                                    seasons: [...(selectedAnime.seasons || []), { name: `Season ${seasonNumber}`, episodes: 0 }]
+                                  });
+                                }}
+                                className="text-secondary hover:text-secondary-light transition-colors"
+                              >
+                                + Add Season
+                              </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              {selectedAnime.seasons?.map((season, index) => (
+                                <div key={index} className="flex gap-4 items-start bg-surface-dark p-4 rounded-lg">
+                                  <div className="flex-1">
+                                    <input
+                                      type="text"
+                                      className="w-full bg-surface p-3 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-secondary"
+                                      value={season.name}
+                                      onChange={(e) => {
+                                        const updatedSeasons = [...(selectedAnime.seasons || [])];
+                                        updatedSeasons[index] = {
+                                          ...updatedSeasons[index],
+                                          name: e.target.value
+                                        };
+                                        setSelectedAnime({ ...selectedAnime, seasons: updatedSeasons });
+                                      }}
+                                      placeholder="Season Name"
+                                    />
+                                    <input
+                                      type="number"
+                                      className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                                      value={season.episodes}
+                                      onChange={(e) => {
+                                        const updatedSeasons = [...(selectedAnime.seasons || [])];
+                                        updatedSeasons[index] = {
+                                          ...updatedSeasons[index],
+                                          episodes: Number(e.target.value)
+                                        };
+                                        setSelectedAnime({ ...selectedAnime, seasons: updatedSeasons });
+                                      }}
+                                      placeholder="Number of Episodes"
+                                      min="0"
+                                    />
+                                  </div>
+                                  {(selectedAnime.seasons?.length || 0) > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updatedSeasons = (selectedAnime.seasons || []).filter((_, i) => i !== index);
+                                        setSelectedAnime({ ...selectedAnime, seasons: updatedSeasons });
+                                      }}
+                                      className="text-red-500 hover:text-red-400 transition-colors p-2"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setEditingAnime(false)}
+                            className="btn-secondary py-2 px-6"
+                          >
+                            Cancel
+                          </button>
+                          <button type="submit" className="btn-primary py-2 px-6">
+                            Save Changes
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="p-6">
+                      <div className="relative h-64 mb-6 rounded-lg overflow-hidden">
+                        <img 
+                          src={selectedAnime.bannerImage || selectedAnime.coverImage} 
+                          alt={selectedAnime.title} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
+                          <div className="p-4">
+                            <h3 className="text-2xl font-bold">{selectedAnime.title}</h3>
+                            <div className="flex items-center text-gray-300 mt-2">
+                              <span>{selectedAnime.releaseYear}</span>
+                              <span className="mx-2">•</span>
+                              <span>{selectedAnime.studio}</span>
+                              <span className="mx-2">•</span>
+                              <span>{selectedAnime.status}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2">
+                          <h4 className="text-lg font-semibold mb-2">Description</h4>
+                          <p className="text-gray-300">{selectedAnime.description}</p>
+                          
+                          <h4 className="text-lg font-semibold mt-6 mb-2">Genres</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedAnime.genres?.map((genre, index) => (
+                              <span key={index} className="bg-primary/20 text-primary px-3 py-1 rounded-full">
+                                {genre}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <h4 className="text-lg font-semibold mt-6 mb-2">Seasons</h4>
+                          <div className="space-y-3">
+                            {selectedAnime.seasons?.map((season, index) => (
+                              <div key={index} className="bg-surface-dark p-3 rounded-lg">
+                                <div className="flex justify-between">
+                                  <h5 className="font-medium">{season.name}</h5>
+                                  <span className="text-sm text-gray-400">{season.episodes} Episodes</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="bg-surface-dark p-4 rounded-lg">
+                            <h4 className="text-lg font-semibold mb-4">Details</h4>
+                            <div className="space-y-3">
+                              <div>
+                                <div className="text-sm text-gray-400">Status</div>
+                                <div>{selectedAnime.status}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm text-gray-400">Release Year</div>
+                                <div>{selectedAnime.releaseYear}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm text-gray-400">Total Episodes</div>
+                                <div>{selectedAnime.episodes}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm text-gray-400">Rating</div>
+                                <div className="flex items-center">
+                                  <span className="text-yellow-500 mr-1">★</span>
+                                  {selectedAnime.rating.toFixed(1)}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-sm text-gray-400">Studio</div>
+                                <div>{selectedAnime.studio}</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-6 space-y-3">
+                            <button
+                              onClick={() => setEditingAnime(true)}
+                              className="w-full btn-primary py-2 flex items-center justify-center gap-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Edit Anime
+                            </button>
+                            
+                            <button
+                              onClick={() => setManagingEpisodes(true)}
+                              className="w-full btn-secondary py-2 flex items-center justify-center gap-2"
+                            >
+                              <Film className="h-4 w-4" />
+                              Manage Episodes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
