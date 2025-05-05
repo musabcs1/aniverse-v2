@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Play } from 'lucide-react';
 import { Anime } from '../types';
-import { db, auth } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import Header from '../components/layout/Header';
 
 const AnimeSeasonPage: React.FC = () => {
   const navigate = useNavigate();
   const { animeId, seasonName } = useParams<{ animeId: string; seasonName: string }>();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen((prev) => !prev);
@@ -18,52 +20,22 @@ const AnimeSeasonPage: React.FC = () => {
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', animeId],
     queryFn: async () => {
-      try {
-        // Wait for auth to initialize
-        await new Promise<void>((resolve) => {
-          const unsubscribe = auth.onAuthStateChanged(() => {
-            unsubscribe();
-            resolve();
-          });
-        });
-
-        if (!animeId) {
-          console.error('No anime ID provided in URL');
-          throw new Error('No anime ID provided');
-        }
-
-        console.log('Fetching anime with ID:', animeId);
-        const animeDoc = doc(db, 'anime', animeId);
-        const animeSnapshot = await getDoc(animeDoc);
-
-        if (!animeSnapshot.exists()) {
-          console.error(`Anime with ID ${animeId} not found in Firestore`);
-          throw new Error('Anime not found');
-        }
-
-        const animeData = { ...animeSnapshot.data(), id: animeSnapshot.id } as Anime;
-        console.log('Anime data loaded:', animeData);
-        return animeData;
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
-        console.error('Error in anime query:', errorMessage);
-        throw new Error(errorMessage);
-      }
-    },
-    enabled: !!animeId,
-    retry: 1,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      const docRef = doc(db, 'anime', animeId!);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) throw new Error('Anime not found');
+      return docSnap.data() as Anime;
+    }
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
-        <div className="container mx-auto px-4">
-          <div className="animate-pulse flex gap-8">
-            <div className="w-1/4 h-[600px] bg-[#2B0144] rounded-lg"></div>
-            <div className="flex-1 h-[600px] bg-[#2B0144] rounded-lg"></div>
-            <div className="w-1/4 h-[600px] bg-[#2B0144] rounded-lg"></div>
+      <div className="min-h-screen bg-background">
+        <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
+        <div className="container mx-auto px-4 pt-24">
+          <div className="animate-pulse flex flex-col md:flex-row gap-8">
+            <div className="w-full md:w-1/4 h-[600px] bg-surface rounded-xl"></div>
+            <div className="flex-1 h-[600px] bg-surface rounded-xl"></div>
+            <div className="w-full md:w-1/4 h-[600px] bg-surface rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -71,16 +43,14 @@ const AnimeSeasonPage: React.FC = () => {
   }
 
   if (error instanceof Error && error.message) {
-    console.error('Error loading anime details:', error);
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="text-red-500 mb-4">
-            {error.message}
-          </div>
+      <div className="min-h-screen bg-background">
+        <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
+        <div className="container mx-auto px-4 pt-24 text-center">
+          <div className="text-red-500 mb-4">{error.message}</div>
           <button 
             onClick={() => navigate(-1)}
-            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
+            className="btn-primary py-2 px-6"
           >
             Back to Anime Details
           </button>
@@ -89,32 +59,15 @@ const AnimeSeasonPage: React.FC = () => {
     );
   }
 
-  if (!anime) {
+  if (!anime || !anime.seasons || !Array.isArray(anime.seasons)) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="text-red-500 mb-4">
-            Failed to load anime data
-          </div>
-          <button 
-            onClick={() => navigate(-1)}
-            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
-          >
-            Back to Anime Details
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!anime.seasons || !Array.isArray(anime.seasons)) {
-    return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
-        <div className="container mx-auto px-4 text-center">
+      <div className="min-h-screen bg-background">
+        <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
+        <div className="container mx-auto px-4 pt-24 text-center">
           <div className="text-red-500 mb-4">No seasons available for this anime</div>
           <button 
             onClick={() => navigate(-1)}
-            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
+            className="btn-primary py-2 px-6"
           >
             Back to Anime Details
           </button>
@@ -124,19 +77,19 @@ const AnimeSeasonPage: React.FC = () => {
   }
 
   const selectedSeason = anime.seasons?.find((season) => {
-    // Convert both the URL parameter and season name to the same format for comparison
     const urlFriendlySeasonName = season.name.toLowerCase().replace(' ', '-');
     return urlFriendlySeasonName === seasonName;
   });
 
   if (!selectedSeason) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
-        <div className="container mx-auto px-4 text-center">
+      <div className="min-h-screen bg-background">
+        <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
+        <div className="container mx-auto px-4 pt-24 text-center">
           <div className="text-red-500 mb-4">Season not found</div>
           <button 
             onClick={() => navigate(-1)}
-            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
+            className="btn-primary py-2 px-6"
           >
             Back to Anime Details
           </button>
@@ -146,53 +99,90 @@ const AnimeSeasonPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
-      <div className="flex flex-grow bg-[#0D0D1A] pt-20">
-        {/* Episodes List */}
-        <div className="w-1/4 bg-[#1A1A2E] text-white overflow-y-auto">
-          <button
-            className="w-full bg-red-600 py-3 text-center text-white font-bold hover:bg-red-700"
-            onClick={() => navigate(-1)}
-          >
-            Back to Details
-          </button>
-          <h2 className="text-center text-xl font-bold py-4">Episodes in {selectedSeason.name}</h2>
-          <ul>
-            {Array.from({ length: selectedSeason.episodes }, (_, i) => (
-              <li
-                key={i}
-                className="py-2 px-4 hover:bg-red-500 cursor-pointer border-b border-gray-700"
+      <div className="container mx-auto px-4 pt-24 pb-12">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Episodes List */}
+          <div className="w-full lg:w-1/4 space-y-6">
+            <div className="bg-surface rounded-xl overflow-hidden shadow-lg">
+              <button
+                className="w-full bg-primary hover:bg-primary-dark py-3 text-center text-white font-medium transition-colors"
+                onClick={() => navigate(-1)}
               >
-                Episode {i + 1}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Video Player and Thumbnails */}
-        <div className="flex-1 p-4">
-          <div className="bg-black w-full h-64 flex items-center justify-center mb-4">
-            <button className="bg-green-500 text-white px-4 py-2 rounded">▶</button>
+                Back to Details
+              </button>
+              <div className="p-6">
+                <h2 className="text-xl font-bold text-white mb-4">{selectedSeason.name}</h2>
+                <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary scrollbar-track-surface-dark">
+                  {Array.from({ length: selectedSeason.episodes }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedEpisode(i)}
+                      className={`w-full p-4 rounded-lg text-white transition-all flex items-center justify-between group ${
+                        selectedEpisode === i 
+                          ? 'bg-surface-light border-l-4 border-secondary' 
+                          : 'bg-surface-dark hover:bg-surface-light'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Play className={`h-5 w-5 ${
+                          selectedEpisode === i ? 'text-secondary' : 'text-primary group-hover:text-secondary'
+                        } transition-colors`} />
+                        <span className={selectedEpisode === i ? 'font-medium' : ''}>
+                          Episode {i + 1}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-4">
-          </div>
-        </div>
 
-        {/* Streaming Servers */}
-        <div className="w-1/4 bg-[#1A1A2E] text-white overflow-y-auto">
-          <h2 className="text-center text-xl font-bold py-4">Streaming Servers</h2>
-          <ul>
-            {['EarnVids', 'StreamHG', 'listeamed', 'upshare', 'VK', 'luluvdo', 'ok', 'vid1sha'].map((server) => (
-              <li
-                key={server}
-                className="py-2 px-4 hover:bg-blue-500 cursor-pointer border-b border-gray-700 flex items-center justify-between"
-              >
-                {server}
-                <button className="bg-green-500 text-white px-2 py-1 rounded">▶</button>
-              </li>
-            ))}
-          </ul>
+          {/* Video Player */}
+          <div className="flex-1">
+            <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
+              <div className="aspect-video bg-black rounded-t-xl mb-6 flex items-center justify-center">
+                {selectedEpisode !== null ? (
+                  <div className="text-center">
+                    <Play className="h-16 w-16 text-secondary mx-auto mb-4 animate-pulse" />
+                    <p className="text-gray-400">Playing Episode {selectedEpisode + 1}</p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-gray-400 mb-2">Select an episode to start watching</p>
+                    <Play className="h-12 w-12 text-gray-600 mx-auto opacity-50" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <h2 className="text-xl font-bold text-white">About {anime.title}</h2>
+                <p className="text-gray-400 leading-relaxed">{anime.description}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Streaming Servers */}
+          <div className="w-full lg:w-1/4">
+            <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
+              <h2 className="text-xl font-bold text-white p-6 border-b border-surface-light">
+                Streaming Servers
+              </h2>
+              <div className="divide-y divide-surface-light">
+                {['EarnVids', 'StreamHG', 'listeamed', 'upshare', 'VK', 'luluvdo', 'ok', 'vid1sha'].map((server) => (
+                  <button
+                    key={server}
+                    className="w-full p-4 text-left hover:bg-surface-light transition-colors flex items-center justify-between group"
+                  >
+                    <span className="text-gray-300 group-hover:text-white transition-colors">{server}</span>
+                    <Play className="h-4 w-4 text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

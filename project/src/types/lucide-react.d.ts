@@ -45,6 +45,7 @@ declare module 'lucide-react' {
   export const Lock: React.FC<IconProps>;
   export const Shield: React.FC<IconProps>;
   export const Bookopen: React.FC<IconProps>;
+  export const Monitor: React.FC<IconProps>;
   export const Home: React.FC<IconProps>;
   export const Film: React.FC<IconProps>;
   export const Newspaper: React.FC<IconProps>;
