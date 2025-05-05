@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where } from 'firebase/firestore';
-import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown } from 'lucide-react';
-import { ForumThread, UserRole } from '../types';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where, setDoc } from 'firebase/firestore';
+import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown, Film } from 'lucide-react';
+import { ForumThread, UserRole, Anime } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
 import { DEFAULT_BADGES } from '../services/badges';
 
@@ -59,6 +59,44 @@ const AdminPage: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [sortField, setSortField] = useState<'username' | 'level' | 'xp' | 'threads'>('username');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showAnimeUpload, setShowAnimeUpload] = useState(false);
+  const [newAnime, setNewAnime] = useState<Partial<Anime>>({
+    title: '',
+    description: '',
+    coverImage: '',
+    bannerImage: '',
+    episodes: 0,
+    releaseYear: new Date().getFullYear(),
+    rating: 0,
+    status: 'Upcoming' as const,
+    studio: '',
+    genres: [],
+    seasons: [{ name: 'Season 1', episodes: 0 }],
+  });
+
+  const [selectedSeason, setSelectedSeason] = useState(0);
+
+  const handleSeasonChange = (index: number, field: 'name' | 'episodes', value: string | number) => {
+    const updatedSeasons = [...(newAnime.seasons || [])];
+    updatedSeasons[index] = {
+      ...updatedSeasons[index],
+      [field]: field === 'episodes' ? Number(value) : value
+    };
+    setNewAnime({ ...newAnime, seasons: updatedSeasons });
+  };
+
+  const addSeason = () => {
+    const seasonNumber = (newAnime.seasons?.length || 0) + 1;
+    setNewAnime({
+      ...newAnime,
+      seasons: [...(newAnime.seasons || []), { name: `Season ${seasonNumber}`, episodes: 0 }]
+    });
+  };
+
+  const removeSeason = (index: number) => {
+    const updatedSeasons = (newAnime.seasons || []).filter((_, i) => i !== index);
+    setNewAnime({ ...newAnime, seasons: updatedSeasons });
+  };
 
   // Check if the user has admin access
   useEffect(() => {
@@ -464,6 +502,41 @@ const AdminPage: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const handleAnimeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAnime.title) {
+      alert('Title is required');
+      return;
+    }
+    try {
+      const animeRef = collection(db, 'anime');
+      const docId = newAnime.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      await setDoc(doc(animeRef, docId), {
+        ...newAnime,
+        id: docId,
+        createdAt: serverTimestamp(),
+      });
+      
+      alert('Anime added successfully!');
+      setNewAnime({
+        title: '',
+        description: '',
+        coverImage: '',
+        bannerImage: '',
+        episodes: 0,
+        releaseYear: new Date().getFullYear(),
+        rating: 0,
+        status: 'Upcoming',
+        studio: '',
+        genres: [],
+        seasons: [{ name: 'Season 1', episodes: 0 }],
+      });
+    } catch (error) {
+      console.error('Error adding anime:', error);
+      alert('Failed to add anime');
+    }
+  };
+
   if (isCheckingAdmin) {
     return (
       <div className="pt-24 pb-16">
@@ -485,6 +558,160 @@ const AdminPage: React.FC = () => {
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8">Admin Panel</h1>
+
+        {/* Add Anime Upload Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowAnimeUpload(!showAnimeUpload)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Film className="h-5 w-5" />
+            <span>{showAnimeUpload ? 'Hide Upload Form' : 'Upload New Anime'}</span>
+          </button>
+        </div>
+
+        {/* Anime Upload Form */}
+        {showAnimeUpload && (
+          <div className="bg-surface rounded-xl p-6 mb-8">
+            <h2 className="text-2xl font-semibold mb-6">Upload New Anime</h2>
+            <form onSubmit={handleAnimeSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Title</label>
+                  <input
+                    type="text"
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.title}
+                    onChange={(e) => setNewAnime({ ...newAnime, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Cover Image URL</label>
+                  <input
+                    type="url"
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.coverImage}
+                    onChange={(e) => setNewAnime({ ...newAnime, coverImage: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Banner Image URL</label>
+                  <input
+                    type="url"
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.bannerImage}
+                    onChange={(e) => setNewAnime({ ...newAnime, bannerImage: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Studio</label>
+                  <input
+                    type="text"
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.studio}
+                    onChange={(e) => setNewAnime({ ...newAnime, studio: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Release Year</label>
+                  <input
+                    type="number"
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.releaseYear}
+                    onChange={(e) => setNewAnime({ ...newAnime, releaseYear: parseInt(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                  <select
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.status}
+                    onChange={(e) => setNewAnime({ ...newAnime, status: e.target.value as 'Upcoming' | 'Ongoing' | 'Completed' })}
+                    required
+                  >
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
+                  <textarea
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-32"
+                    value={newAnime.description}
+                    onChange={(e) => setNewAnime({ ...newAnime, description: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Genres (comma-separated)</label>
+                  <input
+                    type="text"
+                    className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                    value={newAnime.genres?.join(', ')}
+                    onChange={(e) => setNewAnime({ ...newAnime, genres: e.target.value.split(',').map(g => g.trim()) })}
+                    placeholder="Action, Adventure, Comedy..."
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-medium text-gray-400">Seasons & Episodes</label>
+                    <button
+                      type="button"
+                      onClick={addSeason}
+                      className="text-secondary hover:text-secondary-light transition-colors"
+                    >
+                      + Add Season
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {newAnime.seasons?.map((season, index) => (
+                      <div key={index} className="flex gap-4 items-start bg-surface-dark p-4 rounded-lg">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            className="w-full bg-surface p-3 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-secondary"
+                            value={season.name}
+                            onChange={(e) => handleSeasonChange(index, 'name', e.target.value)}
+                            placeholder="Season Name"
+                          />
+                          <input
+                            type="number"
+                            className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                            value={season.episodes}
+                            onChange={(e) => handleSeasonChange(index, 'episodes', e.target.value)}
+                            placeholder="Number of Episodes"
+                            min="0"
+                          />
+                        </div>
+                        {newAnime.seasons!.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeSeason(index)}
+                            className="text-red-500 hover:text-red-400 transition-colors p-2"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button type="submit" className="btn-primary py-2 px-6">
+                  Upload Anime
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Statistics Dashboard */}
         <div className="bg-surface rounded-xl p-6 mb-8">

@@ -75,7 +75,7 @@ const ForumPage: React.FC = () => {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.exists() ? userDoc.data() : {};
-      const authorAvatar = userData.avatar || 'https://i.pravatar.cc/150?img=33';
+      const authorAvatar = userData.avatar || 'https://secure.gravatar.com/avatar/f0431f05c802c06f06a3e5997b3053df/?default=https%3A%2F%2Fus.v-cdn.net%2F5020483%2Fuploads%2Fdefaultavatar%2FK2266OAKOLNC.jpg&rating=g&size=200';
 
       const threadsRef = collection(db, 'forumThreads');
       await addDoc(threadsRef, {
