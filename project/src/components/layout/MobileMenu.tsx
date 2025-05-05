@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { X, Home, Film, MessageSquare, Newspaper, User, Bell, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
+import LanguageSelector from '../LanguageSelector';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
   const [userData, setUserData] = useState<any | null>(null);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
@@ -65,10 +68,17 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
         <div className="relative mb-6">
           <input 
             type="text" 
-            placeholder="Search anime..." 
+            placeholder={t('common.search') + "..."} 
             className="bg-surface/60 py-3 pl-10 pr-4 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-secondary text-white"
           />
           <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+        </div>
+        
+        <div className="mb-4">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-surface-dark">
+            <span className="text-lg font-medium">{t('common.language')}</span>
+            <LanguageSelector />
+          </div>
         </div>
       </div>
       
@@ -77,37 +87,37 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
           <li>
             <Link to="/" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
               <Home className="h-6 w-6 text-secondary" />
-              <span className="text-lg font-medium">Home</span>
+              <span className="text-lg font-medium">{t('header.home')}</span>
             </Link>
           </li>
           <li>
             <Link to="/anime" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
               <Film className="h-6 w-6 text-secondary" />
-              <span className="text-lg font-medium">Anime</span>
+              <span className="text-lg font-medium">{t('header.browse')}</span>
             </Link>
           </li>
           <li>
             <Link to="/forum" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
               <MessageSquare className="h-6 w-6 text-secondary" />
-              <span className="text-lg font-medium">Forum</span>
+              <span className="text-lg font-medium">{t('header.forum')}</span>
             </Link>
           </li>
           <li>
             <Link to="/news" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
               <Newspaper className="h-6 w-6 text-secondary" />
-              <span className="text-lg font-medium">News</span>
+              <span className="text-lg font-medium">{t('header.news')}</span>
             </Link>
           </li>
           <li>
             <Link to="/profile" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
               <User className="h-6 w-6 text-secondary" />
-              <span className="text-lg font-medium">Profile</span>
+              <span className="text-lg font-medium">{t('user.profile')}</span>
             </Link>
           </li>
           <li>
             <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface">
               <Bell className="h-6 w-6 text-secondary" />
-              <span className="text-lg font-medium">Notifications</span>
+              <span className="text-lg font-medium">{t('user.notifications')}</span>
               <span className="bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto">
                 {notificationsCount}
               </span>
@@ -122,7 +132,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
             onClick={handleLogout}
             className="block w-full py-3 text-center font-medium text-white bg-surface rounded-lg"
           >
-            Sign Out
+            {t('header.logout')}
           </button>
         ) : (
           <Link 
@@ -130,7 +140,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
             className="block w-full py-3 text-center font-medium text-white bg-primary rounded-lg"
             onClick={closeMenu}
           >
-            Sign In
+            {t('header.login')}
           </Link>
         )}
       </div>

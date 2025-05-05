@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import { Notification } from '../../types';
 import { onSnapshot, collection, doc, getDoc, query, where } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import LanguageSelector from '../LanguageSelector';
 
 interface HeaderProps {
   toggleMobileMenu: () => void;
@@ -15,6 +17,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [userData, setUserData] = useState<any | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -117,10 +120,10 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
           <div className="flex items-center">
             <Logo />
             <nav className="hidden md:flex ml-8 space-x-1">
-              <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
-              <Link to="/anime" className={`nav-link ${isActive('/anime') ? 'active' : ''}`}>Anime</Link>
-              <Link to="/forum" className={`nav-link ${isActive('/forum') ? 'active' : ''}`}>Forum</Link>
-              <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>News</Link>
+              <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>{t('header.home')}</Link>
+              <Link to="/anime" className={`nav-link ${isActive('/anime') ? 'active' : ''}`}>{t('header.browse')}</Link>
+              <Link to="/forum" className={`nav-link ${isActive('/forum') ? 'active' : ''}`}>{t('header.forum')}</Link>
+              <Link to="/news" className={`nav-link ${isActive('/news') ? 'active' : ''}`}>{t('header.news')}</Link>
             </nav>
           </div>
 
@@ -129,7 +132,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
               <form onSubmit={handleSearch}>
                 <input 
                   type="text" 
-                  placeholder="Search..." 
+                  placeholder={t('common.search') + "..."} 
                   className="bg-surface/60 py-2 pl-10 pr-4 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,6 +147,8 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                 {unreadCount}
               </span>
             </button>
+
+            <LanguageSelector />
           </div>
 
           {userData ? (
@@ -156,7 +161,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                   <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
                     <img 
                       src={userData.avatar} 
-                      alt="Profile"
+                      alt={t('user.profile')}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -166,26 +171,26 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                 {showProfileMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
                     <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
-                      Profile
+                      {t('user.profile')}
                     </Link>
                     <button 
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
+                      {t('header.logout')}
                     </button>
                   </div>
                 )}
               </div>
               {userData?.role === 'admin' && (
                 <Link to="/admin" className="btn-secondary">
-                  Admin Panel
+                  {t('header.admin')}
                 </Link>
               )}
             </>
           ) : (
-            <Link to="/auth" className="btn-primary">Sign In</Link>
+            <Link to="/auth" className="btn-primary">{t('header.login')}</Link>
           )}
 
           <button 
