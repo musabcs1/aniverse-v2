@@ -296,6 +296,20 @@ const AdminPage: React.FC = () => {
     }
 
     try {
+      // Check admin access
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser!.uid));
+      const userData = userDoc.data();
+      const hasAdminBadge = badges.some(badge => badge.name === 'admin');
+      const isAdminRole = userData?.role === 'admin';
+
+      console.log('Current user role:', userData?.role);
+      console.log('Current user badges:', badges.map(badge => badge.name));
+
+      if (!hasAdminBadge && !isAdminRole) {
+        alert('You do not have the necessary permissions to delete this user.');
+        return;
+      }
+
       // Delete user's content
       const threadsRef = collection(db, 'forumThreads');
       const threadsQuery = query(threadsRef, where('authorId', '==', userId));
@@ -311,7 +325,19 @@ const AdminPage: React.FC = () => {
       alert('User deleted successfully.');
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user.');
+
+      // Log detailed error information
+      if (error instanceof Error) {
+        console.error('Error code:', error.name);
+        console.error('Error message:', error.message);
+      }
+
+      // Check for Firebase permission error
+      if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        alert('You do not have the necessary permissions to delete this user.');
+      } else {
+        alert('Failed to delete user. Please try again.');
+      }
     }
   };
 

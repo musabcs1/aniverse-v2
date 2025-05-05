@@ -42,12 +42,19 @@ const AnimeSeasonPage: React.FC = () => {
     );
   }
 
-  if (error instanceof Error && error.message) {
+  if (error instanceof Error) {
+    let errorMessage = error.message;
+
+    // Check for Firebase permission error
+    if (errorMessage.includes('Missing or insufficient permissions')) {
+      errorMessage = 'You do not have the necessary permissions to access this content.';
+    }
+
     return (
       <div className="min-h-screen bg-background">
         <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
         <div className="container mx-auto px-4 pt-24 text-center">
-          <div className="text-red-500 mb-4">{error.message}</div>
+          <div className="text-red-500 mb-4">{errorMessage}</div>
           <button 
             onClick={() => navigate(-1)}
             className="btn-primary py-2 px-6"

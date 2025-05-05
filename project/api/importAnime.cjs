@@ -70,4 +70,12 @@ const updateAnimeCollection = async () => {
   }
 };
 
+function addAnimeToList(newAnime) {
+  const animeList = JSON.parse(fs.readFileSync(animeListPath, 'utf-8'));
+  animeList.push(newAnime);
+  fs.writeFileSync(animeListPath, JSON.stringify(animeList, null, 2), 'utf-8');
+}
+
 updateAnimeCollection();
+
+module.exports = { addAnimeToList };
