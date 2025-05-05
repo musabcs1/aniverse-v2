@@ -93,6 +93,7 @@ const AdminPage: React.FC = () => {
   const [currentEpisode, setCurrentEpisode] = useState<string>('');
   const [embedCode, setEmbedCode] = useState<string>('');
   const [episodeTitle, setEpisodeTitle] = useState<string>('');
+  const [episodeLanguage, setEpisodeLanguage] = useState<string>('en');
   const [savingEpisode, setSavingEpisode] = useState(false);
 
   const handleSeasonChange = (index: number, field: 'name' | 'episodes', value: string | number) => {
@@ -690,7 +691,7 @@ const AdminPage: React.FC = () => {
 
   // Save episode data
   const saveEpisodeData = async () => {
-    if (!selectedAnime || !episodesData || !currentSeason || !currentEpisode || !embedCode) {
+    if (!selectedAnime || !episodesData || !currentSeason || !currentEpisode || !embedCode || !episodeLanguage) {
       alert('Please fill in all required fields');
       return;
     }
@@ -706,11 +707,21 @@ const AdminPage: React.FC = () => {
         updatedData.seasons[currentSeason] = {};
       }
       
-      // Update the episode data
-      updatedData.seasons[currentSeason][currentEpisode] = {
-        embedCode,
-        title: episodeTitle || `Episode ${currentEpisode}`
-      };
+      // Initialize the episode object if it doesn't exist
+      if (!updatedData.seasons[currentSeason][currentEpisode]) {
+        updatedData.seasons[currentSeason][currentEpisode] = {
+          embedCodes: {},
+          title: episodeTitle || `Episode ${currentEpisode}`
+        };
+      }
+      
+      // Update the episode data with the specific language embed code
+      updatedData.seasons[currentSeason][currentEpisode].embedCodes[episodeLanguage] = embedCode;
+      
+      // Update the title if provided
+      if (episodeTitle) {
+        updatedData.seasons[currentSeason][currentEpisode].title = episodeTitle;
+      }
       
       // Save to Firestore
       await setDoc(doc(db, 'anime_episodes', selectedAnime.id), updatedData);
@@ -786,6 +797,31 @@ const AdminPage: React.FC = () => {
       fetchEpisodesData(selectedAnime.id);
     }
   }, [managingEpisodes, selectedAnime]);
+
+  // When editing an episode, load the selected language's embed code
+  const editEpisode = (seasonName: string, episodeNum: string, title: string, embedCodes: { [key: string]: string }) => {
+    setCurrentSeason(seasonName);
+    setCurrentEpisode(episodeNum);
+    setEpisodeTitle(title || '');
+    
+    // Default to English if available, otherwise use the first available language
+    if (embedCodes.en) {
+      setEpisodeLanguage('en');
+      setEmbedCode(embedCodes.en);
+    } else if (embedCodes.tr) {
+      setEpisodeLanguage('tr');
+      setEmbedCode(embedCodes.tr);
+    } else {
+      const firstLanguage = Object.keys(embedCodes)[0];
+      if (firstLanguage) {
+        setEpisodeLanguage(firstLanguage);
+        setEmbedCode(embedCodes[firstLanguage]);
+      } else {
+        setEpisodeLanguage('en');
+        setEmbedCode('');
+      }
+    }
+  };
 
   if (isCheckingAdmin) {
     return (
@@ -1141,6 +1177,17 @@ const AdminPage: React.FC = () => {
                           />
                         </div>
                         <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-400 mb-1">Language</label>
+                          <select
+                            className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                            value={episodeLanguage}
+                            onChange={(e) => setEpisodeLanguage(e.target.value)}
+                          >
+                            <option value="en">English</option>
+                            <option value="tr">Turkish</option>
+                          </select>
+                        </div>
+                        <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-400 mb-1">Embed Code</label>
                           <textarea
                             className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-32 font-mono text-sm"
@@ -1174,33 +1221,40 @@ const AdminPage: React.FC = () => {
                                 <h5 className="font-semibold mb-3">{seasonName}</h5>
                                 <div className="space-y-2">
                                   {Object.entries(episodes).map(([episodeNum, episodeData]) => (
-                                    <div key={episodeNum} className="flex items-center justify-between bg-surface-dark p-3 rounded-lg">
-                                      <div>
-                                        <span className="font-medium">Episode {episodeNum}</span>
-                                        {episodeData.title && episodeData.title !== `Episode ${episodeNum}` && (
-                                          <span className="ml-2 text-gray-400">- {episodeData.title}</span>
-                                        )}
+                                    <div key={episodeNum} className="flex flex-col bg-surface-dark p-3 rounded-lg">
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <span className="font-medium">Episode {episodeNum}</span>
+                                          {episodeData.title && episodeData.title !== `Episode ${episodeNum}` && (
+                                            <span className="ml-2 text-gray-400">- {episodeData.title}</span>
+                                          )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={() => {
+                                              editEpisode(seasonName, episodeNum, episodeData.title || '', episodeData.embedCodes);
+                                            }}
+                                            className="p-2 rounded-lg bg-secondary/20 text-secondary hover:bg-secondary/30 transition-colors"
+                                            title="Edit Episode"
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </button>
+                                          <button
+                                            onClick={() => deleteEpisodeData(seasonName, episodeNum)}
+                                            className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+                                            title="Delete Episode"
+                                          >
+                                            <Trash className="h-4 w-4" />
+                                          </button>
+                                        </div>
                                       </div>
-                                      <div className="flex gap-2">
-                                        <button
-                                          onClick={() => {
-                                            setCurrentSeason(seasonName);
-                                            setCurrentEpisode(episodeNum);
-                                            setEpisodeTitle(episodeData.title || '');
-                                            setEmbedCode(episodeData.embedCode);
-                                          }}
-                                          className="p-2 rounded-lg bg-secondary/20 text-secondary hover:bg-secondary/30 transition-colors"
-                                          title="Edit Episode"
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                          onClick={() => deleteEpisodeData(seasonName, episodeNum)}
-                                          className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
-                                          title="Delete Episode"
-                                        >
-                                          <Trash className="h-4 w-4" />
-                                        </button>
+                                      {/* Display available languages */}
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {episodeData.embedCodes && Object.keys(episodeData.embedCodes).map(lang => (
+                                          <span key={lang} className="text-xs bg-primary/20 text-primary px-2.5 py-1 rounded-full">
+                                            {lang === 'en' ? '🇬🇧 English' : '🇹🇷 Turkish'}
+                                          </span>
+                                        ))}
                                       </div>
                                     </div>
                                   ))}

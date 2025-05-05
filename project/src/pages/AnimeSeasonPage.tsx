@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Play } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Anime, AnimeEpisodes } from '../types';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -15,10 +16,20 @@ const AnimeSeasonPage: React.FC = () => {
   const [episodesData, setEpisodesData] = useState<AnimeEpisodes | null>(null);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [embedCode, setEmbedCode] = useState<string>('');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const { t, i18n } = useTranslation();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen((prev) => !prev);
   };
+
+  // Set initial language from i18n
+  useEffect(() => {
+    const currentLang = i18n.language.substring(0, 2);
+    if (currentLang === 'tr' || currentLang === 'en') {
+      setSelectedLanguage(currentLang);
+    }
+  }, [i18n.language]);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', animeId],
@@ -53,7 +64,7 @@ const AnimeSeasonPage: React.FC = () => {
     }
   }, [animeId]);
 
-  // Set embed code when episode is selected
+  // Set embed code when episode is selected or language changes
   useEffect(() => {
     if (selectedEpisode !== null && episodesData && seasonName) {
       const formattedSeasonName = 
@@ -67,16 +78,60 @@ const AnimeSeasonPage: React.FC = () => {
       if (
         formattedSeasonName && 
         episodesData.seasons[formattedSeasonName] && 
-        episodesData.seasons[formattedSeasonName][episodeNumber]
+        episodesData.seasons[formattedSeasonName][episodeNumber] &&
+        episodesData.seasons[formattedSeasonName][episodeNumber].embedCodes
       ) {
-        setEmbedCode(episodesData.seasons[formattedSeasonName][episodeNumber].embedCode);
+        const episodeData = episodesData.seasons[formattedSeasonName][episodeNumber];
+        
+        // Try to get the selected language, fallback to any available language
+        if (episodeData.embedCodes[selectedLanguage]) {
+          setEmbedCode(episodeData.embedCodes[selectedLanguage]);
+        } else {
+          const availableLanguages = Object.keys(episodeData.embedCodes);
+          if (availableLanguages.length > 0) {
+            // If selected language is not available, update the selected language
+            setSelectedLanguage(availableLanguages[0]);
+            setEmbedCode(episodeData.embedCodes[availableLanguages[0]]);
+          } else {
+            setEmbedCode('');
+          }
+        }
       } else {
         setEmbedCode('');
       }
     } else {
       setEmbedCode('');
     }
-  }, [selectedEpisode, episodesData, seasonName, anime]);
+  }, [selectedEpisode, episodesData, seasonName, anime, selectedLanguage]);
+
+  // Handle language change
+  const handleLanguageChange = (language: string) => {
+    setSelectedLanguage(language);
+  };
+
+  // Get available languages for the current episode
+  const getAvailableLanguages = (): string[] => {
+    if (selectedEpisode !== null && episodesData && seasonName && anime) {
+      const formattedSeasonName = 
+        anime.seasons?.find(season => {
+          const urlFriendlyName = season.name.toLowerCase().replace(' ', '-');
+          return urlFriendlyName === seasonName;
+        })?.name || '';
+      
+      const episodeNumber = String(selectedEpisode + 1);
+      
+      if (
+        formattedSeasonName && 
+        episodesData.seasons[formattedSeasonName] && 
+        episodesData.seasons[formattedSeasonName][episodeNumber] &&
+        episodesData.seasons[formattedSeasonName][episodeNumber].embedCodes
+      ) {
+        return Object.keys(episodesData.seasons[formattedSeasonName][episodeNumber].embedCodes);
+      }
+    }
+    
+    return [];
+  };
 
   if (isLoading) {
     return (
@@ -110,7 +165,7 @@ const AnimeSeasonPage: React.FC = () => {
             onClick={() => navigate(-1)}
             className="btn-primary py-2 px-6"
           >
-            Back to Anime Details
+            {t('anime.backToDetails')}
           </button>
         </div>
       </div>
@@ -122,12 +177,12 @@ const AnimeSeasonPage: React.FC = () => {
       <div className="min-h-screen bg-background">
         <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
         <div className="container mx-auto px-4 pt-24 text-center">
-          <div className="text-red-500 mb-4">No seasons available for this anime</div>
+          <div className="text-red-500 mb-4">{t('anime.noSeasonsAvailable')}</div>
           <button 
             onClick={() => navigate(-1)}
             className="btn-primary py-2 px-6"
           >
-            Back to Anime Details
+            {t('anime.backToDetails')}
           </button>
         </div>
       </div>
@@ -144,12 +199,12 @@ const AnimeSeasonPage: React.FC = () => {
       <div className="min-h-screen bg-background">
         <Header toggleMobileMenu={toggleMobileMenu} mobileMenuOpen={mobileMenuOpen} />
         <div className="container mx-auto px-4 pt-24 text-center">
-          <div className="text-red-500 mb-4">Season not found</div>
+          <div className="text-red-500 mb-4">{t('anime.seasonNotFound')}</div>
           <button 
             onClick={() => navigate(-1)}
             className="btn-primary py-2 px-6"
           >
-            Back to Anime Details
+            {t('anime.backToDetails')}
           </button>
         </div>
       </div>
@@ -161,6 +216,9 @@ const AnimeSeasonPage: React.FC = () => {
     episodesData && 
     episodesData.seasons[selectedSeason.name] && 
     Object.keys(episodesData.seasons[selectedSeason.name]).length > 0;
+
+  // Get available languages for the current episode
+  const availableLanguages = getAvailableLanguages();
 
   return (
     <div className="min-h-screen bg-background">
@@ -174,7 +232,7 @@ const AnimeSeasonPage: React.FC = () => {
                 className="w-full bg-primary hover:bg-primary-dark py-3 text-center text-white font-medium transition-colors"
                 onClick={() => navigate(-1)}
               >
-                Back to Details
+                {t('anime.backToDetails')}
               </button>
               <div className="p-6">
                 <h2 className="text-xl font-bold text-white mb-4">{selectedSeason.name}</h2>
@@ -194,7 +252,7 @@ const AnimeSeasonPage: React.FC = () => {
                           selectedEpisode === i ? 'text-secondary' : 'text-primary group-hover:text-secondary'
                         } transition-colors`} />
                         <span className={selectedEpisode === i ? 'font-medium' : ''}>
-                          Episode {i + 1}
+                          {t('anime.episode')} {i + 1}
                           {hasEpisodesData && 
                            episodesData.seasons[selectedSeason.name][(i + 1).toString()] && 
                            episodesData.seasons[selectedSeason.name][(i + 1).toString()].title !== `Episode ${i + 1}` && (
@@ -214,6 +272,39 @@ const AnimeSeasonPage: React.FC = () => {
           {/* Video Player */}
           <div className="flex-1">
             <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
+              {/* Language selection bar */}
+              {selectedEpisode !== null && availableLanguages.length > 0 && (
+                <div className="bg-surface-dark p-3 flex justify-center items-center space-x-4 border-b border-gray-800">
+                  <span className="text-gray-400">{t('common.language')}:</span>
+                  <div className="flex space-x-2">
+                    {availableLanguages.includes('en') && (
+                      <button
+                        onClick={() => handleLanguageChange('en')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          selectedLanguage === 'en' 
+                            ? 'bg-primary text-white' 
+                            : 'bg-surface-light text-gray-300 hover:bg-primary/30'
+                        }`}
+                      >
+                        🇬🇧 English
+                      </button>
+                    )}
+                    {availableLanguages.includes('tr') && (
+                      <button
+                        onClick={() => handleLanguageChange('tr')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          selectedLanguage === 'tr' 
+                            ? 'bg-primary text-white' 
+                            : 'bg-surface-light text-gray-300 hover:bg-primary/30'
+                        }`}
+                      >
+                        🇹🇷 Türkçe
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="aspect-video bg-black rounded-t-xl mb-6">
                 {selectedEpisode !== null ? (
                   embedCode ? (
@@ -221,19 +312,23 @@ const AnimeSeasonPage: React.FC = () => {
                   ) : (
                     <div className="flex items-center justify-center h-full">
                       <Play className="h-16 w-16 text-secondary mx-auto mb-4 animate-pulse" />
-                      <p className="text-gray-400">No embed code available for Episode {selectedEpisode + 1}</p>
+                      <p className="text-gray-400">
+                        {availableLanguages.length > 0 
+                          ? t('anime.noEpisodesAvailable') 
+                          : `${t('anime.episode')} ${selectedEpisode + 1} ${t('common.error')}`}
+                      </p>
                     </div>
                   )
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400 mb-2">Select an episode to start watching</p>
+                    <p className="text-gray-400 mb-2">{t('anime.selectEpisode')}</p>
                     <Play className="h-12 w-12 text-gray-600 mx-auto opacity-50" />
                   </div>
                 )}
               </div>
               
               <div className="p-6 space-y-4">
-                <h2 className="text-xl font-bold text-white">About {anime.title}</h2>
+                <h2 className="text-xl font-bold text-white">{t('anime.about')} {anime.title}</h2>
                 <p className="text-gray-400 leading-relaxed">{anime.description}</p>
               </div>
             </div>
@@ -243,7 +338,7 @@ const AnimeSeasonPage: React.FC = () => {
           <div className="w-full lg:w-1/4">
             <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
               <h2 className="text-xl font-bold text-white p-6 border-b border-surface-light">
-                Streaming Servers
+                {t('anime.streamingServers')}
               </h2>
               <div className="divide-y divide-surface-light">
                 {['EarnVids', 'StreamHG', 'listeamed', 'upshare', 'VK', 'luluvdo', 'ok', 'vid1sha'].map((server) => (

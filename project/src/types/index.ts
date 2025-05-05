@@ -22,7 +22,9 @@ export interface AnimeEpisodes {
   seasons: {
     [seasonName: string]: {
       [episodeNumber: string]: {
-        embedCode: string;
+        embedCodes: {
+          [language: string]: string; // en, tr, etc.
+        };
         title?: string;
       }
     }
