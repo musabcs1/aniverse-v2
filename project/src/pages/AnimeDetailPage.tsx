@@ -14,27 +14,15 @@ const AnimeDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [selectedSeason, setSelectedSeason] = useState<{ name: string; episodes: number } | null>(null);
-  const [isSeasonsVisible, setIsSeasonsVisible] = useState(false); // State to control visibility of seasons
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', animeId],
     queryFn: async () => {
-      if (!animeId) {
-        console.error('No anime ID provided in URL');
-        throw new Error('No anime ID provided');
-      }
-      console.log('Fetching anime with ID:', animeId);
-      const animeDoc = doc(db, 'anime', animeId);
-      const animeSnapshot = await getDoc(animeDoc);
-      console.log('Firestore document snapshot:', animeSnapshot.exists() ? animeSnapshot.data() : 'Document does not exist');
-
-      if (!animeSnapshot.exists()) {
-        console.error(`Anime with ID ${animeId} not found in Firestore`);
-        throw new Error('Anime not found');
-      }
-
-      return { ...animeSnapshot.data(), id: animeSnapshot.id } as Anime;
+      if (!animeId) throw new Error('No anime ID provided');
+      const docRef = doc(db, 'anime', animeId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) throw new Error('Anime not found');
+      return { ...docSnap.data(), id: docSnap.id } as Anime;
     },
     enabled: !!animeId,
     retry: false,
@@ -61,60 +49,35 @@ const AnimeDetailPage: React.FC = () => {
     checkUserStatus();
   }, [anime]);
 
-  useEffect(() => {
-    if (selectedSeason) {
-      // Automatically update the episodes section when a season is selected
-      console.log(`Displaying episodes for ${selectedSeason.name}`);
-    }
-  }, [selectedSeason]);
-
   const handleToggleWatchlist = async () => {
-    if (!auth.currentUser) {
-      console.error('User is not logged in.');
-      return;
-    }
-    if (!anime) return;
+    if (!auth.currentUser || !anime) return;
 
     try {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
 
       if (isInWatchlist) {
-        // Remove from watchlist
         await updateDoc(userDocRef, {
           watchlist: arrayRemove(anime.id),
           watching: increment(-1)
         });
-        toast.success(`${anime.title} has been removed from your watchlist.`, {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        toast.success(`${anime.title} has been removed from your watchlist.`);
       } else {
-        // Add to watchlist
         await updateDoc(userDocRef, {
           watchlist: arrayUnion(anime.id),
           watching: increment(1)
         });
-        toast.success(`${anime.title} has been added to your watchlist.`, {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        toast.success(`${anime.title} has been added to your watchlist.`);
       }
 
       setIsInWatchlist(!isInWatchlist);
     } catch (error) {
       console.error('Error updating watchlist:', error);
-      toast.error('Failed to update watchlist. Please try again.', {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.error('Failed to update watchlist. Please try again.');
     }
   };
 
   const handleMarkAsCompleted = async () => {
-    if (!auth.currentUser || !anime) {
-      console.error('User is not logged in or anime not found');
-      return;
-    }
+    if (!auth.currentUser || !anime) return;
 
     try {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -128,34 +91,27 @@ const AnimeDetailPage: React.FC = () => {
       const userData = userSnapshot.data();
       
       if (isCompleted) {
-        // Remove from completed list
         await updateDoc(userDocRef, {
           completed: arrayRemove(anime.id),
           'stats.completed': increment(-1),
-          xp: increment(-20) // Deduct XP only when unmarking as completed
+          xp: increment(-20)
         });
-
         toast.success(`${anime.title} removed from completed list (-20 XP)`);
       } else {
-        // Add to completed list
-        const updatedData: any = {
+        const updatedData: Record<string, any> = {
           completed: arrayUnion(anime.id),
           'stats.completed': increment(1),
-          xp: increment(20) // Give XP for completing an anime
+          xp: increment(20)
         };
 
-        // Remove from watchlist if it's there
         if (isInWatchlist) {
           updatedData.watchlist = arrayRemove(anime.id);
           setIsInWatchlist(false);
         }
 
         await updateDoc(userDocRef, updatedData);
-
-        // Update user level based on new XP
-        const newXP = (userData.xp || 0) + 20;
         await updateDoc(userDocRef, {
-          level: Math.floor(newXP / 1000) + 1
+          level: Math.floor((userData.xp || 0) / 1000) + 1
         });
 
         toast.success(`${anime.title} marked as completed! (+20 XP)`);
@@ -169,29 +125,22 @@ const AnimeDetailPage: React.FC = () => {
   };
 
   const handleSeasonClick = (season: { name: string; episodes: number }) => {
-    // Convert "Season 1" to "season-1"
     const urlFriendlySeasonName = season.name.toLowerCase().replace(' ', '-');
     navigate(`/anime/${animeId}/season/${urlFriendlySeasonName}`);
-  };
-
-  const handleWatchNowClick = () => {
-    setIsSeasonsVisible((prev) => !prev); // Toggle the visibility of the seasons section
-    if (isSeasonsVisible) {
-      setSelectedSeason(null); // Hide the episodes section if seasons are being hidden
-    }
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0D0D1A] pt-20">
         <div className="container mx-auto px-4">
-          <div className="animate-pulse flex gap-8">
-            <div className="w-[300px] h-[450px] bg-[#2B0144] rounded-lg"></div>
-            <div className="flex-1">
+          <div className="animate-pulse grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-3 h-[523px] bg-[#2B0144] rounded-lg"></div>
+            <div className="lg:col-span-6">
               <div className="h-8 w-1/2 bg-[#2B0144] rounded mb-4"></div>
               <div className="h-4 w-full bg-[#2B0144] rounded mb-2"></div>
               <div className="h-4 w-3/4 bg-[#2B0144] rounded"></div>
             </div>
+            <div className="lg:col-span-3 h-[523px] bg-[#2B0144] rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -199,7 +148,6 @@ const AnimeDetailPage: React.FC = () => {
   }
 
   if (error || !anime) {
-    console.error('Error loading anime details:', error);
     return (
       <div className="min-h-screen bg-[#0D0D1A] pt-20">
         <div className="container mx-auto px-4 text-center">
@@ -223,31 +171,18 @@ const AnimeDetailPage: React.FC = () => {
         <div className="relative min-h-screen">
           <div className="min-h-screen bg-[#0D0D1A] pt-20">
             <div className="container mx-auto px-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Column */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '99px',
-                    left: '16px',
-                    width: '348px',
-                    height: '523px'
-                  }}
-                >
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Column - Cover Image */}
+                <div className="lg:col-span-3">
                   <img
                     src={anime.coverImage}
                     alt={anime.title}
-                    className="w-full h-full object-cover rounded-lg shadow-xl"
+                    className="w-full h-[523px] object-cover rounded-lg shadow-xl"
                   />
                 </div>
 
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '104px',
-                    left: '394px'
-                  }}
-                >
+                {/* Middle Column - Info */}
+                <div className="lg:col-span-6">
                   <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
                   <div className="flex items-center gap-4 text-gray-300 mb-4">
                     <div className="flex items-center gap-2">
@@ -280,8 +215,8 @@ const AnimeDetailPage: React.FC = () => {
                   <p className="text-gray-300 mb-6">{anime.description}</p>
                   <div className="space-y-4">
                     <button 
-                      className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC]"
-                      onClick={handleWatchNowClick}
+                      className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC] transition-transform hover:scale-105"
+                      onClick={() => anime.seasons && anime.seasons.length > 0 && handleSeasonClick(anime.seasons[0])}
                     >
                       <Play className="h-5 w-5" />
                       Watch Now
@@ -305,55 +240,31 @@ const AnimeDetailPage: React.FC = () => {
                       Share
                     </button>
                   </div>
-                  {isSeasonsVisible && (
-                    <div className="mt-6">
-                      <h2 className="text-2xl font-bold text-white mb-4">Seasons</h2>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {anime.seasons && Array.isArray(anime.seasons) ? (
-                          anime.seasons.map((season: { name: string; episodes: number }, index: number) => (
-                            <button
-                              key={index}
-                              className="bg-[#00F0FF] text-white w-full py-3 rounded-lg hover:bg-[#00C0CC] transition-colors px-6"
-                              onClick={() => handleSeasonClick(season)}
-                            >
-                              {season.name}
-                            </button>
-                          ))
-                        ) : (
-                          <p className="text-gray-400">No seasons available.</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                {/* Right Column */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '116px',
-                    left: '900px'
-                  }}
-                >
-                  <div className="grid grid-cols-0 md:grid-cols-1 gap-1">
-                    {selectedSeason && (
-                      <div className="mt-6">
-                        <h2 className="text-2xl font-bold text-white mb-4">Episodes in {selectedSeason.name}</h2>
-                        <div className="overflow-y-auto max-h-96 space-y-4">
-                          {Array.from({ length: selectedSeason.episodes }, (_, i) => (
-                            <div
-                              key={i}
-                              className="w-full p-4 bg-[#1f0a39] rounded-lg text-white hover:bg-[#00f0ff]/20 transition-colors flex items-center justify-between group px-6"
-                            >
-                              <div className="flex items-center gap-2">
-                                <Play className="h-5 w-5 text-blue-500" />
-                                <span className="text-lg">Episode {i + 1}</span>
-                              </div>
+                {/* Right Column - Seasons */}
+                <div className="lg:col-span-3">
+                  <div className="bg-surface rounded-xl p-6">
+                    <h2 className="text-2xl font-bold text-white mb-4">Seasons</h2>
+                    <div className="space-y-3">
+                      {anime.seasons && Array.isArray(anime.seasons) ? (
+                        anime.seasons.map((season: { name: string; episodes: number }, index: number) => (
+                          <button
+                            key={index}
+                            className="bg-surface-dark text-white w-full py-3 rounded-lg hover:bg-primary transition-colors px-6 flex items-center justify-between group"
+                            onClick={() => handleSeasonClick(season)}
+                          >
+                            <span>{season.name}</span>
+                            <div className="flex items-center gap-2 text-gray-400 group-hover:text-white">
+                              <span className="text-sm">{season.episodes} Episodes</span>
+                              <Play className="h-4 w-4" />
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-gray-400 text-center py-4">No seasons available.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
