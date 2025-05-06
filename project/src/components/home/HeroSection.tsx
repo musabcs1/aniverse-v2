@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Anime } from '../../types';
 
@@ -12,26 +12,48 @@ const HeroSection: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLatestAnime = async () => {
+    const fetchFeaturedAnime = async () => {
       try {
         setLoading(true);
         const animesRef = collection(db, 'anime');
-        const q = query(animesRef, orderBy('releaseYear', 'desc'), limit(4));
+        
+        // List of featured anime titles
+        const featuredAnimeTitles = [
+          "Jujutsu Kaisen",
+          "My Hero Academia",
+          "Demon Slayer",
+          "One Piece"
+        ];
+        
+        // Get all anime and filter for the featured ones
+        const q = query(animesRef, limit(50));
         const querySnapshot = await getDocs(q);
         
-        const animesData = querySnapshot.docs.map(doc => ({
+        const allAnime = querySnapshot.docs.map(doc => ({
+          id: doc.id,
           ...doc.data()
         } as Anime));
         
-        setLatestAnime(animesData);
+        // Filter to only include our featured anime and sort them in the specified order
+        const featuredAnime = featuredAnimeTitles
+          .map(title => {
+            // Find anime with exact title or containing the title
+            return allAnime.find(anime => 
+              anime.title.toLowerCase() === title.toLowerCase() ||
+              anime.title.toLowerCase().includes(title.toLowerCase())
+            );
+          })
+          .filter(anime => anime !== undefined) as Anime[];
+        
+        setLatestAnime(featuredAnime);
       } catch (error) {
-        console.error('Error fetching latest anime:', error);
+        console.error('Error fetching featured anime:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLatestAnime();
+    fetchFeaturedAnime();
   }, []);
 
   useEffect(() => {
@@ -82,7 +104,7 @@ const HeroSection: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 h-full flex items-center">
+      <div className="relative z-10 container mx-auto px-4 h-full flex items-end pb-20">
         <div className="max-w-2xl">
           {latestAnime.map((anime, index) => (
             <div
