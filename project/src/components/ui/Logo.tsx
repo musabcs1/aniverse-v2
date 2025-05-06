@@ -37,7 +37,7 @@ const Logo: React.FC<LogoProps> = ({
           }`}
           style={{ color: textColor }}
         >
-          ANINEST
+           
         </span>
       </div>
     </Link>
