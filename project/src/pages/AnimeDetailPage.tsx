@@ -131,16 +131,16 @@ const AnimeDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
+      <div className="min-h-screen bg-background pt-20">
         <div className="container mx-auto px-4">
           <div className="animate-pulse grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-3 h-[523px] bg-[#2B0144] rounded-lg"></div>
+            <div className="lg:col-span-3 h-[523px] bg-primary/20 rounded-lg"></div>
             <div className="lg:col-span-6">
-              <div className="h-8 w-1/2 bg-[#2B0144] rounded mb-4"></div>
-              <div className="h-4 w-full bg-[#2B0144] rounded mb-2"></div>
-              <div className="h-4 w-3/4 bg-[#2B0144] rounded"></div>
+              <div className="h-8 w-1/2 bg-primary/20 rounded mb-4"></div>
+              <div className="h-4 w-full bg-primary/20 rounded mb-2"></div>
+              <div className="h-4 w-3/4 bg-primary/20 rounded"></div>
             </div>
-            <div className="lg:col-span-3 h-[523px] bg-[#2B0144] rounded-lg"></div>
+            <div className="lg:col-span-3 h-[523px] bg-primary/20 rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -149,14 +149,14 @@ const AnimeDetailPage: React.FC = () => {
 
   if (error || !anime) {
     return (
-      <div className="min-h-screen bg-[#0D0D1A] pt-20">
+      <div className="min-h-screen bg-background pt-20">
         <div className="container mx-auto px-4 text-center">
           <div className="text-red-500 mb-4">
             {error instanceof Error ? error.message : 'Error loading anime details'}
           </div>
           <button 
             onClick={() => navigate('/anime')}
-            className="bg-[#9B00FF] text-white px-6 py-2 rounded-lg hover:bg-[#7A00CC]"
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark"
           >
             Back to Anime List
           </button>
@@ -169,7 +169,7 @@ const AnimeDetailPage: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow">
         <div className="relative min-h-screen">
-          <div className="min-h-screen bg-[#0D0D1A] pt-20">
+          <div className="min-h-screen bg-background pt-20">
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left Column - Cover Image */}
@@ -186,19 +186,19 @@ const AnimeDetailPage: React.FC = () => {
                   <h1 className="text-4xl font-bold text-white mb-4">{anime.title}</h1>
                   <div className="flex items-center gap-4 text-gray-300 mb-4">
                     <div className="flex items-center gap-2">
-                      <StarIcon className="h-5 w-5 text-[#0DFFFF]" />
+                      <StarIcon className="h-5 w-5 text-primary" />
                       <span>{anime.rating.toFixed(1)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-5 w-5 text-[#0DFFFF]" />
+                      <CalendarIcon className="h-5 w-5 text-primary" />
                       <span>{anime.releaseYear}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <ClockIcon className="h-5 w-5 text-[#0DFFFF]" />
+                      <ClockIcon className="h-5 w-5 text-primary" />
                       <span>{anime.episodes} Episodes</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clapperboard className="h-5 w-5 text-[#0DFFFF]" />
+                      <Clapperboard className="h-5 w-5 text-primary" />
                       <span>{anime.studio}</span>
                     </div>
                   </div>
@@ -206,7 +206,7 @@ const AnimeDetailPage: React.FC = () => {
                     {anime.genres.map((genre, index) => (
                       <span 
                         key={index}
-                        className="px-3 py-1 text-sm rounded-full bg-[#31055A] text-white"
+                        className="px-3 py-1 text-sm rounded-full bg-primary/30 text-white"
                       >
                         {genre}
                       </span>
@@ -215,14 +215,14 @@ const AnimeDetailPage: React.FC = () => {
                   <p className="text-gray-300 mb-6">{anime.description}</p>
                   <div className="space-y-4">
                     <button 
-                      className="bg-[#9B00FF] text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#7A00CC] transition-transform hover:scale-105"
+                      className="bg-primary text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-dark transition-transform hover:scale-105"
                       onClick={() => anime.seasons && anime.seasons.length > 0 && handleSeasonClick(anime.seasons[0])}
                     >
                       <Play className="h-5 w-5" />
                       Watch Now
                     </button>
                     <button 
-                      className={`bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform ${isInWatchlist ? 'bg-[#7A00CC]' : ''}`}
+                      className={`bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform ${isInWatchlist ? 'bg-primary-dark' : ''}`}
                       onClick={handleToggleWatchlist}
                     >
                       <BookmarkPlus className="h-5 w-5" />
@@ -273,7 +273,7 @@ const AnimeDetailPage: React.FC = () => {
         </div>
         <ToastContainer />
       </main>
-      <footer className="bg-[#0D0D1A] py-6">
+      <footer className="bg-background py-6">
         <div className="container mx-auto px-4 text-center text-gray-400">
           <p>❤</p>
         </div>

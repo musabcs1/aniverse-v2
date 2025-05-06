@@ -14,16 +14,16 @@ const Footer: React.FC = () => {
               Premium anime streaming and community platform for true fans. Experience anime like never before.
             </p>
             <div className="flex space-x-4 mt-6">
-              <a href="#" className="text-gray-400 hover:text-secondary transition-colors">
+              <a href="#" className="text-gray-400 hover:text-primary transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-secondary transition-colors">
+              <a href="#" className="text-gray-400 hover:text-primary transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-secondary transition-colors">
+              <a href="#" className="text-gray-400 hover:text-primary transition-colors">
                 <Youtube className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-secondary transition-colors">
+              <a href="#" className="text-gray-400 hover:text-primary transition-colors">
                 <MessageSquare className="h-5 w-5" />
               </a>
             </div>
@@ -43,10 +43,10 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-medium mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Cookie Policy</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">DMCA</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-primary transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-primary transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-primary transition-colors">Cookie Policy</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-primary transition-colors">DMCA</a></li>
             </ul>
           </div>
           

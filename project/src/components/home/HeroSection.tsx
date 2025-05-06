@@ -160,7 +160,7 @@ const HeroSection: React.FC = () => {
             onClick={() => setActiveIndex(index)}
             className={`w-3 h-3 rounded-full transition-all ${
               index === activeIndex
-                ? 'bg-secondary w-10'
+                ? 'bg-primary w-10'
                 : 'bg-gray-500 hover:bg-gray-400'
             }`}
             aria-label={`Go to slide ${index + 1}`}

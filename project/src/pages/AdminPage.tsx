@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebaseConfig';
 import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where, setDoc } from 'firebase/firestore';
-import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown, Film, Edit, X, Info } from 'lucide-react';
+import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown, Film, Edit, X, Info, Play } from 'lucide-react';
 import { ForumThread, UserRole, Anime, AnimeEpisodes } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
 import { DEFAULT_BADGES } from '../services/badges';
@@ -1072,7 +1072,7 @@ const AdminPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={addSeason}
-                      className="text-secondary hover:text-secondary-light transition-colors"
+                      className="text-primary hover:text-primary-light transition-colors"
                     >
                       + Add Season
                     </button>
@@ -1186,7 +1186,7 @@ const AdminPage: React.FC = () => {
                           setSelectedAnime(anime);
                           setEditingAnime(true);
                         }}
-                        className="p-2 rounded-lg bg-secondary/20 text-secondary hover:bg-secondary/30 transition-colors"
+                        className="p-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
                         title="Edit Anime"
                       >
                         <Edit className="h-5 w-5" />
@@ -1200,8 +1200,7 @@ const AdminPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteAnime(anime.id)}
-                        className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
-                        title="Delete Anime"
+                        className="p-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
                       >
                         <Trash className="h-5 w-5" />
                       </button>
@@ -1707,8 +1706,8 @@ const AdminPage: React.FC = () => {
 
             <div className="bg-surface-light p-4 rounded-lg">
               <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center mr-4">
-                  <MessageSquare className="h-6 w-6 text-secondary" />
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                  <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <div className="text-2xl font-bold">{stats.totalThreads}</div>

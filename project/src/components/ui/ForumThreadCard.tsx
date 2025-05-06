@@ -162,7 +162,7 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
             className="w-10 h-10 rounded-full"
           />
           <div>
-            <Link to={`/forum/${thread.id}`} className="font-bold text-white hover:text-secondary transition-colors">
+            <Link to={`/forum/${thread.id}`} className="font-bold text-white hover:text-primary transition-colors">
               {thread.title}
             </Link>
             <div className="flex items-center mt-1 text-xs text-gray-400">
@@ -190,7 +190,7 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
           <button
             onClick={handleLike}
             className={`flex items-center space-x-1 ${
-              auth.currentUser && upvotes.includes(auth.currentUser.uid) ? 'text-secondary' : 'hover:text-secondary'
+              auth.currentUser && upvotes.includes(auth.currentUser.uid) ? 'text-primary' : 'hover:text-primary'
             } transition-colors`}
           >
             <ThumbsUp className="h-3 w-3" />

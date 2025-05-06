@@ -273,8 +273,8 @@ const ForumPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center">
-                  <div className="h-10 w-10 rounded-full bg-secondary/20 flex items-center justify-center mr-3">
-                    <Users className="h-5 w-5 text-secondary" />
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                    <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <div className="text-lg font-bold">{stats.totalReplies}</div>
@@ -316,23 +316,23 @@ const ForumPage: React.FC = () => {
               <h3 className="text-xl font-semibold mb-4">Community Guidelines</h3>
               <ul className="space-y-2 text-sm text-gray-300">
                 <li className="flex items-start">
-                  <span className="text-secondary mr-2">•</span>
+                  <span className="text-primary mr-2">•</span>
                   <span>Be respectful to other members</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-secondary mr-2">•</span>
+                  <span className="text-primary mr-2">•</span>
                   <span>Use appropriate tags for discussions</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-secondary mr-2">•</span>
+                  <span className="text-primary mr-2">•</span>
                   <span>Mark spoilers appropriately</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-secondary mr-2">•</span>
+                  <span className="text-primary mr-2">•</span>
                   <span>No spam or self-promotion</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-secondary mr-2">•</span>
+                  <span className="text-primary mr-2">•</span>
                   <span>Follow content guidelines</span>
                 </li>
               </ul>

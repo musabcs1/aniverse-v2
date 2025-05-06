@@ -115,8 +115,8 @@ const CommunitySection: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center mr-4">
-                    <MessageSquare className="h-6 w-6 text-secondary" />
+                  <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                    <MessageSquare className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <div className="text-2xl font-bold">{communityData.stats.discussions}</div>

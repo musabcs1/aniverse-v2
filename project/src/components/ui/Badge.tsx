@@ -20,7 +20,7 @@ const getBadgeStyles = (role: string, size: BadgeSize = 'md', isHovered: boolean
   const colorStyles = {
     admin: `bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-500 ${isHovered ? 'shadow-lg shadow-red-500/25' : ''}`,
     writer: `bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-500 ${isHovered ? 'shadow-lg shadow-blue-500/25' : ''}`,
-    reviewer: `bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-500 ${isHovered ? 'shadow-lg shadow-purple-500/25' : ''}`,
+    reviewer: `bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-500 ${isHovered ? 'shadow-lg shadow-red-500/25' : ''}`,
     user: `bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-500 ${isHovered ? 'shadow-lg shadow-green-500/25' : ''}`
   } as const;
 
