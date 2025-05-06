@@ -1,29 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Info } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import animeList from '../../../api/animeList.json';
+import { Link, useNavigate } from 'react-router-dom';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { Anime } from '../../types';
 
 const HeroSection: React.FC = () => {
-  const [latestAnime, setLatestAnime] = useState<any[]>([]);
+  const [latestAnime, setLatestAnime] = useState<Anime[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Sort anime by id in descending order and take the top 3
-    const sortedAnime = animeList
-      .map((anime) => ({ ...anime, id: parseInt(anime.id, 10) }))
-      .sort((a, b) => b.id - a.id)
-      .slice(0, 4);
+    const fetchLatestAnime = async () => {
+      try {
+        setLoading(true);
+        const animesRef = collection(db, 'anime');
+        const q = query(animesRef, orderBy('releaseYear', 'desc'), limit(4));
+        const querySnapshot = await getDocs(q);
+        
+        const animesData = querySnapshot.docs.map(doc => ({
+          ...doc.data()
+        } as Anime));
+        
+        setLatestAnime(animesData);
+      } catch (error) {
+        console.error('Error fetching latest anime:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setLatestAnime(sortedAnime);
+    fetchLatestAnime();
   }, []);
 
   useEffect(() => {
+    if (latestAnime.length === 0) return;
+    
     const interval = setInterval(() => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % latestAnime.length);
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [latestAnime]);
+
+  const handleWatchNowClick = (anime: Anime) => {
+    navigate(`/anime/${anime.id}`);
+  };
+
+  if (loading || latestAnime.length === 0) {
+    return (
+      <section className="relative h-[80vh] overflow-hidden bg-background">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative h-[80vh] overflow-hidden">
@@ -61,7 +94,7 @@ const HeroSection: React.FC = () => {
               }`}
             >
               <div className="flex space-x-2 mb-4">
-                {anime.genres.map((genre: string, i: number) => (
+                {anime.genres?.map((genre: string, i: number) => (
                   <span
                     key={i}
                     className="px-3 py-1 text-xs rounded-full bg-primary/40 text-white"
@@ -75,18 +108,14 @@ const HeroSection: React.FC = () => {
                 {anime.title}
               </h1>
 
-              <p className="text-gray-300 text-lg mb-8 max-w-xl">
-                {anime.description}
-              </p>
-
               <div className="flex space-x-4">
-                <Link
-                  to={`/anime/${anime.id}`}
+                <button
+                  onClick={() => handleWatchNowClick(anime)}
                   className="btn-primary flex items-center space-x-2 py-3 px-6"
                 >
                   <Play className="h-5 w-5" />
                   <span>Watch Now</span>
-                </Link>
+                </button>
 
                 <Link
                   to={`/anime/${anime.id}`}
