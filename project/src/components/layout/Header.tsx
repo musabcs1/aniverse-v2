@@ -4,10 +4,10 @@ import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import { Notification } from '../../types';
-import { onSnapshot, collection, doc, getDoc, query, where } from 'firebase/firestore';
-import { db, auth } from '../../firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onSnapshot, collection, doc, query, where } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 import LanguageSelector from '../LanguageSelector';
+import { useAuth } from '../../context/AuthContext';
 
 interface HeaderProps {
   toggleMobileMenu: () => void;
@@ -18,35 +18,11 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [userData, setUserData] = useState<any | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const fetchUserData = async (uid: string) => {
-      try {
-        const userDocRef = doc(db, 'users', uid);
-        const userSnapshot = await getDoc(userDocRef);
-        if (userSnapshot.exists()) {
-          setUserData(userSnapshot.data());
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchUserData(user.uid);
-      } else {
-        setUserData(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const { currentUser, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,40 +34,35 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const notificationsRef = query(
-          collection(db, 'notifications'),
-          where('userId', '==', user.uid)
-        );
-        
-        const notificationsUnsubscribe = onSnapshot(notificationsRef, (snapshot) => {
-          const updatedNotifications = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            title: doc.data().title || 'Notification',
-            message: doc.data().message || '',
-            createdAt: doc.data().createdAt?.toDate() || new Date(),
-            read: doc.data().read || false
-          })) as Notification[];
-          setNotifications(updatedNotifications);
-        });
+    if (currentUser) {
+      const notificationsRef = query(
+        collection(db, 'notifications'),
+        where('userId', '==', currentUser.id)
+      );
+      
+      const notificationsUnsubscribe = onSnapshot(notificationsRef, (snapshot) => {
+        const updatedNotifications = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().title || 'Notification',
+          message: doc.data().message || '',
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          read: doc.data().read || false
+        })) as Notification[];
+        setNotifications(updatedNotifications);
+      });
 
-        return () => {
-          notificationsUnsubscribe();
-        };
-      } else {
-        setNotifications([]);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+      return () => {
+        notificationsUnsubscribe();
+      };
+    } else {
+      setNotifications([]);
+    }
+  }, [currentUser]);
 
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
-    localStorage.removeItem('userData');
-    setUserData(null);
+    logout();
     setShowProfileMenu(false);
     navigate('/', { replace: true });
   };
@@ -151,7 +122,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             <LanguageSelector />
           </div>
 
-          {userData ? (
+          {currentUser ? (
             <>
               <div className="relative">
                 <button 
@@ -160,12 +131,12 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                 >
                   <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
                     <img 
-                      src={userData.avatar} 
+                      src={currentUser.avatar} 
                       alt={t('user.profile')}
                       className="h-full w-full object-cover"
                     />
                   </div>
-                  <span className="text-white">{userData.username}</span>
+                  <span className="text-white">{currentUser.username}</span>
                 </button>
 
                 {showProfileMenu && (
@@ -183,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                   </div>
                 )}
               </div>
-              {userData?.role === 'admin' && (
+              {currentUser.role === 'admin' && (
                 <Link to="/admin" className="btn-secondary">
                   {t('header.admin')}
                 </Link>

@@ -7,24 +7,50 @@ import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import Logo from '../components/ui/Logo';
 import { initializeBadges, getUserBadges } from '../services/badges';
 
+interface UserData {
+  id: string;
+  username?: string;
+  email?: string;
+  banned?: boolean;
+  watchlist?: any[];
+  watchlistDetails?: any[];
+  completed?: any[];
+  level?: number;
+  xp?: number;
+  role?: string;
+  badges?: any[];
+  avatar?: string;
+  joinDate?: string;
+  [key: string]: any; // For other possible fields
+}
+
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Redirect to home page if the user is already logged in
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
-      navigate('/'); // Redirect to home page
+      const userData = JSON.parse(storedUserData) as UserData;
+      // Check if user is banned
+      if (userData.banned) {
+        navigate('/banned');
+      } else {
+        navigate('/');
+      }
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    
     try {
       if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -32,17 +58,24 @@ const AuthPage = () => {
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-          alert('User data not found.');
+          setError('User data not found.');
           return;
         }
 
-        const userData = {
+        const userData: UserData = {
           id: userDoc.id,
           ...userDoc.data(),
           watchlist: userDoc.data().watchlist || [],
           level: userDoc.data().level || 0,
           xp: userDoc.data().xp || 0
         };
+        
+        // Check if user is banned
+        if (userData.banned) {
+          localStorage.setItem('userData', JSON.stringify(userData));
+          navigate('/banned');
+          return;
+        }
         
         localStorage.setItem('userData', JSON.stringify(userData));
         navigate('/profile');
@@ -55,7 +88,7 @@ const AuthPage = () => {
         // Get default user badge
         const defaultBadges = await getUserBadges('user');
         
-        const userData = {
+        const userData: UserData = {
           id: userCredential.user.uid,
           username,
           email,
@@ -67,7 +100,8 @@ const AuthPage = () => {
           watchlistDetails: [],
           completed: [],
           level: 0,
-          xp: 0
+          xp: 0,
+          banned: false
         };
 
         const userDocRef = doc(db, 'users', userCredential.user.uid);
@@ -78,7 +112,7 @@ const AuthPage = () => {
       }
     } catch (error) {
       console.error('Error during user authentication:', error);
-      alert((error as any).message || 'Authentication failed.');
+      setError((error as any).message || 'Authentication failed.');
     }
   };
 
@@ -94,6 +128,13 @@ const AuthPage = () => {
             {isLogin ? 'Sign in to continue to your account' : 'Sign up to get started'}
           </p>
         </div>
+        
+        {error && (
+          <div className="bg-red-500/20 text-red-300 p-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           {!isLogin && (
             <div className="relative mb-4">

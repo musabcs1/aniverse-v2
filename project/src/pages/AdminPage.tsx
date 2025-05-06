@@ -355,6 +355,17 @@ const AdminPage: React.FC = () => {
   // Handle user management actions
   const handleBanUser = async (userId: string, isBanned: boolean) => {
     try {
+      // Check admin access
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser!.uid));
+      const userData = userDoc.data();
+      const hasAdminBadge = badges.some(badge => badge.name === 'admin');
+      const isAdminRole = userData?.role === 'admin';
+
+      if (!hasAdminBadge && !isAdminRole) {
+        alert('You do not have the necessary permissions to ban/unban users.');
+        return;
+      }
+
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         banned: !isBanned
@@ -379,7 +390,13 @@ const AdminPage: React.FC = () => {
       alert(isBanned ? 'User unbanned successfully.' : 'User banned successfully.');
     } catch (error) {
       console.error('Error updating user ban status:', error);
-      alert('Failed to update user ban status.');
+      
+      // Check for Firebase permission error
+      if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        alert('You do not have the necessary permissions to ban/unban users.');
+      } else {
+        alert('Failed to update user ban status.');
+      }
     }
   };
 
@@ -568,6 +585,17 @@ const AdminPage: React.FC = () => {
     }
 
     try {
+      // Check admin access
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser!.uid));
+      const userData = userDoc.data();
+      const hasAdminBadge = badges.some(badge => badge.name === 'admin');
+      const isAdminRole = userData?.role === 'admin';
+
+      if (!hasAdminBadge && !isAdminRole) {
+        alert(`You do not have the necessary permissions to ${action} users.`);
+        return;
+      }
+
       const promises = selectedUsers.map(userId => {
         const userRef = doc(db, 'users', userId);
         
@@ -601,7 +629,13 @@ const AdminPage: React.FC = () => {
       alert(`Successfully ${action}ed ${selectedUsers.length} users`);
     } catch (error) {
       console.error(`Error performing bulk ${action}:`, error);
-      alert(`Failed to ${action} users. Please try again.`);
+      
+      // Check for Firebase permission error
+      if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        alert(`You do not have the necessary permissions to ${action} users.`);
+      } else {
+        alert(`Failed to ${action} users. Please try again.`);
+      }
     }
   };
 

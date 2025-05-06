@@ -42,6 +42,9 @@ declare module 'lucide-react' {
   export const TrendingUp: React.FC<IconProps>;
   export const Users: React.FC<IconProps>;
   export const Mail: React.FC<IconProps>;
+  export const Instagram: React.FC<IconProps>;
+  export const Twitter: React.FC<IconProps>;
+  export const Youtube: React.FC<IconProps>;
   export const Lock: React.FC<IconProps>;
   export const Shield: React.FC<IconProps>;
   export const Bookopen: React.FC<IconProps>;

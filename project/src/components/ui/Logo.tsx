@@ -1,16 +1,43 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Tv } from 'lucide-react';
+import logoImage from '/logo.png';
 
-const Logo: React.FC = () => {
+interface LogoProps {
+  size?: 'small' | 'medium' | 'large';
+  variant?: 'default' | 'white';
+}
+
+const Logo: React.FC<LogoProps> = ({ 
+  size = 'medium', 
+  variant = 'default'
+}) => {
+  const sizeClasses = {
+    small: 'h-8',
+    medium: 'h-10',
+    large: 'h-14'
+  };
+
+  const textColor = variant === 'white' ? '#ffffff' : '#d32f2f';
+  
+  // For image variant styling if needed
+  const imageFilter = variant === 'white' ? 'brightness(0) invert(1)' : 'none';
+
   return (
-    <Link to="/" className="flex items-center space-x-2">
-      <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-        <Tv className="h-5 w-5 text-white" />
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xl font-orbitron font-bold tracking-wide text-white">
-          <span className="text-secondary">Ani</span>Nest
+    <Link to="/" className="flex items-center">
+      <div className={`flex items-center`}>
+        <img 
+          src={logoImage} 
+          alt="AniNest Logo" 
+          className={`${sizeClasses[size]}`}
+          style={{ filter: imageFilter }}
+        />
+        <span 
+          className={`ml-2 font-bold tracking-wider ${
+            size === 'small' ? 'text-lg' : size === 'large' ? 'text-2xl' : 'text-xl'
+          }`}
+          style={{ color: textColor }}
+        >
+          ANINEST
         </span>
       </div>
     </Link>
