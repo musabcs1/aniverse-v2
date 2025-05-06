@@ -708,7 +708,8 @@ const AdminPage: React.FC = () => {
       }
       
       // Initialize the episode object if it doesn't exist
-      if (!updatedData.seasons[currentSeason][currentEpisode]) {
+      const isNewEpisode = !updatedData.seasons[currentSeason][currentEpisode];
+      if (isNewEpisode) {
         updatedData.seasons[currentSeason][currentEpisode] = {
           embedCodes: {},
           title: episodeTitle || `Episode ${currentEpisode}`
@@ -729,19 +730,47 @@ const AdminPage: React.FC = () => {
       // Update the local state
       setEpisodesData(updatedData);
       
-      // Update the anime to indicate it has episodes data
-      if (!selectedAnime.hasEpisodesData) {
-        const animeRef = doc(db, 'anime', selectedAnime.id);
-        await updateDoc(animeRef, {
-          hasEpisodesData: true
-        });
-        
-        // Update local state
-        setSelectedAnime({
-          ...selectedAnime,
-          hasEpisodesData: true
-        });
-      }
+      // Count total episodes across all seasons in the episodes data
+      let totalEpisodes = 0;
+      const seasonEpisodeCounts: { [seasonName: string]: number } = {};
+      
+      Object.entries(updatedData.seasons).forEach(([seasonName, episodes]) => {
+        const episodeCount = Object.keys(episodes).length;
+        totalEpisodes += episodeCount;
+        seasonEpisodeCounts[seasonName] = episodeCount;
+      });
+      
+      // Update the anime document with updated episode count and season episodes
+      const animeRef = doc(db, 'anime', selectedAnime.id);
+      
+      // Create updated seasons array with correct episode counts
+      const updatedSeasons = selectedAnime.seasons?.map(season => ({
+        ...season,
+        episodes: seasonEpisodeCounts[season.name] || season.episodes
+      })) || [];
+      
+      await updateDoc(animeRef, {
+        episodes: totalEpisodes,
+        hasEpisodesData: true,
+        seasons: updatedSeasons
+      });
+      
+      // Update local state
+      setSelectedAnime({
+        ...selectedAnime,
+        episodes: totalEpisodes,
+        hasEpisodesData: true,
+        seasons: updatedSeasons
+      });
+      
+      // Update animes list to reflect the changes
+      setAnimes(prevAnimes => 
+        prevAnimes.map(anime => 
+          anime.id === selectedAnime.id 
+            ? { ...anime, episodes: totalEpisodes, hasEpisodesData: true, seasons: updatedSeasons }
+            : anime
+        )
+      );
       
       alert('Episode data saved successfully');
       
@@ -777,11 +806,57 @@ const AdminPage: React.FC = () => {
           delete updatedData.seasons[seasonName];
         }
         
-        // Update Firestore
+        // Update Firestore with episode data
         await setDoc(doc(db, 'anime_episodes', selectedAnime.id), updatedData);
         
         // Update local state
         setEpisodesData(updatedData);
+        
+        // Count total episodes across all seasons in the episodes data after deletion
+        let totalEpisodes = 0;
+        const seasonEpisodeCounts: { [seasonName: string]: number } = {};
+        
+        Object.entries(updatedData.seasons).forEach(([seasonName, episodes]) => {
+          const episodeCount = Object.keys(episodes).length;
+          totalEpisodes += episodeCount;
+          seasonEpisodeCounts[seasonName] = episodeCount;
+        });
+        
+        // Create updated seasons array with correct episode counts
+        const updatedSeasons = selectedAnime.seasons?.map(season => ({
+          ...season,
+          episodes: seasonEpisodeCounts[season.name] || season.episodes
+        })) || [];
+        
+        // Update the anime document with updated episode count
+        const animeRef = doc(db, 'anime', selectedAnime.id);
+        await updateDoc(animeRef, {
+          episodes: totalEpisodes,
+          seasons: updatedSeasons,
+          hasEpisodesData: totalEpisodes > 0
+        });
+        
+        // Update local state for selected anime
+        setSelectedAnime({
+          ...selectedAnime,
+          episodes: totalEpisodes,
+          seasons: updatedSeasons,
+          hasEpisodesData: totalEpisodes > 0
+        });
+        
+        // Update animes list to reflect the changes
+        setAnimes(prevAnimes => 
+          prevAnimes.map(anime => 
+            anime.id === selectedAnime.id 
+              ? { 
+                  ...anime, 
+                  episodes: totalEpisodes, 
+                  seasons: updatedSeasons,
+                  hasEpisodesData: totalEpisodes > 0 
+                }
+              : anime
+          )
+        );
         
         alert('Episode deleted successfully');
       }
