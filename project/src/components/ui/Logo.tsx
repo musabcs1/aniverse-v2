@@ -10,7 +10,7 @@ const Logo: React.FC = () => {
       </div>
       <div className="flex flex-col">
         <span className="text-xl font-orbitron font-bold tracking-wide text-white">
-          <span className="text-secondary">Ani</span>Verse
+          <span className="text-secondary">Ani</span>Nest
         </span>
       </div>
     </Link>

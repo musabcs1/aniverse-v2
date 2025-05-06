@@ -54,7 +54,7 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-medium mb-4">Get In Touch</h3>
             <div className="flex items-start space-x-3 text-gray-400 mb-4">
               <Mail className="h-5 w-5 mt-0.5" />
-              <span>contact@aniverse.com</span>
+              <span>contact@aninest.com</span>
             </div>
             <div className="mt-6">
               <h4 className="font-medium mb-2">Join our newsletter</h4>
@@ -74,7 +74,7 @@ const Footer: React.FC = () => {
         
         <div className="border-t border-gray-800 mt-12 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm">
-            © 2025 Aniverse. All rights reserved.
+            © 2025 AniNest. All rights reserved.
           </p>
           <p className="text-gray-500 text-sm mt-2 md:mt-0">
             Designed with @musab for anime fans everywhere

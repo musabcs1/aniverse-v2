@@ -1,6 +1,6 @@
 import React from 'react';
 import HeroSection from '../components/home/HeroSection';
-import AniversePicksSection from '../components/home/AniversePicksSection';
+import AniNestPicksSection from '../components/home/AniNestPicksSection';
 import NewsUpdateSection from '../components/home/NewsUpdateSection';
 import CommunitySection from '../components/home/CommunitySection';
 
@@ -10,7 +10,7 @@ const HomePage: React.FC = () => {
   return (
     <div>
       <HeroSection />
-      <AniversePicksSection />
+      <AniNestPicksSection />
       <NewsUpdateSection />
       <CommunitySection />
     </div>

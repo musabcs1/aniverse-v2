@@ -12,7 +12,7 @@ const genres = [
 ];
 
 const years = [2025, 2024, 2023, 2022, 2021];
-const studios = ["All Studios", "Aniverse Studios", "NeoCyber Productions", "Shogun Animation", "Phantom Works", "Digital Frontier", "Chrono Visuals"];
+const studios = ["All Studios", "AniNest Studios", "NeoCyber Productions", "Shogun Animation", "Phantom Works", "Digital Frontier", "Chrono Visuals"];
 const status = ["All", "Ongoing", "Completed", "Upcoming"];
 
 const AnimeDirectoryPage: React.FC = () => {
