@@ -72,7 +72,7 @@ const NewsUpdateSection: React.FC = () => {
             <p className="text-gray-400 mt-2">Stay informed with the anime world's latest happenings</p>
           </div>
           
-          <Link to="/news" className="flex items-center space-x-1 text-primary hover:text-primary-light transition-colors">
+          <Link to="/news" className="flex items-center space-x-1 text-secondary hover:text-secondary-light transition-colors">
             <span>All news</span>
             <ChevronRight className="h-4 w-4" />
           </Link>

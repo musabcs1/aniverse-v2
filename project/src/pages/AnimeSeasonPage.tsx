@@ -241,21 +241,17 @@ const AnimeSeasonPage: React.FC = () => {
                     <button
                       key={i}
                       onClick={() => setSelectedEpisode(i)}
-                      className={`py-3 px-4 flex items-center justify-between border-b border-gray-800 ${
-                        selectedEpisode === i
-                          ? 'bg-surface-light border-l-4 border-primary'
+                      className={`w-full p-4 rounded-lg text-white transition-all flex items-center justify-between group ${
+                        selectedEpisode === i 
+                          ? 'bg-surface-light border-l-4 border-secondary' 
                           : 'bg-surface-dark hover:bg-surface-light'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <Play className={`h-5 w-5 ${
-                          selectedEpisode === i ? 'text-primary' : 'text-primary group-hover:text-primary'
+                          selectedEpisode === i ? 'text-secondary' : 'text-primary group-hover:text-secondary'
                         } transition-colors`} />
-                        <span
-                          className={
-                            selectedEpisode === i ? 'text-primary' : 'text-primary group-hover:text-primary'
-                          }
-                        >
+                        <span className={selectedEpisode === i ? 'font-medium' : ''}>
                           {t('anime.episode')} {i + 1}
                           {hasEpisodesData && 
                            episodesData.seasons[selectedSeason.name][(i + 1).toString()] && 
@@ -315,7 +311,7 @@ const AnimeSeasonPage: React.FC = () => {
                     <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: embedCode }} />
                   ) : (
                     <div className="flex items-center justify-center h-full">
-                      <Play className="h-16 w-16 text-primary mx-auto mb-4 animate-pulse" />
+                      <Play className="h-16 w-16 text-secondary mx-auto mb-4 animate-pulse" />
                       <p className="text-gray-400">
                         {availableLanguages.length > 0 
                           ? t('anime.noEpisodesAvailable') 
@@ -351,7 +347,7 @@ const AnimeSeasonPage: React.FC = () => {
                     className="w-full p-4 text-left hover:bg-surface-light transition-colors flex items-center justify-between group"
                   >
                     <span className="text-gray-300 group-hover:text-white transition-colors">{server}</span>
-                    <Play className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Play className="h-4 w-4 text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>
                 ))}
               </div>

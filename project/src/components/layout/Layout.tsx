@@ -44,16 +44,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isSafeToRender = !isBanned || location.pathname === '/banned' || !currentUser;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background relative">
-      <div className="absolute inset-0 bg-red-900/10 pointer-events-none z-0"></div>
-      <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-red-900/30 to-transparent pointer-events-none z-0"></div>
-      <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-red-900/30 to-transparent pointer-events-none z-0"></div>
+    <div className="flex flex-col min-h-screen">
       <Header 
         toggleMobileMenu={toggleMobileMenu} 
         mobileMenuOpen={mobileMenuOpen} 
       />
       <MobileMenu isOpen={mobileMenuOpen} closeMenu={() => setMobileMenuOpen(false)} />
-      <main className="flex-grow relative z-10">
+      <main className="flex-grow">
         {isSafeToRender ? children : null}
       </main>
       <Footer />

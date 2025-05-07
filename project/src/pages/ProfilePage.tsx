@@ -33,7 +33,7 @@ const getBadgeIcon = (role: UserRole) => {
     case 'writer':
       return <MessageSquare className={`h-5 w-5 text-blue-400 ${iconClass}`} />;
     case 'user':
-      return <UserRound className={`h-5 w-5 text-primary ${iconClass}`} />;
+      return <UserRound className={`h-5 w-5 text-secondary ${iconClass}`} />;
     default:
       return null;
   }
@@ -374,19 +374,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const getIconForTab = (tab: string, iconClass: string = '') => {
-    switch (tab) {
-      case 'activity':
-        return <Shield className={`h-5 w-5 text-primary ${iconClass}`} />;
-      case 'profile':
-        return <UserRound className={`h-5 w-5 text-primary ${iconClass}`} />;
-      case 'forum':
-        return <MessageSquare className={`h-5 w-5 text-blue-400 ${iconClass}`} />;
-      default:
-        return null;
-    }
-  };
-
   if (loading) {
     return (
       <div className="pt-24 pb-16 min-h-screen bg-background">
@@ -447,7 +434,7 @@ const ProfilePage: React.FC = () => {
                 <h1 className="text-2xl font-bold text-white">{userData.username}</h1>
                 <div className="flex gap-2">
                   {badgesLoading ? (
-                    <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                    <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
                   ) : badges && badges.length > 0 ? (
                     <div className="flex gap-2 items-center">
                       {badges.map((badge) => (
@@ -509,7 +496,7 @@ const ProfilePage: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-gray-300">
-                    <MessageSquare className="h-5 w-5 mr-2 text-primary" />
+                    <MessageSquare className="h-5 w-5 mr-2 text-secondary" />
                     <span>Comments</span>
                   </div>
                   <span className="text-white font-semibold">{stats.comments}</span>
@@ -558,7 +545,7 @@ const ProfilePage: React.FC = () => {
             <div className="bg-surface rounded-xl p-5 mt-6">
               <h3 className="text-xl font-semibold mb-4">Badges</h3>
               {badgesLoading ? (
-                <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
               ) : badges && badges.length > 0 ? (
                 <div className="space-y-4">
                   {badges.map((badge) => (
@@ -591,7 +578,7 @@ const ProfilePage: React.FC = () => {
                 >
                   Watchlist
                   {activeTab === 'watchlist' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary"></span>
                   )}
                 </button>
                 
@@ -605,7 +592,7 @@ const ProfilePage: React.FC = () => {
                 >
                   Activity
                   {activeTab === 'activity' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary"></span>
                   )}
                 </button>
                 
@@ -619,7 +606,7 @@ const ProfilePage: React.FC = () => {
                 >
                   Reviews
                   {activeTab === 'reviews' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary"></span>
                   )}
                 </button>
                 
@@ -633,7 +620,7 @@ const ProfilePage: React.FC = () => {
                 >
                   Settings
                   {activeTab === 'settings' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary"></span>
                   )}
                 </button>
               </div>
@@ -644,7 +631,7 @@ const ProfilePage: React.FC = () => {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-semibold">My Watchlist</h2>
-                  <button className="text-primary text-sm flex items-center">
+                  <button className="text-secondary text-sm flex items-center">
                     <span>View all</span>
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </button>
@@ -664,7 +651,7 @@ const ProfilePage: React.FC = () => {
                 <div className="mt-10">
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold">Recently Completed</h2>
-                    <button className="text-primary text-sm flex items-center">
+                    <button className="text-secondary text-sm flex items-center">
                       <span>View all</span>
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </button>
@@ -700,7 +687,7 @@ const ProfilePage: React.FC = () => {
                   <p className="text-gray-400">No recent activity to display.</p>
                 </div>
                 
-                <button className="w-full mt-8 py-3 text-center text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors">
+                <button className="w-full mt-8 py-3 text-center text-secondary border border-secondary/30 rounded-lg hover:bg-secondary/10 transition-colors">
                   Load More Activity
                 </button>
               </div>
@@ -735,7 +722,7 @@ const ProfilePage: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-400 mb-1">Username</label>
                         <input 
                           type="text" 
-                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                           value={userData.username}
                           onChange={(e) => setUserData((prev) => ({ ...prev!, username: e.target.value }))}
                         />
@@ -751,7 +738,7 @@ const ProfilePage: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
                         <input 
                           type="email" 
-                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                           value={userData.email}
                         />
                       </div>
@@ -769,7 +756,7 @@ const ProfilePage: React.FC = () => {
                       <div className="flex flex-col">
                         <input 
                           type="text" 
-                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary mb-2"
+                          className="w-full bg-surface-dark p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary mb-2"
                           value={avatarURL}
                           onChange={(e) => setAvatarURL(e.target.value)}
                           placeholder="Enter avatar URL"

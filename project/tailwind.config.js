@@ -5,29 +5,29 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#ff0000',
-          light: '#ff3333',
-          dark: '#cc0000',
+          DEFAULT: '#9900FF',
+          light: '#B347FF',
+          dark: '#7500CC',
         },
         secondary: {
-          DEFAULT: '#990000',
-          light: '#b30000',
-          dark: '#800000',
+          DEFAULT: '#00FFFF',
+          light: '#66FFFF',
+          dark: '#00CCCC',
         },
         accent: {
-          DEFAULT: '#ff5555',
-          light: '#ff7777',
-          dark: '#cc4444',
+          DEFAULT: '#FF00FF',
+          light: '#FF66FF',
+          dark: '#CC00CC',
         },
         background: {
-          DEFAULT: '#330000',
-          light: '#4d0000',
-          dark: '#200000',
+          DEFAULT: '#080215',
+          light: '#150D29',
+          dark: '#050113',
         },
         surface: {
-          DEFAULT: '#4d0000',
-          light: '#660000',
-          dark: '#330000',
+          DEFAULT: '#110726',
+          light: '#1B0D3E',
+          dark: '#0C051A',
         },
       },
       fontFamily: {
@@ -41,8 +41,8 @@ export default {
       },
       keyframes: {
         glow: {
-          '0%': { 'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff0000, 0 0 20px #ff0000' },
-          '100%': { 'text-shadow': '0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ff0000, 0 0 40px #ff0000' },
+          '0%': { 'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 15px #9900FF, 0 0 20px #9900FF' },
+          '100%': { 'text-shadow': '0 0 10px #fff, 0 0 20px #fff, 0 0 30px #9900FF, 0 0 40px #9900FF' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
@@ -51,7 +51,7 @@ export default {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-pattern': 'linear-gradient(rgba(51, 0, 0, 0.8), rgba(51, 0, 0, 0.8)), url("https://images.pexels.com/photos/3732475/pexels-photo-3732475.jpeg")',
+        'hero-pattern': 'linear-gradient(rgba(8, 2, 21, 0.8), rgba(8, 2, 21, 0.8)), url("https://images.pexels.com/photos/3732475/pexels-photo-3732475.jpeg")',
       },
     },
   },

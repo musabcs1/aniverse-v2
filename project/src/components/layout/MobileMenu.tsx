@@ -86,37 +86,37 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, closeMenu }) => {
         <ul className="space-y-4">
           <li>
             <Link to="/" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
-              <Home className="h-6 w-6 text-primary" />
+              <Home className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">{t('header.home')}</span>
             </Link>
           </li>
           <li>
             <Link to="/anime" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
-              <Film className="h-6 w-6 text-primary" />
+              <Film className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">{t('header.browse')}</span>
             </Link>
           </li>
           <li>
             <Link to="/forum" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
-              <MessageSquare className="h-6 w-6 text-primary" />
+              <MessageSquare className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">{t('header.forum')}</span>
             </Link>
           </li>
           <li>
             <Link to="/news" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
-              <Newspaper className="h-6 w-6 text-primary" />
+              <Newspaper className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">{t('header.news')}</span>
             </Link>
           </li>
           <li>
             <Link to="/profile" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface" onClick={closeMenu}>
-              <User className="h-6 w-6 text-primary" />
+              <User className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">{t('user.profile')}</span>
             </Link>
           </li>
           <li>
             <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-surface">
-              <Bell className="h-6 w-6 text-primary" />
+              <Bell className="h-6 w-6 text-secondary" />
               <span className="text-lg font-medium">{t('user.notifications')}</span>
               <span className="bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-auto">
                 {notificationsCount}
