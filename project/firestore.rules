@@ -1,15 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return user.role == 'admin' || 
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
     // Allow authenticated users to read the `admins` collection
     match /admins/{adminId} {
       allow read: if request.auth != null;
-    }
-    
-    // Simpler rules for admin access to unblock progress
-    function isAdmin() {
-      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return user.role == 'admin';
+      allow write: if request.auth != null && isAdmin();
     }
   
     // Forum rules
@@ -50,7 +52,7 @@ service cloud.firestore {
 
     // Notifications rules
     match /notifications/{notificationId} {
-      allow read: if request.auth != null; // Allow authenticated users to read all notifications
+      allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow delete: if request.auth != null && (
         request.auth.uid == resource.data.userId ||

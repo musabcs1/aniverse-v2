@@ -154,18 +154,11 @@ const AdminPage: React.FC = () => {
         const isAdminRole = userData?.role === 'admin';
         console.log('Admin access check:', { hasAdminBadge, isAdminRole });
 
-        if (hasAdminBadge || isAdminRole) {
-          console.log('Admin access granted');
-          setIsAdmin(true);
-          setIsCheckingAdmin(false);
-          return;
-        }
-
         const adminData = localStorage.getItem('adminData');
         console.log('Checking legacy admin data:', { hasAdminData: !!adminData });
-        
-        if (adminData) {
-          console.log('Admin access granted via legacy data');
+
+        if (hasAdminBadge || isAdminRole || adminData) {
+          console.log('Admin access granted');
           setIsAdmin(true);
           setIsCheckingAdmin(false);
           return;
@@ -188,7 +181,7 @@ const AdminPage: React.FC = () => {
     return () => {
       isSubscribed = false;
     };
-  }, [navigate, badges, badgesLoading]);
+  }, [auth.currentUser, badges, badgesLoading, navigate]);
 
   // Fetch platform statistics
   const fetchStats = async () => {
