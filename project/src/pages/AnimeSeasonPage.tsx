@@ -237,33 +237,63 @@ const AnimeSeasonPage: React.FC = () => {
               <div className="p-6">
                 <h2 className="text-xl font-bold text-white mb-4">{selectedSeason.name}</h2>
                 <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary scrollbar-track-surface-dark">
-                  {Array.from({ length: selectedSeason.episodes }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedEpisode(i)}
-                      className={`w-full p-4 rounded-lg text-white transition-all flex items-center justify-between group ${
-                        selectedEpisode === i 
-                          ? 'bg-surface-light border-l-4 border-secondary' 
-                          : 'bg-surface-dark hover:bg-surface-light'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Play className={`h-5 w-5 ${
-                          selectedEpisode === i ? 'text-secondary' : 'text-primary group-hover:text-secondary'
-                        } transition-colors`} />
-                        <span className={selectedEpisode === i ? 'font-medium' : ''}>
-                          {t('anime.episode')} {i + 1}
-                          {hasEpisodesData && 
-                           episodesData.seasons[selectedSeason.name][(i + 1).toString()] && 
-                           episodesData.seasons[selectedSeason.name][(i + 1).toString()].title !== `Episode ${i + 1}` && (
-                            <span className="ml-2 text-gray-400 text-sm">
-                              - {episodesData.seasons[selectedSeason.name][(i + 1).toString()].title}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+                  {hasEpisodesData && episodesData.seasons[selectedSeason.name] ? (
+                    <>
+                      {selectedEpisode !== null && selectedEpisode > 0 && (
+                        <button
+                          onClick={() => setSelectedEpisode(selectedEpisode - 1)}
+                          className="w-full p-4 rounded-lg text-white transition-all flex items-center justify-between bg-surface-dark hover:bg-surface-light mb-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Play className="h-5 w-5 text-primary group-hover:text-secondary transition-colors" />
+                            <span>Previous Episode</span>
+                          </div>
+                        </button>
+                      )}
+                      {Object.entries(episodesData.seasons[selectedSeason.name])
+                        .sort(([a], [b]) => Number(a) - Number(b))
+                        .map(([episodeNum, episodeData]) => (
+                          <button
+                            key={episodeNum}
+                            onClick={() => setSelectedEpisode(Number(episodeNum) - 1)}
+                            className={`w-full p-4 rounded-lg text-white transition-all flex items-center justify-between group ${
+                              selectedEpisode === Number(episodeNum) - 1 
+                                ? 'bg-surface-light border-l-4 border-secondary' 
+                                : 'bg-surface-dark hover:bg-surface-light'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Play className={`h-5 w-5 ${
+                                selectedEpisode === Number(episodeNum) - 1 ? 'text-secondary' : 'text-primary group-hover:text-secondary'
+                              } transition-colors`} />
+                              <span className={selectedEpisode === Number(episodeNum) - 1 ? 'font-medium' : ''}>
+                                {t('anime.episode')} {episodeNum}
+                                {episodeData.title !== `Episode ${episodeNum}` && (
+                                  <span className="ml-2 text-gray-400 text-sm">
+                                    - {episodeData.title}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      {selectedEpisode !== null && selectedEpisode < Object.keys(episodesData.seasons[selectedSeason.name]).length - 1 && (
+                        <button
+                          onClick={() => setSelectedEpisode(selectedEpisode + 1)}
+                          className="w-full p-4 rounded-lg text-white transition-all flex items-center justify-between bg-surface-dark hover:bg-surface-light mt-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Play className="h-5 w-5 text-primary group-hover:text-secondary transition-colors" />
+                            <span>Next Episode</span>
+                          </div>
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400">{t('anime.noEpisodesAvailable')}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
