@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where, setDoc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, increment, addDoc, serverTimestamp, arrayUnion, getDoc, query, where, setDoc, writeBatch } from 'firebase/firestore';
 import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, ChevronDown, Film, Edit, X, Info } from 'lucide-react';
 import { ForumThread, UserRole, Anime, AnimeEpisodes } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
@@ -134,6 +134,10 @@ const AdminPage: React.FC = () => {
       }
 
       try {
+        // Force refresh the auth token to ensure we have the latest claims
+        await auth.currentUser.getIdToken(true);
+        console.log('Auth token refreshed');
+        
         const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
         const userData = userDoc.data();
         console.log('User data loaded:', { 
@@ -725,7 +729,44 @@ const AdminPage: React.FC = () => {
 
     try {
       setSavingEpisode(true);
+      console.log('Starting episode save operation...');
       
+      // Force token refresh to ensure admin permissions are up to date
+      if (auth.currentUser) {
+        console.log('Refreshing auth token before saving episode data');
+        await auth.currentUser.getIdToken(true);
+      } else {
+        console.error('No current user found when trying to save episode data');
+        throw new Error('You must be logged in to save episode data');
+      }
+      
+      // Test permissions to an admin-only test document first
+      try {
+        console.log('Testing admin permissions with a write operation...');
+        const testDocRef = doc(db, 'admin_test', 'test_doc');
+        await setDoc(testDocRef, { 
+          lastTest: new Date().toISOString(),
+          user: auth.currentUser.email,
+          timestamp: serverTimestamp()
+        });
+        console.log('Admin permission test passed successfully');
+      } catch (error) {
+        console.error('Admin permission test failed:', error);
+        throw new Error('You do not have admin permissions to save episode data. Please try logging out and logging back in as an admin.');
+      }
+      
+      // First, check if the anime document exists
+      console.log('Checking anime document existence:', selectedAnime.id);
+      const animeRef = doc(db, 'anime', selectedAnime.id);
+      const animeDoc = await getDoc(animeRef);
+      
+      if (!animeDoc.exists()) {
+        console.error('Anime document does not exist:', selectedAnime.id);
+        throw new Error('Anime document does not exist');
+      }
+      
+      console.log('Anime document exists, proceeding with episode update');
+
       // Create a deep copy of the existing data
       const updatedData = JSON.parse(JSON.stringify(episodesData)) as AnimeEpisodes;
       
@@ -751,12 +792,6 @@ const AdminPage: React.FC = () => {
         updatedData.seasons[currentSeason][currentEpisode].title = episodeTitle;
       }
       
-      // Save to Firestore
-      await setDoc(doc(db, 'anime_episodes', selectedAnime.id), updatedData);
-      
-      // Update the local state
-      setEpisodesData(updatedData);
-      
       // Count total episodes across all seasons in the episodes data
       let totalEpisodes = 0;
       const seasonEpisodeCounts: { [seasonName: string]: number } = {};
@@ -767,22 +802,34 @@ const AdminPage: React.FC = () => {
         seasonEpisodeCounts[seasonName] = episodeCount;
       });
       
-      // Update the anime document with updated episode count and season episodes
-      const animeRef = doc(db, 'anime', selectedAnime.id);
-      
       // Create updated seasons array with correct episode counts
       const updatedSeasons = selectedAnime.seasons?.map(season => ({
         ...season,
         episodes: seasonEpisodeCounts[season.name] || season.episodes
       })) || [];
+
+      // Use a batch to update both documents atomically
+      console.log('Creating batch write for anime and episode data...');
+      const batch = writeBatch(db);
       
-      await updateDoc(animeRef, {
+      // Reference to the episodes document
+      const episodesRef = doc(db, 'anime_episodes', selectedAnime.id);
+      
+      // Add both operations to the batch
+      batch.set(episodesRef, updatedData);
+      batch.update(animeRef, {
         episodes: totalEpisodes,
         hasEpisodesData: true,
         seasons: updatedSeasons
       });
       
-      // Update local state
+      // Commit the batch
+      console.log('Committing batch write...');
+      await batch.commit();
+      console.log('Batch write successful');
+      
+      // Update local states
+      setEpisodesData(updatedData);
       setSelectedAnime({
         ...selectedAnime,
         episodes: totalEpisodes,
@@ -806,7 +853,17 @@ const AdminPage: React.FC = () => {
       setEpisodeTitle('');
     } catch (error) {
       console.error('Error saving episode data:', error);
-      alert('Failed to save episode data');
+      if (error instanceof Error) {
+        if (error.message.includes('Missing or insufficient permissions')) {
+          alert('You do not have permission to save episode data. Please make sure you are logged in as an admin.');
+        } else if (error.message.includes('Anime document does not exist')) {
+          alert('The anime document does not exist. Please try adding the anime first.');
+        } else {
+          alert(`Failed to save episode data: ${error.message}`);
+        }
+      } else {
+        alert('Failed to save episode data. Please try again.');
+      }
     } finally {
       setSavingEpisode(false);
     }
@@ -1306,6 +1363,29 @@ const AdminPage: React.FC = () => {
                           >
                             <Check className="h-4 w-4" />
                             {savingEpisode ? 'Saving...' : 'Save Episode'}
+                          </button>
+                        </div>
+                        
+                        <div className="mt-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                console.log('Testing admin permissions...');
+                                const testDocRef = doc(db, 'admin_test', 'test_doc');
+                                await setDoc(testDocRef, { 
+                                  lastTest: new Date().toISOString(),
+                                  user: auth.currentUser?.email,
+                                  timestamp: serverTimestamp()
+                                });
+                                alert('Admin permissions test successful! You have proper admin rights.');
+                              } catch (error) {
+                                console.error('Admin permissions test failed:', error);
+                                alert('Admin permissions test failed. You may not have proper admin rights.');
+                              }
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-300"
+                          >
+                            Test Admin Permissions
                           </button>
                         </div>
                       </div>

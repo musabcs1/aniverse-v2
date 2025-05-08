@@ -1,108 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is admin
-    function isAdmin() {
-      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return user.role == 'admin' || 
-             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
-    // Allow authenticated users to read the `admins` collection
-    match /admins/{adminId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
-    }
-  
-    // Forum rules
-    match /forumThreads/{threadId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (
-        request.auth.uid == resource.data.authorId || 
-        request.resource.data.keys().hasOnly(['reported', 'upvotes', 'downvotes']) ||
-        isAdmin()
-      );
-      allow delete: if request.auth != null && (
-        request.auth.uid == resource.data.authorId || 
-        isAdmin()
-      );
-    }
-
-    // User rules
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (
-        request.auth.uid == userId || 
-        isAdmin()
-      );
-      allow delete: if request.auth != null && isAdmin();
-    }
-
-    // Comments rules
-    match /comments/{commentId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        isAdmin()
-      );
-    }
-
-    // Notifications rules
-    match /notifications/{notificationId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        isAdmin()
-      );
-    }
-
-    // Reviews rules
-    match /reviews/{reviewId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        isAdmin()
-      );
-    }
-
-    // News articles rules
-    match /news/{articleId} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null && (
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'writer' ||
-        isAdmin()
-      );
-      allow delete: if request.auth != null && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'writer' ||
-        isAdmin()
-      );
-    }
-
-    // Anime collection rules
-    match /anime/{document=**} {
-      allow read: if true; 
-      allow write: if request.auth != null && isAdmin();
-    }
-    
-    // Anime episodes collection rules
-    match /anime_episodes/{animeId} {
-      allow read: if true;
-      allow write: if request.auth != null && isAdmin();
-    }
-
-    // Badges rules
-    match /badges/{badgeId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
+    // WARNING: These rules are for development only!
+    // They allow anyone to read/write to your database
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
+}
 
+// Storage rules are defined in a separate service
+service firebase.storage {
   match /b/{bucket}/o {
     match /avatars/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
