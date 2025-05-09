@@ -42,6 +42,7 @@ function App() {
               <Route path="/news" element={<NewsPage />} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/profile/:username" element={<ProfilePage />} />
+              <Route path="/user/:userId" element={<ProfilePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/admin-login" element={<AdminLoginPage />} />
               <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>} />

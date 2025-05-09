@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ThumbsUp, ThumbsDown, ClockIcon } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, increment, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
@@ -9,6 +9,7 @@ interface ForumThread {
   id: string;
   title: string;
   content: string;
+  authorId: string;
   authorName: string;
   authorAvatar: string;
   createdAt: string | number | Date;
@@ -30,10 +31,15 @@ interface ForumThreadCardProps {
 }
 
 const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
+  const navigate = useNavigate();
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState<Array<{ id: string; content: string; authorId: string; authorName: string; createdAt: Date }>>(thread.comments || []);
   const [upvotes, setUpvotes] = useState(Array.isArray(thread.upvotes) ? thread.upvotes : []);
   const [downvotes, setDownvotes] = useState(Array.isArray(thread.downvotes) ? thread.downvotes : []);
+
+  const handleProfileClick = (authorId: string) => {
+    navigate(`/user/${authorId}`);
+  };
 
   const handleAddComment = async () => {
     if (!auth.currentUser) {
@@ -159,14 +165,21 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
           <img 
             src={thread.authorAvatar} 
             alt={thread.authorName} 
-            className="w-10 h-10 rounded-full"
+            className="w-10 h-10 rounded-full cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+            onClick={() => handleProfileClick(thread.authorId)}
+            title={`View ${thread.authorName}'s profile`}
           />
           <div>
             <Link to={`/forum/${thread.id}`} className="font-bold text-white hover:text-secondary transition-colors">
               {thread.title}
             </Link>
             <div className="flex items-center mt-1 text-xs text-gray-400">
-              <span>by {thread.authorName}</span>
+              <span 
+                className="hover:text-primary cursor-pointer transition-colors"
+                onClick={() => handleProfileClick(thread.authorId)}
+              >
+                by {thread.authorName}
+              </span>
               <span className="mx-2">•</span>
               <span className="flex items-center">
                 <ClockIcon className="h-3 w-3 mr-1" />
@@ -228,9 +241,14 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
       <div className="mt-4">
         <h4 className="text-lg font-semibold">Comments</h4>
         <ul>
-          {comments.map((c: { id: string; content: string; authorName: string }, index: number) => (
-            <li key={index} className="text-sm text-gray-300">
-              <strong>{c.authorName}:</strong> {c.content}
+          {comments.map((c: { id: string; content: string; authorName: string; authorId: string }, index: number) => (
+            <li key={index} className="text-sm text-gray-300 mt-2">
+              <strong 
+                className="cursor-pointer hover:text-primary transition-colors"
+                onClick={() => handleProfileClick(c.authorId)}
+              >
+                {c.authorName}:
+              </strong> {c.content}
             </li>
           ))}
         </ul>

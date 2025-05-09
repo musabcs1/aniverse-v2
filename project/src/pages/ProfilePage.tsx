@@ -56,7 +56,7 @@ const ProfilePage: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [completedAnime, setCompletedAnime] = useState<Anime[]>([]);
-  const { username } = useParams<{ username: string }>();
+  const { username, userId } = useParams<{ username: string; userId: string }>();
   const { badges, loading: badgesLoading } = useUserBadges();
 
   useEffect(() => {
@@ -76,14 +76,40 @@ const ProfilePage: React.FC = () => {
 
         await waitForAuth;
 
-        if (!auth.currentUser) {
-          setError('No user is logged in');
+        // If userId is provided, fetch by userId directly
+        if (userId) {
+          const userDocRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = { id: userDoc.id, ...userDoc.data() } as User;
+            setUserData(userData);
+            setAvatarURL(userData.avatar || '');
+
+            setStats({
+              watching: userData.watchlist?.length || 0,
+              completed: userData.stats?.completed || 0,
+              comments: userData.stats?.comments || 0,
+              reviews: userData.stats?.reviews || 0,
+              threads: userData.stats?.threads || 0,
+              level: userData.level || 0,
+              xp: userData.xp || 0,
+            });
+          } else {
+            setError('User data not found');
+          }
           setLoading(false);
           return;
         }
 
-        // If no username is provided, use current user's data
+        // If no username or userId is provided, use current user's data
         if (!username) {
+          if (!auth.currentUser) {
+            setError('No user is logged in');
+            setLoading(false);
+            return;
+          }
+          
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           
@@ -140,7 +166,7 @@ const ProfilePage: React.FC = () => {
     };
 
     fetchUserData();
-  }, [username]);
+  }, [username, userId]);
 
   useEffect(() => {
     const fetchWatchlist = async () => {
