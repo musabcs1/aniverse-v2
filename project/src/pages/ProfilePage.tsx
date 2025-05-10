@@ -1002,29 +1002,31 @@ const ProfilePage: React.FC = () => {
                           Found {userData.watchlistDetails.length} anime in your watchlist
                         </p>
                       </div>
-                      <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
-                        {userData.watchlistDetails.map((anime, index) => {
-                          // Ensure anime has all required properties
-                          const safeAnime = {
-                            ...anime,
-                            id: anime.id || `anime-${index}`,
-                            title: anime.title || 'Unknown Anime',
-                            coverImage: anime.coverImage || BASE64_FALLBACK,
-                            episodes: anime.episodes || 0,
-                            rating: anime.rating || 0,
-                            genres: anime.genres || ['Unknown'],
-                            description: anime.description || '',
-                          };
-                          
-                          return (
-                            <div 
-                              key={safeAnime.id} 
-                              className="w-[169px] h-[295px]" 
-                            >
-                              <AnimeCard anime={safeAnime} />
-                            </div>
-                          );
-                        })}
+                      <div className="overflow-x-auto pb-4 hide-scrollbar">
+                        <div className="flex flex-nowrap gap-4 min-w-max">
+                          {userData.watchlistDetails.map((anime, index) => {
+                            // Ensure anime has all required properties
+                            const safeAnime = {
+                              ...anime,
+                              id: anime.id || `anime-${index}`,
+                              title: anime.title || 'Unknown Anime',
+                              coverImage: anime.coverImage || BASE64_FALLBACK,
+                              episodes: anime.episodes || 0,
+                              rating: anime.rating || 0,
+                              genres: anime.genres || ['Unknown'],
+                              description: anime.description || '',
+                            };
+                            
+                            return (
+                              <div 
+                                key={safeAnime.id} 
+                                className="w-[169px] h-[295px] flex-shrink-0" 
+                              >
+                                <AnimeCard anime={safeAnime} />
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </>
                   ) : (
@@ -1059,29 +1061,31 @@ const ProfilePage: React.FC = () => {
                         </button>
                       </div>
                       
-                      <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
-                        {completedAnime.slice(0, 4).map((anime, index) => {
-                          // Ensure anime has all required properties
-                          const safeAnime = {
-                            ...anime,
-                            id: anime.id || `completed-${index}`,
-                            title: anime.title || 'Unknown Anime',
-                            coverImage: anime.coverImage || BASE64_FALLBACK,
-                            episodes: anime.episodes || 0,
-                            rating: anime.rating || 0,
-                            genres: anime.genres || ['Unknown'],
-                            description: anime.description || '',
-                          };
-                          
-                          return (
-                            <div 
-                              key={safeAnime.id} 
-                              className="w-[169px] h-[295px]" 
-                            >
-                              <AnimeCard anime={safeAnime} />
-                            </div>
-                          );
-                        })}
+                      <div className="overflow-x-auto pb-4 hide-scrollbar">
+                        <div className="flex flex-nowrap gap-4 min-w-max">
+                          {completedAnime.slice(0, 4).map((anime, index) => {
+                            // Ensure anime has all required properties
+                            const safeAnime = {
+                              ...anime,
+                              id: anime.id || `completed-${index}`,
+                              title: anime.title || 'Unknown Anime',
+                              coverImage: anime.coverImage || BASE64_FALLBACK,
+                              episodes: anime.episodes || 0,
+                              rating: anime.rating || 0,
+                              genres: anime.genres || ['Unknown'],
+                              description: anime.description || '',
+                            };
+                            
+                            return (
+                              <div 
+                                key={safeAnime.id} 
+                                className="w-[169px] h-[295px] flex-shrink-0" 
+                              >
+                                <AnimeCard anime={safeAnime} />
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
