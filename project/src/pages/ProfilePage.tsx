@@ -4,7 +4,7 @@ import {
   Clock, Award, ChevronRight, Edit, Shield, UserRound,
   Calendar, Star, Eye, BarChart3, Map, Bookmark, Zap
 } from 'lucide-react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -199,21 +199,34 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchWatchlistDetails = async () => {
-      if (!auth.currentUser || !userData?.watchlist) return;
+      if (!userData?.watchlist) return;
 
       try {
+        console.log("Fetching watchlist details for:", userData.watchlist);
         const animeDetails = await Promise.all(
           userData.watchlist.map(async (animeId: string) => {
             const animeDocRef = doc(db, 'anime', animeId);
             const animeSnapshot = await getDoc(animeDocRef);
-            return animeSnapshot.exists() ? { id: animeId, ...animeSnapshot.data() } as Anime : null;
+            if (animeSnapshot.exists()) {
+              console.log("Found anime:", animeId, animeSnapshot.data());
+              return { id: animeId, ...animeSnapshot.data() } as Anime;
+            } else {
+              console.log("Anime not found:", animeId);
+              return null;
+            }
           })
         );
 
-        setUserData((prev) => ({
-          ...prev!,
-          watchlistDetails: animeDetails.filter((anime) => anime !== null),
-        }));
+        const validAnimeDetails = animeDetails.filter((anime): anime is Anime => anime !== null);
+        console.log("Valid anime details:", validAnimeDetails);
+        
+        setUserData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            watchlistDetails: validAnimeDetails,
+          };
+        });
       } catch (error) {
         console.error('Error fetching watchlist details:', error);
       }
@@ -339,18 +352,27 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchCompletedAnime = async () => {
-      if (!auth.currentUser || !userData?.completed) return;
+      if (!userData?.completed) return;
 
       try {
+        console.log("Fetching completed anime details for:", userData.completed);
         const animeDetails = await Promise.all(
           userData.completed.map(async (animeId: string) => {
             const animeDocRef = doc(db, 'anime', animeId);
             const animeSnapshot = await getDoc(animeDocRef);
-            return animeSnapshot.exists() ? { id: animeId, ...animeSnapshot.data() } as Anime : null;
+            if (animeSnapshot.exists()) {
+              console.log("Found completed anime:", animeId, animeSnapshot.data());
+              return { id: animeId, ...animeSnapshot.data() } as Anime;
+            } else {
+              console.log("Completed anime not found:", animeId);
+              return null;
+            }
           })
         );
 
-        setCompletedAnime(animeDetails.filter((anime): anime is Anime => anime !== null));
+        const validAnimeDetails = animeDetails.filter((anime): anime is Anime => anime !== null);
+        console.log("Valid completed anime details:", validAnimeDetails);
+        setCompletedAnime(validAnimeDetails);
       } catch (error) {
         console.error('Error fetching completed anime details:', error);
       }
@@ -358,6 +380,118 @@ const ProfilePage: React.FC = () => {
 
     fetchCompletedAnime();
   }, [userData?.completed]);
+
+  useEffect(() => {
+    const checkAnimeData = async () => {
+      try {
+        const animeCollectionRef = collection(db, 'anime');
+        const animeSnapshot = await getDocs(animeCollectionRef);
+        
+        console.log(`Found ${animeSnapshot.size} anime in the database`);
+        
+        if (animeSnapshot.size === 0) {
+          console.error("No anime data found in the database!");
+          
+          // Add sample anime data
+          const sampleAnimeData = [
+            {
+              id: "jujutsu-kaisen",
+              title: "Jujutsu Kaisen",
+              description: "A boy swallows a cursed talisman - the finger of a demon - and becomes cursed himself. He enters a shaman's school to be able to locate the demon's other body parts and thus exorcise himself.",
+              coverImage: "https://cdn.myanimelist.net/images/anime/1171/109222.jpg",
+              bannerImage: "https://cdn.myanimelist.net/images/anime/1964/116831.jpg",
+              episodes: 24,
+              rating: 8.7,
+              releaseYear: 2020,
+              genres: ["Action", "Fantasy", "School", "Shounen", "Supernatural"],
+              status: "Completed",
+              studio: "MAPPA",
+              seasons: [
+                { name: "Season 1", episodes: 24 }
+              ]
+            },
+            {
+              id: "demon-slayer",
+              title: "Demon Slayer",
+              description: "A family is attacked by demons and only two members survive - Tanjiro and his sister Nezuko, who is turning into a demon slowly. Tanjiro sets out to become a demon slayer to avenge his family and cure his sister.",
+              coverImage: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+              bannerImage: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+              episodes: 26,
+              rating: 8.9,
+              releaseYear: 2019,
+              genres: ["Action", "Fantasy", "Historical", "Shounen", "Supernatural"],
+              status: "Completed",
+              studio: "ufotable",
+              seasons: [
+                { name: "Season 1", episodes: 26 }
+              ]
+            },
+            {
+              id: "attack-on-titan",
+              title: "Attack on Titan",
+              description: "After his hometown is destroyed and his mother is killed, young Eren Jaeger vows to cleanse the earth of the giant humanoid Titans that have brought humanity to the brink of extinction.",
+              coverImage: "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+              bannerImage: "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+              episodes: 25,
+              rating: 8.5,
+              releaseYear: 2013,
+              genres: ["Action", "Drama", "Fantasy", "Shounen", "Supernatural"],
+              status: "Completed",
+              studio: "Wit Studio",
+              seasons: [
+                { name: "Season 1", episodes: 25 }
+              ]
+            }
+          ];
+          
+          console.log("Adding sample anime data to the database...");
+          
+          try {
+            await Promise.all(sampleAnimeData.map(async (anime) => {
+              const animeRef = doc(db, 'anime', anime.id);
+              await setDoc(animeRef, anime);
+              console.log(`Added anime: ${anime.title}`);
+            }));
+            
+            console.log("Sample anime data added successfully!");
+            
+            // If the user has a watchlist but no anime in the database,
+            // add these sample anime to their watchlist
+            if (userData && auth.currentUser && userData.watchlist?.length === 0) {
+              const userRef = doc(db, 'users', auth.currentUser.uid);
+              await updateDoc(userRef, {
+                watchlist: sampleAnimeData.map(anime => anime.id)
+              });
+              console.log("Added sample anime to user's watchlist");
+            }
+          } catch (error) {
+            console.error("Error adding sample anime data:", error);
+          }
+        } else {
+          console.log("First few anime:", animeSnapshot.docs.slice(0, 3).map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })));
+        }
+      } catch (error) {
+        console.error("Error checking anime data:", error);
+      }
+    };
+    
+    checkAnimeData();
+  }, [userData]);
+
+  useEffect(() => {
+    if (userData) {
+      console.log("userData updated:", {
+        id: userData.id,
+        username: userData.username,
+        watchlist: userData.watchlist,
+        watchlistDetails: userData.watchlistDetails,
+        completed: userData.completed
+      });
+    }
+  }, [userData]);
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
