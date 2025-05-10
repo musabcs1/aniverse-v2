@@ -16,6 +16,7 @@ import BannedPage from './pages/BannedPage';
 import Layout from './components/layout/Layout';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ToastProvider } from './components/ui/ToastContainer';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -31,28 +32,30 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/anime" element={<AnimeDirectoryPage />} />
-              <Route path="/anime/:animeId" element={<AnimeDetailPage />} />
-              <Route path="/anime/:animeId/season/:seasonName" element={<AnimeSeasonPage />} />
-              <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              <Route path="/profile/:username" element={<ProfilePage />} />
-              <Route path="/user/:userId" element={<ProfilePage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/admin-login" element={<AdminLoginPage />} />
-              <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/banned" element={<BannedPage />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
+        <ToastProvider>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/anime" element={<AnimeDirectoryPage />} />
+                <Route path="/anime/:animeId" element={<AnimeDetailPage />} />
+                <Route path="/anime/:animeId/season/:seasonName" element={<AnimeSeasonPage />} />
+                <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="/profile/:username" element={<ProfilePage />} />
+                <Route path="/user/:userId" element={<ProfilePage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/admin-login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/banned" element={<BannedPage />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -3,6 +3,7 @@ import HeroSection from '../components/home/HeroSection';
 import AniNestPicksSection from '../components/home/AniNestPicksSection';
 import NewsUpdateSection from '../components/home/NewsUpdateSection';
 import CommunitySection from '../components/home/CommunitySection';
+import ToastDemo from '../components/ui/ToastDemo';
 
 // Fixed JSX element type issues by ensuring TypeScript recognizes JSX.
 
@@ -17,6 +18,13 @@ const HomePage: React.FC = () => {
           <NewsUpdateSection />
         </div>
         <CommunitySection />
+        
+        {/* Toast Demo Section */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            <ToastDemo />
+          </div>
+        </div>
       </div>
     </div>
   );

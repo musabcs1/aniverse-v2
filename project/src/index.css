@@ -75,6 +75,49 @@
     @apply font-orbitron font-bold text-transparent bg-clip-text;
     background-image: linear-gradient(45deg, #FF00FF, #9900FF);
   }
+  
+  /* Toast animations and styles */
+  .toast-enter {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8);
+  }
+  
+  .toast-enter-active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
+  .toast-exit {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  
+  .toast-exit-active {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8);
+    transition: opacity 200ms, transform 200ms;
+  }
+  
+  .toast-success {
+    border-left: 4px solid #10B981;
+    background: linear-gradient(to right, rgba(16, 185, 129, 0.1), rgba(17, 7, 38, 0.9));
+  }
+  
+  .toast-error {
+    border-left: 4px solid #EF4444;
+    background: linear-gradient(to right, rgba(239, 68, 68, 0.1), rgba(17, 7, 38, 0.9));
+  }
+  
+  .toast-warning {
+    border-left: 4px solid #F59E0B;
+    background: linear-gradient(to right, rgba(245, 158, 11, 0.1), rgba(17, 7, 38, 0.9));
+  }
+  
+  .toast-info {
+    border-left: 4px solid #9900FF;
+    background: linear-gradient(to right, rgba(153, 0, 255, 0.1), rgba(17, 7, 38, 0.9));
+  }
 }
 
 @keyframes border-glow {

@@ -13,6 +13,8 @@ import Badge from '../components/ui/Badge';
 import { UserRole, User, Anime } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
 import { motion } from 'framer-motion';
+import Toast from '../components/ui/Toast';
+import { ToastProvider, useToast } from '../components/ui/ToastContainer';
 
 interface UserStats {
   watching: number;
@@ -66,6 +68,7 @@ const ProfilePage: React.FC = () => {
   const [completedAnime, setCompletedAnime] = useState<Anime[]>([]);
   const { username, userId } = useParams<{ username: string; userId: string }>();
   const { badges, loading: badgesLoading } = useUserBadges();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -543,7 +546,7 @@ const ProfilePage: React.FC = () => {
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
-      setImageError('Please provide a valid avatar URL.');
+      showToast('Please provide a valid avatar URL.', 'error');
       return;
     }
     try {
@@ -561,9 +564,11 @@ const ProfilePage: React.FC = () => {
       const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
       await updateDoc(userDocRef, { avatar: avatarURL });
       setUserData((prev) => ({ ...prev!, avatar: avatarURL }));
+      
+      showToast('Avatar updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating avatar:', error);
-      setImageError('Failed to update avatar. Please provide a valid image URL.');
+      showToast('Failed to update avatar. Please provide a valid image URL.', 'error');
     } finally {
       setUpdating(false);
     }
@@ -571,7 +576,7 @@ const ProfilePage: React.FC = () => {
 
   const handleBannerUpdate = async () => {
     if (!bannerURL.trim()) {
-      setImageError('Please provide a valid banner URL.');
+      showToast('Please provide a valid banner URL.', 'error');
       return;
     }
     try {
@@ -589,9 +594,11 @@ const ProfilePage: React.FC = () => {
       const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
       await updateDoc(userDocRef, { banner: bannerURL });
       setUserData((prev) => ({ ...prev!, banner: bannerURL }));
+      
+      showToast('Banner updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating banner:', error);
-      setImageError('Failed to update banner. Please provide a valid image URL.');
+      showToast('Failed to update banner. Please provide a valid image URL.', 'error');
     } finally {
       setUpdatingBanner(false);
     }
@@ -599,7 +606,7 @@ const ProfilePage: React.FC = () => {
 
   const handleUsernameUpdate = async () => {
     if (!userData?.username.trim()) {
-      alert('Please provide a valid username.');
+      showToast('Please provide a valid username.', 'error');
       return;
     }
     try {
@@ -619,10 +626,10 @@ const ProfilePage: React.FC = () => {
       localStorage.setItem('userData', JSON.stringify(updatedUserData));
       setUserData(updatedUserData);
 
-      alert('Username updated successfully!');
+      showToast('Username updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating username:', error);
-      alert('Failed to update username. Please try again.');
+      showToast('Failed to update username. Please try again.', 'error');
     } finally {
       setUpdating(false);
     }
