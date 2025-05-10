@@ -63,6 +63,7 @@ export interface User {
   username: string;
   email: string;
   avatar: string;
+  banner?: string;
   joinDate: string;
   role: UserRole;
   watchlist: string[];

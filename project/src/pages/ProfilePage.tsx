@@ -48,6 +48,9 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [avatarURL, setAvatarURL] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [bannerURL, setBannerURL] = useState('');
+  const [updatingBanner, setUpdatingBanner] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats>({
     watching: 0,
     completed: 0,
@@ -88,6 +91,7 @@ const ProfilePage: React.FC = () => {
             const userData = { id: userDoc.id, ...userDoc.data() } as User;
             setUserData(userData);
             setAvatarURL(userData.avatar || '');
+            setBannerURL(userData.banner || '');
 
             setStats({
               watching: userData.watchlist?.length || 0,
@@ -120,6 +124,7 @@ const ProfilePage: React.FC = () => {
             const userData = { id: userDoc.id, ...userDoc.data() } as User;
             setUserData(userData);
             setAvatarURL(userData.avatar || '');
+            setBannerURL(userData.banner || '');
 
             setStats({
               watching: userData.watchlist?.length || 0,
@@ -147,6 +152,7 @@ const ProfilePage: React.FC = () => {
           const userData = { id: userDoc.id, ...userDoc.data() } as User;
           setUserData(userData);
           setAvatarURL(userData.avatar || '');
+          setBannerURL(userData.banner || '');
 
           setStats({
             watching: userData.watchlist?.length || 0,
@@ -355,20 +361,57 @@ const ProfilePage: React.FC = () => {
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
-      alert('Please provide a valid avatar URL.');
+      setImageError('Please provide a valid avatar URL.');
       return;
     }
     try {
       setUpdating(true);
+      setImageError(null);
+      
+      // Validate image URL
+      const img = new Image();
+      img.src = avatarURL;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Invalid image URL'));
+      });
+
       const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
       await updateDoc(userDocRef, { avatar: avatarURL });
       setUserData((prev) => ({ ...prev!, avatar: avatarURL }));
-      alert('Avatar updated successfully!');
     } catch (error) {
       console.error('Error updating avatar:', error);
-      alert('Failed to update avatar. Please try again.');
+      setImageError('Failed to update avatar. Please provide a valid image URL.');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleBannerUpdate = async () => {
+    if (!bannerURL.trim()) {
+      setImageError('Please provide a valid banner URL.');
+      return;
+    }
+    try {
+      setUpdatingBanner(true);
+      setImageError(null);
+      
+      // Validate image URL
+      const img = new Image();
+      img.src = bannerURL;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Invalid image URL'));
+      });
+
+      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+      await updateDoc(userDocRef, { banner: bannerURL });
+      setUserData((prev) => ({ ...prev!, banner: bannerURL }));
+    } catch (error) {
+      console.error('Error updating banner:', error);
+      setImageError('Failed to update banner. Please provide a valid image URL.');
+    } finally {
+      setUpdatingBanner(false);
     }
   };
 
@@ -474,29 +517,62 @@ const ProfilePage: React.FC = () => {
           <div 
             className="h-48 bg-gradient-to-r from-primary/40 to-secondary/40 relative" 
             style={{
-              backgroundImage: "url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80')",
+              backgroundImage: `url('${userData.banner || 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80'}')`,
               backgroundSize: 'cover',
               backgroundBlendMode: 'overlay',
               backgroundPosition: 'center'
             }}
           >
             {isOwnProfile && (
-              <button 
-                className="absolute top-4 right-4 bg-surface/40 backdrop-blur-sm p-2.5 rounded-lg text-white hover:bg-surface/60 transition-all hover:scale-105"
-                title="Change banner image"
-              >
-                <Edit className="h-5 w-5" />
-              </button>
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button 
+                  className="bg-surface/40 backdrop-blur-sm p-2.5 rounded-lg text-white hover:bg-surface/60 transition-all hover:scale-105"
+                  title="Change banner image"
+                  onClick={() => {
+                    const url = prompt('Enter banner image URL:');
+                    if (url) {
+                      setBannerURL(url);
+                      handleBannerUpdate();
+                    }
+                  }}
+                >
+                  {updatingBanner ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Edit className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
           </div>
 
           <div className="px-6 py-5 flex flex-col md:flex-row items-start md:items-center relative">
             <div className="absolute -top-20 left-6 h-32 w-32 rounded-full border-4 border-surface overflow-hidden shadow-xl">
-              <img src={userData.avatar || 'https://via.placeholder.com/150'} alt={userData.username} className="h-full w-full object-cover" />
+              <img 
+                src={userData.avatar || 'https://via.placeholder.com/150'} 
+                alt={userData.username} 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://via.placeholder.com/150';
+                }}
+              />
               {isOwnProfile && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity cursor-pointer group">
-                  <Edit className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-transform group-hover:scale-110" />
+                <div 
+                  className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity cursor-pointer group"
+                  onClick={() => {
+                    const url = prompt('Enter avatar image URL:');
+                    if (url) {
+                      setAvatarURL(url);
+                      handleAvatarUpdate();
+                    }
+                  }}
+                >
+                  {updating ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Edit className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-transform group-hover:scale-110" />
+                  )}
                 </div>
               )}
             </div>
@@ -924,34 +1000,84 @@ const ProfilePage: React.FC = () => {
                     </div>
                     
                     <div className="bg-surface-dark p-6 rounded-xl">
-                      <h3 className="text-lg font-medium mb-6 text-secondary">Avatar</h3>
-                      <div className="flex flex-col md:flex-row items-center gap-6">
-                        <div className="relative group">
-                          <img 
-                            src={userData.avatar} 
-                            alt={userData.username} 
-                            className="w-32 h-32 rounded-full object-cover border-4 border-surface"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                            <Edit className="h-8 w-8 text-white" />
+                      <h3 className="text-lg font-medium mb-6 text-secondary">Profile Images</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Avatar Settings */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative group">
+                              <img 
+                                src={userData.avatar || 'https://via.placeholder.com/150'} 
+                                alt={userData.username} 
+                                className="w-24 h-24 rounded-full object-cover border-4 border-surface"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://via.placeholder.com/150';
+                                }}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                                <Edit className="h-6 w-6 text-white" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-gray-300 mb-1">Avatar URL</label>
+                              <input 
+                                type="text" 
+                                className="w-full bg-surface p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary border border-surface-light"
+                                value={avatarURL}
+                                onChange={(e) => setAvatarURL(e.target.value)}
+                                placeholder="Enter avatar URL"
+                              />
+                              {imageError && (
+                                <p className="text-red-500 text-sm mt-1">{imageError}</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex-1 space-y-4">
-                          <input 
-                            type="text" 
-                            className="w-full bg-surface p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary border border-surface-light"
-                            value={avatarURL}
-                            onChange={(e) => setAvatarURL(e.target.value)}
-                            placeholder="Enter avatar URL"
-                          />
                           <motion.button 
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            className="btn-primary py-3 px-6 rounded-xl w-full md:w-auto"
+                            className="btn-primary py-2 px-6 rounded-xl w-full"
                             onClick={handleAvatarUpdate}
                             disabled={updating}
                           >
                             {updating ? 'Updating...' : 'Update Avatar'}
+                          </motion.button>
+                        </div>
+
+                        {/* Banner Settings */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative group w-24 h-24 overflow-hidden rounded-xl">
+                              <img 
+                                src={userData.banner || 'https://via.placeholder.com/1500'} 
+                                alt="Profile banner" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://via.placeholder.com/1500';
+                                }}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Edit className="h-6 w-6 text-white" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-gray-300 mb-1">Banner URL</label>
+                              <input 
+                                type="text" 
+                                className="w-full bg-surface p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary border border-surface-light"
+                                value={bannerURL}
+                                onChange={(e) => setBannerURL(e.target.value)}
+                                placeholder="Enter banner URL"
+                              />
+                            </div>
+                          </div>
+                          <motion.button 
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="btn-primary py-2 px-6 rounded-xl w-full"
+                            onClick={handleBannerUpdate}
+                            disabled={updatingBanner}
+                          >
+                            {updatingBanner ? 'Updating...' : 'Update Banner'}
                           </motion.button>
                         </div>
                       </div>
