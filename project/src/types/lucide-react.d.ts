@@ -52,6 +52,23 @@ declare module 'lucide-react' {
   export const Home: React.FC<IconProps>;
   export const Film: React.FC<IconProps>;
   export const Newspaper: React.FC<IconProps>;
+  export const Calendar: React.FC<IconProps>;
+  export const Star: React.FC<IconProps>;
+  export const Map: React.FC<IconProps>;
+  export const Bookmark: React.FC<IconProps>;
+  export const Zap: React.FC<IconProps>;
+  export const BarChart3: React.FC<IconProps>;
+  export const ChevronRight: React.FC<IconProps>;
+  export const ChevronLeft: React.FC<IconProps>;
+  export const ChevronUp: React.FC<IconProps>;
+  export const ChevronDown: React.FC<IconProps>;
+  export const ChevronRight: React.FC<IconProps>;
+  export const ChevronLeft: React.FC<IconProps>;
+  export const ChevronUp: React.FC<IconProps>;
+  export const ChevronDown: React.FC<IconProps>;
+  export const Eye: React.FC<IconProps>;
+
+  export const ChevronRight: React.FC<IconProps>;
   export declare const Menu: LucideIcon;
   export declare const Search: LucideIcon;
   export declare const Bell: LucideIcon;
