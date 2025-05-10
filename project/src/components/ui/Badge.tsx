@@ -35,6 +35,12 @@ const Badge: React.FC<BadgeProps> = ({ badge, size = 'md', children }) => {
   
   if (!badge?.name) return null;
 
+  // Special case for admin badge to accommodate fire effect
+  const isAdmin = badge.name === 'admin';
+  const contentClass = isAdmin
+    ? 'flex items-center justify-center' 
+    : `flex items-center justify-center ${isHovered ? 'animate-pulse' : ''}`;
+
   return (
     <span 
       className={getBadgeStyles(badge.name, size, isHovered)}
@@ -42,7 +48,7 @@ const Badge: React.FC<BadgeProps> = ({ badge, size = 'md', children }) => {
       onMouseLeave={() => setIsHovered(false)}
       title={`${badge.name.charAt(0).toUpperCase() + badge.name.slice(1)} Badge`}
     >
-      <span className={`flex items-center justify-center ${isHovered ? 'animate-pulse' : ''}`}>
+      <span className={contentClass}>
         {children || badge.name.charAt(0).toUpperCase() + badge.name.slice(1)}
       </span>
     </span>

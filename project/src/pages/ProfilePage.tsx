@@ -15,6 +15,7 @@ import { useUserBadges } from '../hooks/useUserBadges';
 import { motion } from 'framer-motion';
 import Toast from '../components/ui/Toast';
 import { ToastProvider, useToast } from '../components/ui/ToastContainer';
+import FireBadge from '../components/ui/FireBadge';
 
 interface UserStats {
   watching: number;
@@ -31,7 +32,11 @@ const getBadgeIcon = (role: UserRole) => {
   
   switch (role) {
     case 'admin':
-      return <Shield className={`h-5 w-5 text-primary ${iconClass}`} />;
+      return (
+        <FireBadge>
+          <Shield className={`h-5 w-5 text-primary ${iconClass}`} />
+        </FireBadge>
+      );
     case 'reviewer':
       return <Award className={`h-5 w-5 text-yellow-400 ${iconClass}`} />;
     case 'writer':

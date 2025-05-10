@@ -76,6 +76,92 @@
     background-image: linear-gradient(45deg, #FF00FF, #9900FF);
   }
   
+  /* Admin Badge Fire Animation */
+  .admin-badge-container {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .fire-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #FF4500;
+    filter: blur(1px);
+    opacity: 0;
+    z-index: -1;
+    box-shadow: 0 0 4px 2px rgba(255, 69, 0, 0.4);
+  }
+
+  .admin-badge-fire::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: radial-gradient(circle, rgba(255,69,0,0.4) 0%, rgba(255,140,0,0.2) 50%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: pulse-fire 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-fire {
+    0% {
+      transform: scale(0.95);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(0.95);
+      opacity: 0.7;
+    }
+  }
+
+  .fire-effect {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    overflow: hidden;
+    z-index: -1;
+    opacity: 0.8;
+  }
+
+  .fire-effect::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 30% 50%, rgba(255,69,0,0.8) 0%, rgba(255,140,0,0.6) 30%, transparent 70%),
+      radial-gradient(circle at 70% 50%, rgba(255,69,0,0.8) 0%, rgba(255,140,0,0.6) 30%, transparent 70%);
+    filter: blur(2px);
+    animation: rotate-fire 3s linear infinite;
+  }
+
+  .fire-effect::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: 
+      radial-gradient(circle at 40% 60%, rgba(255,215,0,0.6) 0%, rgba(255,215,0,0.3) 20%, transparent 50%),
+      radial-gradient(circle at 60% 40%, rgba(255,215,0,0.6) 0%, rgba(255,215,0,0.3) 20%, transparent 50%);
+    filter: blur(1px);
+    animation: rotate-fire 4s linear infinite reverse;
+  }
+
+  @keyframes rotate-fire {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
   /* Toast animations and styles */
   .toast-enter {
     opacity: 0;
