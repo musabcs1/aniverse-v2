@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NewsCard from '../ui/NewsCard';
 import { NewsArticle } from '../../types';
@@ -62,31 +62,76 @@ const newsArticles: NewsArticle[] = [
 
 const NewsUpdateSection: React.FC = () => {
   return (
-    <section className="py-16">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
+    <section className="py-24 relative">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBmaWxsPSIjMTEwNzI2IiBkPSJNMCAwaDYwdjYwSDB6Ii8+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIgZmlsbD0iI0ZGMDBGRiIgZmlsbC1vcGFjaXR5PSIuMDUiLz48L2c+PC9zdmc+')] opacity-30"></div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
-            <h2 className="text-3xl font-orbitron font-bold">
+            <div className="inline-block mb-2 bg-accent/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-accent-light">
+              LATEST UPDATES
+            </div>
+            <h2 className="text-3xl md:text-4xl font-orbitron font-bold">
               <span className="gradient-text">Latest</span> News & Updates
             </h2>
-            <p className="text-gray-400 mt-2">Stay informed with the anime world's latest happenings</p>
+            <p className="text-gray-400 mt-2 max-w-lg">
+              Stay informed with the anime world's latest happenings and industry insights
+            </p>
           </div>
           
-          <Link to="/news" className="flex items-center space-x-1 text-secondary hover:text-secondary-light transition-colors">
-            <span>All news</span>
-            <ChevronRight className="h-4 w-4" />
+          <Link 
+            to="/news" 
+            className="group flex items-center space-x-2 py-2 px-4 border border-accent/30 rounded-full hover:bg-accent/10 transition-all"
+          >
+            <span className="text-white group-hover:text-accent transition-colors">All News</span>
+            <ChevronRight className="h-4 w-4 text-accent transform group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {newsArticles.map((article, index) => (
-            <NewsCard key={article.id} article={article} featured={index === 0} />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Featured article */}
+          <div className="md:col-span-6 lg:col-span-8">
+            <div className="relative group h-full">
+              <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 rounded-xl opacity-0 group-hover:opacity-100 -z-10 blur-xl transition-opacity"></div>
+              <div className="transform group-hover:-translate-y-1 transition-transform duration-300 h-full">
+                <NewsCard article={newsArticles[0]} featured={true} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Secondary articles */}
+          <div className="md:col-span-6 lg:col-span-4 grid grid-cols-1 gap-6">
+            {newsArticles.slice(1, 3).map((article) => (
+              <div key={article.id} className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 rounded-xl opacity-0 group-hover:opacity-100 -z-10 blur-xl transition-opacity"></div>
+                <div className="transform group-hover:-translate-y-1 transition-transform duration-300">
+                  <NewsCard article={article} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Additional articles in a row */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {newsArticles.slice(3).map((article) => (
+            <div key={article.id} className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 rounded-xl opacity-0 group-hover:opacity-100 -z-10 blur-xl transition-opacity"></div>
+              <div className="transform group-hover:-translate-y-1 transition-transform duration-300">
+                <NewsCard article={article} />
+              </div>
+            </div>
           ))}
         </div>
         
         <div className="mt-12 flex justify-center">
-          <Link to="/news" className="btn-ghost py-3 px-6">
-            View All Articles
+          <Link 
+            to="/news" 
+            className="group flex items-center space-x-2 py-3 px-8 bg-gradient-to-r from-accent/20 to-primary/20 rounded-full hover:from-accent/30 hover:to-primary/30 transition-all border border-accent/20"
+          >
+            <span>View All Articles</span>
+            <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>

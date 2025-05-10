@@ -1,7 +1,7 @@
 // filepath: project/src/firebaseConfig.ts
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 export const firebaseConfig = {
   apiKey: "AIzaSyDpU9R1Rg662_29X0nuUYBYylNWCmmYdYY",
@@ -15,9 +15,10 @@ export const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Initialize Firestore with persistence enabled
+// Initialize Firestore with multi-tab persistence enabled
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache(
-    { cacheSizeBytes: 50 * 1024 * 1024 } // 50 MB cache size
-  )
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+    cacheSizeBytes: 50 * 1024 * 1024 // 50 MB cache size
+  })
 });
