@@ -1002,7 +1002,7 @@ const ProfilePage: React.FC = () => {
                           Found {userData.watchlistDetails.length} anime in your watchlist
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                      <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
                         {userData.watchlistDetails.map((anime, index) => {
                           // Ensure anime has all required properties
                           const safeAnime = {
@@ -1019,8 +1019,7 @@ const ProfilePage: React.FC = () => {
                           return (
                             <div 
                               key={safeAnime.id} 
-                              className="w-full h-full" 
-                              style={{ minHeight: '280px' }}
+                              className="w-[169px] h-[295px]" 
                             >
                               <AnimeCard anime={safeAnime} />
                             </div>
@@ -1060,7 +1059,7 @@ const ProfilePage: React.FC = () => {
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                      <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
                         {completedAnime.slice(0, 4).map((anime, index) => {
                           // Ensure anime has all required properties
                           const safeAnime = {
@@ -1077,8 +1076,7 @@ const ProfilePage: React.FC = () => {
                           return (
                             <div 
                               key={safeAnime.id} 
-                              className="w-full h-full" 
-                              style={{ minHeight: '280px' }}
+                              className="w-[169px] h-[295px]" 
                             >
                               <AnimeCard anime={safeAnime} />
                             </div>

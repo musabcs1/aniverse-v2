@@ -75,20 +75,6 @@ const AniNestPicksSection: React.FC = () => {
             <AnimeCard key={anime.id} anime={anime} featured />
           ))}
         </div>
-
-        <div className="mt-16 bg-gradient-to-r from-primary/20 to-accent/20 rounded-xl p-6 md:p-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-6 md:mb-0">
-              <h3 className="text-2xl font-orbitron font-bold text-white">Join AniNest Premium</h3>
-              <p className="text-gray-300 mt-2 max-w-xl">
-                Get unlimited access to all episodes, ad-free viewing, and exclusive content.
-              </p>
-            </div>
-            <Link to="/premium" className="btn-primary py-3 px-8">
-              Upgrade Now
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   );
