@@ -205,10 +205,10 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
   
   // Render the manager
   return (
-    <div className={`bg-surface p-4 rounded-xl shadow-lg ${className}`}>
+    <div className={`bg-surface p-3 md:p-4 rounded-xl shadow-lg ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <h3 className="text-lg md:text-xl font-semibold">
           {mode === 'view' ? 'My Custom Lists' : 'Add to List'}
         </h3>
         {onClose && (
@@ -224,42 +224,42 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
       
       {/* Create/Edit Form */}
       {(isCreating || isEditing) && (
-        <div className="mb-6 bg-surface-dark p-4 rounded-lg">
-          <h4 className="text-lg font-medium mb-3">
+        <div className="mb-4 md:mb-6 bg-surface-dark p-3 md:p-4 rounded-lg">
+          <h4 className="text-base md:text-lg font-medium mb-2 md:mb-3">
             {isCreating ? 'Create New List' : 'Edit List'}
           </h4>
           
           <div className="space-y-3">
             <div>
-              <label className="block text-sm text-gray-300 mb-1">List Name</label>
+              <label className="block text-xs md:text-sm text-gray-300 mb-1">List Name</label>
               <input
                 type="text"
                 value={newListName}
                 onChange={(e) => setNewListName(e.target.value)}
                 placeholder="E.g., Summer Favorites"
-                className="w-full bg-surface-light p-2 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-surface-light p-2 rounded-lg text-white text-sm md:text-base focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Description (Optional)</label>
+              <label className="block text-xs md:text-sm text-gray-300 mb-1">Description (Optional)</label>
               <textarea
                 value={newListDescription}
                 onChange={(e) => setNewListDescription(e.target.value)}
                 placeholder="What's this list about?"
                 rows={2}
-                className="w-full bg-surface-light p-2 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-surface-light p-2 rounded-lg text-white text-sm md:text-base focus:outline-none focus:ring-1 focus:ring-primary"
               ></textarea>
             </div>
             
             <div>
-              <label className="block text-sm text-gray-300 mb-2">Color</label>
+              <label className="block text-xs md:text-sm text-gray-300 mb-1 md:mb-2">Color</label>
               <div className="flex flex-wrap gap-2">
                 {PRESET_COLORS.map(color => (
                   <button
                     key={color}
                     onClick={() => setNewListColor(color)}
-                    className={`h-8 w-8 rounded-full ${newListColor === color ? 'ring-2 ring-white' : ''}`}
+                    className={`h-7 w-7 md:h-8 md:w-8 rounded-full ${newListColor === color ? 'ring-2 ring-white' : ''}`}
                     style={{ backgroundColor: color }}
                     aria-label={`Select color ${color}`}
                   ></button>
@@ -268,12 +268,12 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
             </div>
             
             <div className="flex items-center">
-              <label className="flex items-center text-sm text-gray-300 cursor-pointer">
+              <label className="flex items-center text-xs md:text-sm text-gray-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={newListPublic}
                   onChange={(e) => setNewListPublic(e.target.checked)}
-                  className="mr-2 h-4 w-4 rounded accent-primary"
+                  className="mr-2 h-3 w-3 md:h-4 md:w-4 rounded accent-primary"
                 />
                 Make this list public
               </label>
@@ -291,13 +291,13 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
                   setNewListName('');
                   setNewListDescription('');
                 }}
-                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base text-gray-300 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => isEditing ? handleUpdateList(isEditing) : handleCreateList()}
-                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
+                className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
               >
                 {isCreating ? 'Create List' : 'Save Changes'}
               </button>
@@ -308,28 +308,28 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
       
       {/* List of lists */}
       {isLoading ? (
-        <div className="py-6 text-center text-gray-400">
+        <div className="py-4 md:py-6 text-center text-gray-400">
           <div className="animate-pulse">Loading your lists...</div>
         </div>
       ) : error ? (
-        <div className="py-6 text-center text-red-400">
+        <div className="py-4 md:py-6 text-center text-red-400">
           <p>{error}</p>
           <button 
             onClick={fetchLists} 
-            className="mt-2 text-primary hover:underline"
+            className="mt-2 text-primary hover:underline text-sm md:text-base"
           >
             Try again
           </button>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-1">
           {customLists.length === 0 && !isCreating ? (
-            <div className="py-6 text-center text-gray-400">
-              <List className="h-12 w-12 mx-auto mb-2 text-gray-500" />
-              <p className="mb-4">You haven't created any custom lists yet</p>
+            <div className="py-4 md:py-6 text-center text-gray-400">
+              <List className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 text-gray-500" />
+              <p className="mb-3 md:mb-4 text-sm md:text-base">You haven't created any custom lists yet</p>
               <button
                 onClick={() => setIsCreating(true)}
-                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
+                className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
               >
                 Create Your First List
               </button>
@@ -338,7 +338,7 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
             customLists.map(list => (
               <div
                 key={list.id}
-                className={`p-3 rounded-lg ${
+                className={`p-2 md:p-3 rounded-lg ${
                   isEditing === list.id 
                     ? 'bg-surface-light' 
                     : 'bg-surface-dark hover:bg-surface-light'
@@ -348,17 +348,17 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div 
-                        className="h-8 w-8 rounded-md flex items-center justify-center flex-shrink-0 mr-3"
+                        className="h-7 w-7 md:h-8 md:w-8 rounded-md flex items-center justify-center flex-shrink-0 mr-2 md:mr-3"
                         style={{ backgroundColor: list.iconColor || '#9900FF' }}
                       >
-                        <Film className="h-4 w-4 text-white" />
+                        <Film className="h-3 w-3 md:h-4 md:w-4 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-medium">{list.name}</h4>
+                        <h4 className="font-medium text-sm md:text-base">{list.name}</h4>
                         <div className="flex items-center text-xs text-gray-400">
-                          <Film className="h-3 w-3 mr-1" />
+                          <Film className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
                           <span>{list.animeIds.length} anime</span>
-                          {!list.isPublic && <Lock className="h-3 w-3 ml-2" />}
+                          {!list.isPublic && <Lock className="h-2.5 w-2.5 md:h-3 md:w-3 ml-2" />}
                         </div>
                       </div>
                     </div>
@@ -367,17 +367,17 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
                       <div className="flex space-x-1">
                         <button
                           onClick={() => startEditing(list)}
-                          className="p-2 text-gray-400 hover:text-white hover:bg-surface-light rounded-md transition-colors"
+                          className="p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-surface-light rounded-md transition-colors"
                           aria-label="Edit list"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteList(list.id, list.name)}
-                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-surface-light rounded-md transition-colors"
+                          className="p-1.5 md:p-2 text-gray-400 hover:text-red-400 hover:bg-surface-light rounded-md transition-colors"
                           aria-label="Delete list"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         </button>
                       </div>
                     ) : (
@@ -386,7 +386,7 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
                           ? handleRemoveAnimeFromList(list.id, list.name) 
                           : handleAddAnimeToList(list.id, list.name)
                         }
-                        className={`px-4 py-1 rounded-full text-sm ${
+                        className={`px-3 md:px-4 py-1 md:py-1.5 rounded-full text-xs md:text-sm ${
                           isInList(list)
                             ? 'bg-primary text-white hover:bg-primary-dark'
                             : 'border border-gray-600 text-gray-300 hover:bg-surface-light'
@@ -407,9 +407,9 @@ const CustomListManager: React.FC<CustomListManagerProps> = ({
       {!isCreating && !isEditing && (
         <button
           onClick={() => setIsCreating(true)}
-          className="mt-4 w-full py-3 flex items-center justify-center rounded-lg border border-dashed border-gray-600 text-gray-300 hover:border-primary hover:text-primary transition-colors"
+          className="mt-3 md:mt-4 w-full py-2 md:py-3 flex items-center justify-center rounded-lg border border-dashed border-gray-600 text-gray-300 hover:border-primary hover:text-primary transition-colors text-sm md:text-base"
         >
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2" />
           Create New List
         </button>
       )}

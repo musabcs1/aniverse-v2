@@ -488,54 +488,179 @@ const AnimeSeasonPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Control Bar */}
-        <div className="flex items-center justify-between mb-6 bg-surface rounded-xl p-4 shadow-lg">
+      <div className="container mx-auto px-4 py-4 md:py-8">
+        {/* Control Bar - Make it more mobile-friendly */}
+        <div className="flex flex-wrap items-center justify-between mb-4 md:mb-6 bg-surface rounded-xl p-3 md:p-4 shadow-lg">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-white hover:text-primary transition-colors"
+            className="flex items-center gap-2 text-white hover:text-primary transition-colors mb-2 sm:mb-0"
           >
             <ChevronLeft className="h-5 w-5" />
-            <span>{t('anime.backToDetails')}</span>
+            <span className="text-sm md:text-base">{t('anime.backToDetails')}</span>
           </button>
           
-          <div className="flex items-center">
-            <span className="text-white font-medium mr-3">{selectedSeason.name}</span>
-            <button 
-              onClick={toggleFavorite}
-              disabled={isUpdatingFavorite}
-              className={`p-2 rounded-full hover:bg-surface-light transition-colors mr-2 ${isUpdatingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Heart 
-                className={`h-5 w-5 ${favorited ? 'text-red-500' : 'text-gray-400'} ${isUpdatingFavorite ? 'animate-pulse' : ''}`} 
-                fill={favorited ? 'currentColor' : 'none'} 
-              />
-            </button>
-            <button 
-              onClick={toggleBookmark}
-              disabled={isUpdatingBookmark}
-              className={`p-2 rounded-full hover:bg-surface-light transition-colors mr-2 ${isUpdatingBookmark ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Bookmark 
-                className={`h-5 w-5 ${bookmarked ? 'text-blue-500' : 'text-gray-400'} ${isUpdatingBookmark ? 'animate-pulse' : ''}`} 
-                fill={bookmarked ? 'currentColor' : 'none'} 
-              />
-            </button>
-            <button className="p-2 rounded-full hover:bg-surface-light transition-colors">
-              <Share2 className="h-5 w-5 text-gray-400" />
-            </button>
+          <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start">
+            <span className="text-white font-medium mr-3 text-sm md:text-base">{selectedSeason.name}</span>
+            <div className="flex items-center">
+              <button 
+                onClick={toggleFavorite}
+                disabled={isUpdatingFavorite}
+                className={`p-2 rounded-full hover:bg-surface-light transition-colors mr-2 ${isUpdatingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Heart 
+                  className={`h-5 w-5 ${favorited ? 'text-red-500' : 'text-gray-400'} ${isUpdatingFavorite ? 'animate-pulse' : ''}`} 
+                  fill={favorited ? 'currentColor' : 'none'} 
+                />
+              </button>
+              <button 
+                onClick={toggleBookmark}
+                disabled={isUpdatingBookmark}
+                className={`p-2 rounded-full hover:bg-surface-light transition-colors mr-2 ${isUpdatingBookmark ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Bookmark 
+                  className={`h-5 w-5 ${bookmarked ? 'text-blue-500' : 'text-gray-400'} ${isUpdatingBookmark ? 'animate-pulse' : ''}`} 
+                  fill={bookmarked ? 'currentColor' : 'none'} 
+                />
+              </button>
+              <button className="p-2 rounded-full hover:bg-surface-light transition-colors">
+                <Share2 className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Sidebar */}
-          <div className="w-full lg:w-1/4 space-y-6">
+        {/* Reorder content for mobile - Video player first, then episodes */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
+          {/* Video Player - Move to top on mobile */}
+          <div className="flex-1 order-1 lg:order-2">
+            <div className="bg-surface rounded-xl shadow-lg overflow-hidden border border-surface-light/20">
+              {/* Language selection bar - Make responsive */}
+              {selectedEpisode !== null && availableLanguages.length > 0 && (
+                <div className="bg-surface-dark p-2 md:p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-800">
+                  <div className="text-white font-medium text-sm md:text-base mb-2 sm:mb-0">
+                    {t('anime.episode')} {selectedEpisode + 1}: {currentEpisode?.title || ''}
+                  </div>
+                  <div className="flex items-center space-x-2 md:space-x-4 w-full sm:w-auto">
+                    <span className="text-gray-400 text-xs md:text-sm">{t('common.language')}:</span>
+                    <div className="flex space-x-2 flex-wrap gap-2">
+                      {availableLanguages.includes('en') && (
+                        <button
+                          onClick={() => handleLanguageChange('en')}
+                          className={`px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                            selectedLanguage === 'en' 
+                              ? 'bg-primary text-white' 
+                              : 'bg-surface-light text-gray-300 hover:bg-primary/30'
+                          }`}
+                        >
+                          🇬🇧 English
+                        </button>
+                      )}
+                      {availableLanguages.includes('tr') && (
+                        <button
+                          onClick={() => handleLanguageChange('tr')}
+                          className={`px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                            selectedLanguage === 'tr' 
+                              ? 'bg-primary text-white' 
+                              : 'bg-surface-light text-gray-300 hover:bg-primary/30'
+                          }`}
+                        >
+                          🇹🇷 Türkçe
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="relative">
+                <div className="aspect-video bg-black">
+                  {selectedEpisode !== null ? (
+                    embedCode ? (
+                      <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: embedCode }} />
+                    ) : (
+                      <div className="flex items-center justify-center h-full flex-col">
+                        <Play className="h-12 w-12 md:h-16 md:w-16 text-secondary mx-auto mb-4 animate-pulse" />
+                        <p className="text-gray-400 text-sm md:text-base">
+                          {availableLanguages.length > 0 
+                            ? t('anime.loadingVideo') 
+                            : `${t('anime.episode')} ${selectedEpisode + 1} ${t('common.error')}`}
+                        </p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex items-center justify-center h-full flex-col">
+                      <div className="text-center">
+                        <Play className="h-12 w-12 md:h-16 md:w-16 text-gray-600 mx-auto opacity-50 mb-3" />
+                        <p className="text-gray-400 text-base md:text-lg">{t('anime.selectEpisode')}</p>
+                        <p className="text-gray-500 text-xs md:text-sm mt-2">{t('anime.enjoyYourShow')}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Episode navigation buttons - Improve for touch */}
+                {selectedEpisode !== null && (
+                  <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between px-2 md:px-4 pointer-events-none">
+                    <button
+                      onClick={() => navigateToEpisode('prev')}
+                      disabled={selectedEpisode <= 0}
+                      className={`p-2 md:p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-primary transition-colors pointer-events-auto ${
+                        selectedEpisode <= 0 ? 'opacity-40 cursor-not-allowed' : 'opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+                    </button>
+                    <button
+                      onClick={() => navigateToEpisode('next')}
+                      disabled={!hasEpisodesData || selectedEpisode >= Object.keys(episodesData!.seasons[selectedSeason.name]).length - 1}
+                      className={`p-2 md:p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-primary transition-colors pointer-events-auto ${
+                        !hasEpisodesData || selectedEpisode >= Object.keys(episodesData!.seasons[selectedSeason.name]).length - 1 
+                          ? 'opacity-40 cursor-not-allowed' 
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Episode info - Improve readability on mobile */}
+              {currentEpisode && (
+                <div className="p-4 md:p-6 border-t border-surface-light/20">
+                  <h2 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">{t('anime.episode')} {selectedEpisode! + 1}: {currentEpisode.title}</h2>
+                  <p className="text-gray-400 leading-relaxed text-xs md:text-sm">{(currentEpisode as any).description || anime.description}</p>
+                  
+                  {(currentEpisode as any).airDate && (
+                    <div className="mt-3 md:mt-4 flex items-center gap-2 text-xs md:text-sm text-gray-400">
+                      <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                      <span>{t('anime.airDate')}: {(currentEpisode as any).airDate}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Comments section placeholder */}
+            <div className="mt-4 md:mt-6 bg-surface rounded-xl p-4 md:p-6 shadow-lg border border-surface-light/20">
+              <h3 className="text-base md:text-lg font-bold text-white mb-3 md:mb-4 flex items-center gap-2">
+                <Info className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                {t('anime.comments')}
+              </h3>
+              <div className="text-center py-6 md:py-8">
+                <p className="text-gray-400 text-sm md:text-base">{t('common.comingSoon')}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Left Sidebar - Episodes list */}
+          <div className="w-full lg:w-1/4 space-y-4 md:space-y-6 order-2 lg:order-1">
             <div className="bg-surface rounded-xl overflow-hidden shadow-lg border border-surface-light/20">
               {/* Tab Navigation */}
               <div className="flex border-b border-surface-light">
                 <button
                   onClick={() => setActiveTab('episodes')}
-                  className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+                  className={`flex-1 py-2 md:py-3 px-3 md:px-4 text-center font-medium transition-colors text-sm md:text-base ${
                     activeTab === 'episodes' 
                       ? 'text-secondary border-b-2 border-secondary' 
                       : 'text-white hover:text-secondary'
@@ -545,7 +670,7 @@ const AnimeSeasonPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('info')}
-                  className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+                  className={`flex-1 py-2 md:py-3 px-3 md:px-4 text-center font-medium transition-colors text-sm md:text-base ${
                     activeTab === 'info' 
                       ? 'text-secondary border-b-2 border-secondary' 
                       : 'text-white hover:text-secondary'
@@ -556,9 +681,9 @@ const AnimeSeasonPage: React.FC = () => {
               </div>
 
               {/* Tab Content */}
-              <div className="p-4">
+              <div className="p-3 md:p-4">
                 {activeTab === 'episodes' ? (
-                  <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary scrollbar-track-surface-dark">
+                  <div className="space-y-2 max-h-[300px] md:max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary scrollbar-track-surface-dark">
                     {hasEpisodesData && episodesData.seasons[selectedSeason.name] ? (
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -573,26 +698,26 @@ const AnimeSeasonPage: React.FC = () => {
                               key={episodeNum}
                               whileHover={{ scale: 1.02 }}
                               onClick={() => setSelectedEpisode(Number(episodeNum) - 1)}
-                              className={`w-full p-4 rounded-lg text-white transition-all flex items-center justify-between group ${
+                              className={`w-full p-3 md:p-4 rounded-lg text-white transition-all flex items-center justify-between group ${
                                 selectedEpisode === Number(episodeNum) - 1 
                                   ? 'bg-gradient-to-r from-primary/30 to-secondary/30 border-l-4 border-secondary shadow-md' 
                                   : 'bg-surface-dark hover:bg-surface-light'
                               }`}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className={`rounded-full p-1.5 ${
+                              <div className="flex items-center gap-2 md:gap-3">
+                                <div className={`rounded-full p-1 md:p-1.5 ${
                                   selectedEpisode === Number(episodeNum) - 1
                                     ? 'bg-secondary text-black'
                                     : 'bg-surface-light text-primary group-hover:bg-primary/20'
                                 } transition-colors`}>
-                                  <Play className="h-3 w-3" />
+                                  <Play className="h-2 w-2 md:h-3 md:w-3" />
                                 </div>
                                 <div className="text-left">
-                                  <span className={`block ${selectedEpisode === Number(episodeNum) - 1 ? 'font-medium' : ''}`}>
+                                  <span className={`block text-sm md:text-base ${selectedEpisode === Number(episodeNum) - 1 ? 'font-medium' : ''}`}>
                                     {t('anime.episode')} {episodeNum}
                                   </span>
                                   {episodeData.title !== `Episode ${episodeNum}` && (
-                                    <span className="block text-gray-400 text-xs mt-0.5 truncate max-w-[180px]">
+                                    <span className="block text-gray-400 text-xs mt-0.5 truncate max-w-[120px] md:max-w-[180px]">
                                       {episodeData.title}
                                     </span>
                                   )}
@@ -608,8 +733,8 @@ const AnimeSeasonPage: React.FC = () => {
                           ))}
                       </motion.div>
                     ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-400">{loadingEpisodes ? t('common.loading') : t('anime.noEpisodesAvailable')}</p>
+                      <div className="text-center py-6 md:py-8">
+                        <p className="text-gray-400 text-sm md:text-base">{loadingEpisodes ? t('common.loading') : t('anime.noEpisodesAvailable')}</p>
                       </div>
                     )}
                   </div>
@@ -618,14 +743,14 @@ const AnimeSeasonPage: React.FC = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4 text-gray-300"
+                    className="space-y-3 md:space-y-4 text-gray-300"
                   >
                     <div>
-                      <h3 className="text-white font-medium mb-2">{t('anime.synopsis')}</h3>
-                      <p className="text-gray-400 text-sm leading-relaxed">{anime.description}</p>
+                      <h3 className="text-white font-medium mb-1 md:mb-2 text-sm md:text-base">{t('anime.synopsis')}</h3>
+                      <p className="text-gray-400 text-xs md:text-sm leading-relaxed">{anime.description}</p>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-1 md:space-y-2 text-xs md:text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-400">{t('anime.status')}:</span>
                         <span className="text-white">{anime.status || 'Unknown'}</span>
@@ -653,145 +778,36 @@ const AnimeSeasonPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Video Player */}
-          <div className="flex-1">
-            <div className="bg-surface rounded-xl shadow-lg overflow-hidden border border-surface-light/20">
-              {/* Language selection bar */}
-              {selectedEpisode !== null && availableLanguages.length > 0 && (
-                <div className="bg-surface-dark p-3 flex justify-between items-center border-b border-gray-800">
-                  <div className="text-white font-medium">
-                    {t('anime.episode')} {selectedEpisode + 1}: {currentEpisode?.title || ''}
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-gray-400">{t('common.language')}:</span>
-                    <div className="flex space-x-2">
-                      {availableLanguages.includes('en') && (
-                        <button
-                          onClick={() => handleLanguageChange('en')}
-                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                            selectedLanguage === 'en' 
-                              ? 'bg-primary text-white' 
-                              : 'bg-surface-light text-gray-300 hover:bg-primary/30'
-                          }`}
-                        >
-                          🇬🇧 English
-                        </button>
-                      )}
-                      {availableLanguages.includes('tr') && (
-                        <button
-                          onClick={() => handleLanguageChange('tr')}
-                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                            selectedLanguage === 'tr' 
-                              ? 'bg-primary text-white' 
-                              : 'bg-surface-light text-gray-300 hover:bg-primary/30'
-                          }`}
-                        >
-                          🇹🇷 Türkçe
-                        </button>
-                      )}
-                    </div>
-                  </div>
+          {/* Right Sidebar - Streaming Servers & Related Anime */}
+          <div className="w-full lg:w-1/4 order-3">
+            {/* Streaming Servers - Collapsible on mobile */}
+            <div className="bg-surface rounded-xl shadow-lg overflow-hidden border border-surface-light/20 mb-4 md:mb-0">
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden w-full text-xl font-bold text-white p-4 border-b border-surface-light flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Play className="h-5 w-5 text-primary" />
+                  {t('anime.streamingServers')}
                 </div>
-              )}
-
-              <div className="relative">
-                <div className="aspect-video bg-black">
-                  {selectedEpisode !== null ? (
-                    embedCode ? (
-                      <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: embedCode }} />
-                    ) : (
-                      <div className="flex items-center justify-center h-full flex-col">
-                        <Play className="h-16 w-16 text-secondary mx-auto mb-4 animate-pulse" />
-                        <p className="text-gray-400">
-                          {availableLanguages.length > 0 
-                            ? t('anime.loadingVideo') 
-                            : `${t('anime.episode')} ${selectedEpisode + 1} ${t('common.error')}`}
-                        </p>
-                      </div>
-                    )
-                  ) : (
-                    <div className="flex items-center justify-center h-full flex-col">
-                      <div className="text-center">
-                        <Play className="h-16 w-16 text-gray-600 mx-auto opacity-50 mb-3" />
-                        <p className="text-gray-400 text-lg">{t('anime.selectEpisode')}</p>
-                        <p className="text-gray-500 text-sm mt-2">{t('anime.enjoyYourShow')}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Episode navigation buttons */}
-                {selectedEpisode !== null && (
-                  <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between px-4 pointer-events-none">
-                    <button
-                      onClick={() => navigateToEpisode('prev')}
-                      disabled={selectedEpisode <= 0}
-                      className={`p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-primary transition-colors pointer-events-auto ${
-                        selectedEpisode <= 0 ? 'opacity-40 cursor-not-allowed' : 'opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </button>
-                    <button
-                      onClick={() => navigateToEpisode('next')}
-                      disabled={!hasEpisodesData || selectedEpisode >= Object.keys(episodesData!.seasons[selectedSeason.name]).length - 1}
-                      className={`p-3 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-primary transition-colors pointer-events-auto ${
-                        !hasEpisodesData || selectedEpisode >= Object.keys(episodesData!.seasons[selectedSeason.name]).length - 1 
-                          ? 'opacity-40 cursor-not-allowed' 
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </button>
-                  </div>
-                )}
-              </div>
+                <ChevronRight className={`h-5 w-5 transition-transform ${mobileMenuOpen ? 'rotate-90' : ''}`} />
+              </button>
               
-              {/* Episode info */}
-              {currentEpisode && (
-                <div className="p-6 border-t border-surface-light/20">
-                  <h2 className="text-xl font-bold text-white mb-3">{t('anime.episode')} {selectedEpisode! + 1}: {currentEpisode.title}</h2>
-                  <p className="text-gray-400 leading-relaxed text-sm">{(currentEpisode as any).description || anime.description}</p>
-                  
-                  {(currentEpisode as any).airDate && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
-                      <Calendar className="h-4 w-4" />
-                      <span>{t('anime.airDate')}: {(currentEpisode as any).airDate}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Comments section placeholder */}
-            <div className="mt-6 bg-surface rounded-xl p-6 shadow-lg border border-surface-light/20">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Info className="h-5 w-5 text-primary" />
-                {t('anime.comments')}
-              </h3>
-              <div className="text-center py-8">
-                <p className="text-gray-400">{t('common.comingSoon')}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Streaming Servers */}
-          <div className="w-full lg:w-1/4">
-            <div className="bg-surface rounded-xl shadow-lg overflow-hidden border border-surface-light/20">
-              <h2 className="text-xl font-bold text-white p-6 border-b border-surface-light flex items-center gap-2">
+              <h2 className="hidden lg:flex text-xl font-bold text-white p-6 border-b border-surface-light items-center gap-2">
                 <Play className="h-5 w-5 text-primary" />
                 {t('anime.streamingServers')}
               </h2>
-              <div className="divide-y divide-surface-light">
+              
+              <div className={`divide-y divide-surface-light ${mobileMenuOpen ? 'block' : 'hidden lg:block'}`}>
                 {['EarnVids', 'StreamHG', 'listeamed', 'upshare', 'VK', 'luluvdo', 'ok', 'vid1sha'].map((server) => (
                   <motion.button
                     key={server}
                     whileHover={{ x: 5 }}
-                    className="w-full p-4 text-left hover:bg-surface-light transition-colors flex items-center justify-between group"
+                    className="w-full p-3 md:p-4 text-left hover:bg-surface-light transition-colors flex items-center justify-between group"
                   >
-                    <span className="text-gray-300 group-hover:text-white transition-colors">{server}</span>
-                    <div className="bg-surface-light group-hover:bg-primary rounded-full p-1.5 transition-colors">
-                      <Play className="h-3 w-3 text-white" />
+                    <span className="text-gray-300 group-hover:text-white transition-colors text-sm md:text-base">{server}</span>
+                    <div className="bg-surface-light group-hover:bg-primary rounded-full p-1 md:p-1.5 transition-colors">
+                      <Play className="h-2 w-2 md:h-3 md:w-3 text-white" />
                     </div>
                   </motion.button>
                 ))}
@@ -799,21 +815,21 @@ const AnimeSeasonPage: React.FC = () => {
             </div>
 
             {/* Related Anime */}
-            <div className="mt-6 bg-surface rounded-xl shadow-lg overflow-hidden border border-surface-light/20">
-              <h2 className="text-xl font-bold text-white p-6 border-b border-surface-light">
+            <div className="mt-4 md:mt-6 bg-surface rounded-xl shadow-lg overflow-hidden border border-surface-light/20">
+              <h2 className="text-lg md:text-xl font-bold text-white p-4 md:p-6 border-b border-surface-light">
                 {t('anime.relatedAnime')}
               </h2>
-              <div className="p-4 space-y-4">
+              <div className="p-3 md:p-4 space-y-3 md:space-y-4">
                 {(anime as any).related ? (
                   (anime as any).related.map((relatedAnime: any, index: number) => (
-                    <div key={index} className="flex gap-3 group cursor-pointer">
+                    <div key={index} className="flex gap-2 md:gap-3 group cursor-pointer">
                       <img 
                         src={relatedAnime.image || 'https://via.placeholder.com/80x120?text=No+Image'} 
                         alt={relatedAnime.title} 
-                        className="w-14 h-20 object-cover rounded-md group-hover:ring-2 ring-primary transition-all"
+                        className="w-12 h-16 md:w-14 md:h-20 object-cover rounded-md group-hover:ring-2 ring-primary transition-all"
                       />
                       <div>
-                        <h4 className="text-white font-medium group-hover:text-primary transition-colors">{relatedAnime.title}</h4>
+                        <h4 className="text-white font-medium group-hover:text-primary transition-colors text-sm md:text-base">{relatedAnime.title}</h4>
                         <p className="text-xs text-gray-400">{relatedAnime.relation}</p>
                         <div className="flex items-center gap-1 mt-1">
                           <Star className="h-3 w-3 text-yellow-500" fill="currentColor" />
@@ -824,7 +840,7 @@ const AnimeSeasonPage: React.FC = () => {
                   ))
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-400">{t('anime.noRelatedAnime')}</p>
+                    <p className="text-gray-400 text-sm md:text-base">{t('anime.noRelatedAnime')}</p>
                   </div>
                 )}
               </div>
