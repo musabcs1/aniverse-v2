@@ -119,8 +119,35 @@ export interface NewsArticle {
 
 export interface Notification {
   id: string;
+  userId: string;
   title: string;
   message: string;
+  type: 'system' | 'message' | 'activity' | 'anime';
+  relatedId?: string;
   createdAt: Date;
   read: boolean;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  receiverId: string;
+  content: string;
+  createdAt: Date;
+  read: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  participants: string[];
+  lastMessage?: {
+    content: string;
+    senderId: string;
+    createdAt: Date;
+  };
+  unreadCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

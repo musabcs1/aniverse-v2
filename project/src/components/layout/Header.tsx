@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Bell, LogOut } from 'lucide-react';
+import { Menu, X, Search, LogOut, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
-import { Notification } from '../../types';
-import { onSnapshot, collection, doc, query, where } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
 import LanguageSelector from '../LanguageSelector';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../ui/NotificationBell';
 
 interface HeaderProps {
   toggleMobileMenu: () => void;
@@ -20,7 +18,6 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const { t } = useTranslation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const { currentUser, logout } = useAuth();
 
@@ -33,32 +30,6 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (currentUser) {
-      const notificationsRef = query(
-        collection(db, 'notifications'),
-        where('userId', '==', currentUser.id)
-      );
-      
-      const notificationsUnsubscribe = onSnapshot(notificationsRef, (snapshot) => {
-        const updatedNotifications = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          title: doc.data().title || 'Notification',
-          message: doc.data().message || '',
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-          read: doc.data().read || false
-        })) as Notification[];
-        setNotifications(updatedNotifications);
-      });
-
-      return () => {
-        notificationsUnsubscribe();
-      };
-    } else {
-      setNotifications([]);
-    }
-  }, [currentUser]);
-
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
@@ -67,18 +38,12 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
     navigate('/', { replace: true });
   };
 
-  const handleNotificationsClick = () => {
-    navigate('/notifications');
-  };
-
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
     }
   };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <header 
@@ -112,12 +77,14 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
               </form>
             </div>
 
-            <button className="relative" onClick={handleNotificationsClick}>
-              <Bell className="h-6 w-6 text-gray-300 hover:text-white transition-colors" />
-              <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {unreadCount}
-              </span>
-            </button>
+            {currentUser && (
+              <>
+                <NotificationBell />
+                <Link to="/messages" className="relative p-2 rounded-full hover:bg-surface-dark transition-all">
+                  <MessageSquare className="h-6 w-6 text-white" />
+                </Link>
+              </>
+            )}
 
             <LanguageSelector />
           </div>
