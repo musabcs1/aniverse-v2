@@ -16,6 +16,7 @@ import { motion } from 'framer-motion';
 import Toast from '../components/ui/Toast';
 import { ToastProvider, useToast } from '../components/ui/ToastContainer';
 import FireBadge from '../components/ui/FireBadge';
+import { useAuth } from '../context/AuthContext';
 
 interface UserStats {
   watching: number;
@@ -71,9 +72,12 @@ const ProfilePage: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [completedAnime, setCompletedAnime] = useState<Anime[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [viewingHiddenProfile, setViewingHiddenProfile] = useState(false);
   const { username, userId } = useParams<{ username: string; userId: string }>();
   const { badges, loading: badgesLoading } = useUserBadges();
   const { showToast } = useToast();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -92,6 +96,61 @@ const ProfilePage: React.FC = () => {
 
         await waitForAuth;
 
+        // Check if current user is an admin
+        let currentUserIsAdmin = false;
+        if (currentUser) {
+          try {
+            // Method 1: Check user document for role and badges
+            const currentUserDocRef = doc(db, 'users', currentUser.id);
+            const currentUserDoc = await getDoc(currentUserDocRef);
+            
+            if (currentUserDoc.exists()) {
+              const currentUserData = currentUserDoc.data();
+              
+              // Check if user has admin role
+              if (currentUserData.role === 'admin') {
+                currentUserIsAdmin = true;
+              }
+              
+              // Check if user has admin badge
+              if (currentUserData.badges && Array.isArray(currentUserData.badges)) {
+                console.log('User badges:', JSON.stringify(currentUserData.badges));
+                const hasAdminBadge = currentUserData.badges.some(
+                  (badge: any) => {
+                    console.log('Checking badge:', badge);
+                    return badge.name === 'admin' || badge.type === 'admin';
+                  }
+                );
+                if (hasAdminBadge) {
+                  currentUserIsAdmin = true;
+                }
+              }
+            }
+            
+            // Method 2: Check admins collection
+            const adminDocRef = doc(db, 'admins', currentUser.id);
+            const adminDoc = await getDoc(adminDocRef);
+            if (adminDoc.exists()) {
+              currentUserIsAdmin = true;
+            }
+            
+            // Method 3: Check localStorage for legacy admin data
+            const hasLegacyAdminData = localStorage.getItem('adminData') !== null;
+            if (hasLegacyAdminData) {
+              currentUserIsAdmin = true;
+            }
+            
+            console.log('Admin check result:', { 
+              uid: currentUser.id,
+              isAdmin: currentUserIsAdmin
+            });
+            
+            setIsAdmin(currentUserIsAdmin);
+          } catch (error) {
+            console.error('Error checking admin status:', error);
+          }
+        }
+
         // If userId is provided, fetch by userId directly
         if (userId) {
           const userDocRef = doc(db, 'users', userId);
@@ -100,11 +159,16 @@ const ProfilePage: React.FC = () => {
           if (userDoc.exists()) {
             const userData = { id: userDoc.id, ...userDoc.data() } as User;
             
-            // Check if profile is hidden and the viewer is not the profile owner
-            if (userData.profileHidden && auth.currentUser?.uid !== userData.id) {
-              setError('This profile is hidden by the user');
-              setLoading(false);
-              return;
+            // Check if profile is hidden and the viewer is not the profile owner or an admin
+            if (userData.profileHidden) {
+              if (currentUser?.id !== userData.id && !currentUserIsAdmin && !viewingHiddenProfile) {
+                setError('This profile is hidden by the user');
+                setLoading(false);
+                return;
+              } else if (currentUserIsAdmin && currentUser?.id !== userData.id) {
+                // Admin is viewing a hidden profile
+                setViewingHiddenProfile(true);
+              }
             }
             
             setUserData(userData);
@@ -129,24 +193,19 @@ const ProfilePage: React.FC = () => {
 
         // If no username or userId is provided, use current user's data
         if (!username) {
-          if (!auth.currentUser) {
+          if (!currentUser) {
             setError('No user is logged in');
             setLoading(false);
             return;
           }
           
-          const userDocRef = doc(db, 'users', auth.currentUser.uid);
+          const userDocRef = doc(db, 'users', currentUser.id);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
             const userData = { id: userDoc.id, ...userDoc.data() } as User;
             
-            // Check if profile is hidden and the viewer is not the profile owner
-            if (userData.profileHidden && auth.currentUser?.uid !== userData.id) {
-              setError('This profile is hidden by the user');
-              setLoading(false);
-              return;
-            }
+            // No need to check for hidden profile here as users can always see their own profile
             
             setUserData(userData);
             setAvatarURL(userData.avatar || '');
@@ -177,11 +236,16 @@ const ProfilePage: React.FC = () => {
           const userDoc = querySnapshot.docs[0];
           const userData = { id: userDoc.id, ...userDoc.data() } as User;
           
-          // Check if profile is hidden and the viewer is not the profile owner
-          if (userData.profileHidden && auth.currentUser?.uid !== userData.id) {
-            setError('This profile is hidden by the user');
-            setLoading(false);
-            return;
+          // Check if profile is hidden and the viewer is not the profile owner or an admin
+          if (userData.profileHidden) {
+            if (currentUser?.id !== userData.id && !currentUserIsAdmin && !viewingHiddenProfile) {
+              setError('This profile is hidden by the user');
+              setLoading(false);
+              return;
+            } else if (currentUserIsAdmin && currentUser?.id !== userData.id) {
+              // Admin is viewing a hidden profile
+              setViewingHiddenProfile(true);
+            }
           }
           
           setUserData(userData);
@@ -209,14 +273,14 @@ const ProfilePage: React.FC = () => {
     };
 
     fetchUserData();
-  }, [username, userId]);
+  }, [username, userId, viewingHiddenProfile, currentUser]);
 
   useEffect(() => {
     const fetchWatchlist = async () => {
-      if (!auth.currentUser) return;
+      if (!currentUser) return;
 
       try {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDocRef = doc(db, 'users', currentUser.id);
         const userSnapshot = await getDoc(userDocRef);
 
         if (userSnapshot.exists()) {
@@ -229,7 +293,7 @@ const ProfilePage: React.FC = () => {
     };
 
     fetchWatchlist();
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     const fetchWatchlistDetails = async () => {
@@ -290,10 +354,10 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchUserStats = async () => {
-      if (!auth.currentUser) return;
+      if (!currentUser) return;
 
       try {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDocRef = doc(db, 'users', currentUser.id);
         const userSnapshot = await getDoc(userDocRef);
 
         if (userSnapshot.exists()) {
@@ -325,12 +389,12 @@ const ProfilePage: React.FC = () => {
     };
 
     fetchUserStats();
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    if (!currentUser) return;
 
-    const userDocRef = doc(db, 'users', auth.currentUser.uid);
+    const userDocRef = doc(db, 'users', currentUser.id);
 
     const unsubscribeUser = onSnapshot(userDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
@@ -363,7 +427,7 @@ const ProfilePage: React.FC = () => {
 
     const threadsQuery = query(
       collection(db, 'forumThreads'),
-      where('authorId', '==', auth.currentUser.uid)
+      where('authorId', '==', currentUser.id)
     );
 
     const unsubscribeThreads = onSnapshot(threadsQuery, (querySnapshot) => {
@@ -384,7 +448,7 @@ const ProfilePage: React.FC = () => {
 
     const reviewsQuery = query(
       collection(db, 'reviews'),
-      where('authorId', '==', auth.currentUser.uid)
+      where('authorId', '==', currentUser.id)
     );
 
     const unsubscribeReviews = onSnapshot(reviewsQuery, (querySnapshot) => {
@@ -401,7 +465,7 @@ const ProfilePage: React.FC = () => {
       unsubscribeThreads();
       unsubscribeReviews();
     };
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     const fetchCompletedAnime = async () => {
@@ -537,8 +601,8 @@ const ProfilePage: React.FC = () => {
             
             // If the user has a watchlist but no anime in the database,
             // add these sample anime to their watchlist
-            if (userData && auth.currentUser && userData.watchlist?.length === 0) {
-              const userRef = doc(db, 'users', auth.currentUser.uid);
+            if (userData && currentUser && userData.watchlist?.length === 0) {
+              const userRef = doc(db, 'users', currentUser.id);
               await updateDoc(userRef, {
                 watchlist: sampleAnimeData.map(anime => anime.id)
               });
@@ -573,6 +637,36 @@ const ProfilePage: React.FC = () => {
     }
   }, [userData]);
 
+  useEffect(() => {
+    // Check URL parameters for admin override
+    const queryParams = new URLSearchParams(window.location.search);
+    const adminOverride = queryParams.get('adminOverride');
+    
+    if (adminOverride === 'true') {
+      console.log('Admin override detected in URL');
+      setViewingHiddenProfile(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Check if user has admin badge from the useUserBadges hook
+    if (badges && badges.length > 0) {
+      const hasAdminBadge = badges.some(badge => badge.name === 'admin');
+      if (hasAdminBadge && !isAdmin) {
+        console.log('Admin badge found via useUserBadges hook');
+        setIsAdmin(true);
+      }
+    }
+  }, [badges, isAdmin]);
+
+  useEffect(() => {
+    if (viewingHiddenProfile && isAdmin) {
+      // Clear the error message if admin decides to view the hidden profile
+      setError(null);
+      showToast('You are viewing a hidden profile as an admin', 'info');
+    }
+  }, [viewingHiddenProfile, isAdmin, showToast]);
+
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {
       showToast('Please provide a valid avatar URL.', 'error');
@@ -590,7 +684,7 @@ const ProfilePage: React.FC = () => {
         img.onerror = () => reject(new Error('Invalid image URL'));
       });
 
-      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+      const userDocRef = doc(db, 'users', currentUser?.id || '');
       await updateDoc(userDocRef, { avatar: avatarURL });
       setUserData((prev) => ({ ...prev!, avatar: avatarURL }));
       
@@ -620,7 +714,7 @@ const ProfilePage: React.FC = () => {
         img.onerror = () => reject(new Error('Invalid image URL'));
       });
 
-      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+      const userDocRef = doc(db, 'users', currentUser?.id || '');
       await updateDoc(userDocRef, { banner: bannerURL });
       setUserData((prev) => ({ ...prev!, banner: bannerURL }));
       
@@ -642,7 +736,7 @@ const ProfilePage: React.FC = () => {
       setUpdating(true);
 
       // Update username in Firestore
-      const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+      const userDocRef = doc(db, 'users', currentUser?.id || '');
       await updateDoc(userDocRef, { username: userData.username });
 
       // Update display name in Firebase Authentication
@@ -698,6 +792,34 @@ const ProfilePage: React.FC = () => {
               {error.includes('hidden') ? 'Profile Hidden' : 'Profile Error'}
             </h1>
             <p className="text-gray-300">{error}</p>
+            {error.includes('hidden') && (
+              <div className="mt-6 p-4 bg-primary/10 rounded-lg">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <span className="font-medium text-primary">Admin Access</span>
+                </div>
+                <p className="text-sm text-gray-300 mb-4">
+                  If you have admin privileges, you should be able to view this profile.
+                </p>
+                <button 
+                  onClick={() => {
+                    // Direct override - force viewing the profile
+                    setViewingHiddenProfile(true);
+                    setError(null);
+                    
+                    // Try to get the username from the URL
+                    const usernameFromUrl = window.location.pathname.split('/').pop();
+                    if (usernameFromUrl) {
+                      // Reload the page with the admin override flag
+                      window.location.href = `/profile/${usernameFromUrl}?adminOverride=true`;
+                    }
+                  }} 
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors w-full"
+                >
+                  Admin Override - View Profile
+                </button>
+              </div>
+            )}
             <button 
               onClick={() => navigate('/')} 
               className="mt-6 px-6 py-3 bg-surface-light hover:bg-surface-dark transition-colors rounded-xl text-white font-medium"
@@ -722,7 +844,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  const isOwnProfile = auth.currentUser?.uid === userData?.id;
+  const isOwnProfile = currentUser?.id === userData?.id;
 
   // Calculate XP percentage for the progress bar
   const xpPercentage = (stats.xp % 1000) / 10;
@@ -731,6 +853,30 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="pt-24 pb-16 min-h-screen bg-background">
       <div className="container mx-auto px-4">
+        {/* Admin Override Banner */}
+        {viewingHiddenProfile && isAdmin && (
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/20 rounded-full">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium text-white">Admin Override Active</h3>
+                <p className="text-sm text-gray-300">You are viewing a hidden profile with admin privileges</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                setViewingHiddenProfile(false);
+                navigate('/forum');
+              }}
+              className="px-4 py-2 bg-surface rounded-lg hover:bg-surface-light transition-colors text-sm"
+            >
+              Exit Admin View
+            </button>
+          </div>
+        )}
+        
         {/* Enhanced Profile Banner */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -810,6 +956,12 @@ const ProfilePage: React.FC = () => {
                   <div className="flex items-center gap-1 px-2 py-1 bg-secondary/20 rounded-full">
                     <Eye className="h-4 w-4 text-secondary" />
                     <span className="text-xs text-secondary font-medium">Hidden Profile</span>
+                  </div>
+                )}
+                {viewingHiddenProfile && isAdmin && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-primary/20 rounded-full">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <span className="text-xs text-primary font-medium">Admin View</span>
                   </div>
                 )}
                 <div className="flex gap-2">
@@ -1378,7 +1530,7 @@ const ProfilePage: React.FC = () => {
                             onChange={async () => {
                               try {
                                 const newHiddenValue = !userData.profileHidden;
-                                const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+                                const userDocRef = doc(db, 'users', currentUser?.id || '');
                                 await updateDoc(userDocRef, { profileHidden: newHiddenValue });
                                 setUserData((prev) => ({ ...prev!, profileHidden: newHiddenValue }));
                                 showToast(
