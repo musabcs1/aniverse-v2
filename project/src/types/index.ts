@@ -57,6 +57,19 @@ export interface Badge {
   permissions: string[];
 }
 
+// Custom anime list interface
+export interface CustomList {
+  id: string;
+  name: string;
+  description?: string;
+  animeIds: string[];
+  animeDetails?: Anime[];
+  createdAt: Date;
+  updatedAt: Date;
+  iconColor?: string;
+  isPublic: boolean;
+}
+
 export interface User {
   stats: any;
   id: string;
@@ -73,6 +86,7 @@ export interface User {
   xp: number;
   badges: Badge[];
   profileHidden?: boolean; // Flag to indicate if the user's profile is hidden from others
+  customLists?: CustomList[]; // User's custom anime lists
 }
 
 export type ForumCategory = 'General' | 'Anime' | 'Theory' | 'Memes' | 'Reviews';

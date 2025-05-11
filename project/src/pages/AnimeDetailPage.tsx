@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Anime } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard, Check } from 'lucide-react';
+import { ListPlus } from '../components/ui/Icons';
 import { auth } from '../firebaseConfig';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import CustomListManager from '../components/ui/CustomListManager';
 
 const AnimeDetailPage: React.FC = () => {
   const { animeId } = useParams<{ animeId: string }>();
   const navigate = useNavigate();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showCustomListModal, setShowCustomListModal] = useState(false);
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', animeId],
@@ -226,7 +229,7 @@ const AnimeDetailPage: React.FC = () => {
                       onClick={handleToggleWatchlist}
                     >
                       <BookmarkPlus className="h-5 w-5" />
-                      {isInWatchlist ? 'Remove from List' : 'Add to List'}
+                      {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                     </button>
                     <button 
                       className={`bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform ${isCompleted ? 'bg-green-600' : ''}`}
@@ -238,6 +241,13 @@ const AnimeDetailPage: React.FC = () => {
                     <button className="bg-black text-white w-full py-3 rounded-lg flex items-center justify-center gap-2 border border-white hover:bg-[#1A1A1A] hover:scale-105 transition-transform">
                       <Share2 className="h-5 w-5" />
                       Share
+                    </button>
+                    <button
+                      className="flex items-center justify-center gap-2 py-3 px-4 bg-surface rounded-lg hover:bg-surface-light hover:scale-105 transition-transform"
+                      onClick={() => setShowCustomListModal(true)}
+                    >
+                      <ListPlus className="h-5 w-5" />
+                      Add to List
                     </button>
                   </div>
                 </div>
@@ -278,6 +288,19 @@ const AnimeDetailPage: React.FC = () => {
           <p>❤</p>
         </div>
       </footer>
+      {showCustomListModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md">
+            <CustomListManager
+              mode="add"
+              animeId={anime.id}
+              anime={anime}
+              onClose={() => setShowCustomListModal(false)}
+              className="max-h-[80vh]"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

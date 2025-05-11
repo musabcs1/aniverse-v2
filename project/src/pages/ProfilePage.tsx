@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   User as UserIcon, Settings, Heart, BookOpen, MessageSquare, 
   Clock, Award, ChevronRight, Edit, Shield, UserRound,
   Calendar, Star, Eye, BarChart3, Map, Bookmark, Zap
 } from 'lucide-react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc } from 'firebase/firestore';
+import { ListFilter } from '../components/ui/Icons';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, writeBatch, arrayUnion, arrayRemove, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
 import Badge from '../components/ui/Badge';
-import { UserRole, User, Anime } from '../types';
-import { useUserBadges } from '../hooks/useUserBadges';
-import { motion } from 'framer-motion';
-import Toast from '../components/ui/Toast';
-import { ToastProvider, useToast } from '../components/ui/ToastContainer';
+import { useToast } from '../hooks/useToast';
 import FireBadge from '../components/ui/FireBadge';
 import { useAuth } from '../context/AuthContext';
+import CustomListManager from '../components/ui/CustomListManager';
+import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { User, Anime, UserRole, CustomList, Badge as BadgeType } from '../types';
+import { useUserBadges } from '../hooks/useUserBadges';
 
 interface UserStats {
   watching: number;
@@ -78,6 +80,7 @@ const ProfilePage: React.FC = () => {
   const { badges, loading: badgesLoading } = useUserBadges();
   const { showToast } = useToast();
   const { currentUser } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -334,10 +337,12 @@ const ProfilePage: React.FC = () => {
           })
         );
 
-        const validAnimeDetails = animeDetails.filter((anime): anime is Anime => anime !== null);
+        // Fix type for filter callback types
+        const validAnimeDetails = animeDetails.filter((anime: Anime | null): anime is Anime => anime !== null);
         console.log("Valid anime details:", validAnimeDetails);
         
-        setUserData((prev) => {
+        // Fix type for setUserData callbacks
+        setUserData((prev: User | null) => {
           if (!prev) return prev;
           return {
             ...prev,
@@ -409,7 +414,7 @@ const ProfilePage: React.FC = () => {
           completed: data.completed || [],
           level: data.level || 0,
           xp: data.xp || 0
-        }));
+        }) as User);
         
         // Update stats from users collection fields
         setStats(prev => ({
@@ -651,7 +656,7 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     // Check if user has admin badge from the useUserBadges hook
     if (badges && badges.length > 0) {
-      const hasAdminBadge = badges.some(badge => badge.name === 'admin');
+      const hasAdminBadge = badges.some((badge: BadgeType) => badge.name === 'admin');
       if (hasAdminBadge && !isAdmin) {
         console.log('Admin badge found via useUserBadges hook');
         setIsAdmin(true);
@@ -686,7 +691,7 @@ const ProfilePage: React.FC = () => {
 
       const userDocRef = doc(db, 'users', currentUser?.id || '');
       await updateDoc(userDocRef, { avatar: avatarURL });
-      setUserData((prev) => ({ ...prev!, avatar: avatarURL }));
+      setUserData((prev: User | null) => ({ ...prev!, avatar: avatarURL }));
       
       showToast('Avatar updated successfully!', 'success');
     } catch (error) {
@@ -716,7 +721,7 @@ const ProfilePage: React.FC = () => {
 
       const userDocRef = doc(db, 'users', currentUser?.id || '');
       await updateDoc(userDocRef, { banner: bannerURL });
-      setUserData((prev) => ({ ...prev!, banner: bannerURL }));
+      setUserData((prev: User | null) => ({ ...prev!, banner: bannerURL }));
       
       showToast('Banner updated successfully!', 'success');
     } catch (error) {
@@ -969,7 +974,7 @@ const ProfilePage: React.FC = () => {
                     <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
                   ) : badges && badges.length > 0 ? (
                     <div className="flex gap-2 items-center">
-                      {badges.map((badge) => (
+                      {badges.map((badge: BadgeType) => (
                         <motion.div 
                           key={badge.id || badge.name} 
                           className="group"
@@ -1120,7 +1125,7 @@ const ProfilePage: React.FC = () => {
                 </div>
               ) : badges && badges.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {badges.map((badge) => (
+                  {badges.map((badge: BadgeType) => (
                     <motion.div 
                       key={badge.id || badge.name} 
                       className="group bg-surface-dark p-3 rounded-xl flex flex-col items-center justify-center transform hover:scale-105 hover:shadow-md hover:shadow-primary/10 transition-all"
@@ -1156,7 +1161,8 @@ const ProfilePage: React.FC = () => {
                   { id: 'watchlist', label: 'Watchlist', icon: <Bookmark className="h-4 w-4 mr-2" /> },
                   { id: 'activity', label: 'Activity', icon: <Clock className="h-4 w-4 mr-2" /> },
                   { id: 'reviews', label: 'Reviews', icon: <Star className="h-4 w-4 mr-2" /> },
-                  { id: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4 mr-2" /> }
+                  { id: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4 mr-2" /> },
+                  { id: 'lists', label: 'Lists', icon: <ListFilter className="h-4 w-4 mr-2" /> }
                 ].map((tab) => (
                   <button 
                     key={tab.id}
@@ -1204,7 +1210,7 @@ const ProfilePage: React.FC = () => {
                       </div>
                       <div className="overflow-x-auto pb-4 hide-scrollbar">
                         <div className="flex flex-nowrap gap-4 min-w-max">
-                          {userData.watchlistDetails.map((anime, index) => {
+                          {userData.watchlistDetails.map((anime: Anime, index: number) => {
                             // Ensure anime has all required properties
                             const safeAnime = {
                               ...anime,
@@ -1395,7 +1401,7 @@ const ProfilePage: React.FC = () => {
                             type="text" 
                             className="w-full bg-surface p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary border border-surface-light"
                             value={userData.username}
-                            onChange={(e) => setUserData((prev) => ({ ...prev!, username: e.target.value }))}
+                            onChange={(e) => setUserData((prev: User | null) => ({ ...prev!, username: e.target.value }))}
                           />
                           <motion.button 
                             whileHover={{ scale: 1.03 }}
@@ -1532,7 +1538,7 @@ const ProfilePage: React.FC = () => {
                                 const newHiddenValue = !userData.profileHidden;
                                 const userDocRef = doc(db, 'users', currentUser?.id || '');
                                 await updateDoc(userDocRef, { profileHidden: newHiddenValue });
-                                setUserData((prev) => ({ ...prev!, profileHidden: newHiddenValue }));
+                                setUserData((prev: User | null) => ({ ...prev!, profileHidden: newHiddenValue }));
                                 showToast(
                                   newHiddenValue 
                                     ? 'Your profile is now hidden from other users' 
@@ -1560,6 +1566,24 @@ const ProfilePage: React.FC = () => {
                       </motion.button>
                     </div>
                   </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'lists' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h2 className="text-2xl font-semibold mb-8 flex items-center">
+                    <ListFilter className="h-5 w-5 mr-2 text-primary" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+                      My Custom Lists
+                    </span>
+                  </h2>
+                  
+                  {/* Show the custom list manager in view mode */}
+                  <CustomListManager mode="view" className="bg-transparent p-0" />
                 </motion.div>
               )}
             </div>
