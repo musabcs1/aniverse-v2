@@ -784,6 +784,11 @@ const AdminPage: React.FC = () => {
         };
       }
       
+      // Ensure embedCodes object exists
+      if (!updatedData.seasons[currentSeason][currentEpisode].embedCodes) {
+        updatedData.seasons[currentSeason][currentEpisode].embedCodes = {};
+      }
+      
       // Update the episode data with the specific language embed code
       updatedData.seasons[currentSeason][currentEpisode].embedCodes[episodeLanguage] = embedCode;
       

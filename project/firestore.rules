@@ -6,6 +6,21 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if true;
     }
+    
+    // Add specific rule for users collection
+    match /users/{userId} {
+      // Allow reading user data
+      allow read: if true;
+      
+      // Allow users to update their own profile data
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Ensure profileHidden can only be modified by the profile owner
+      allow update: if request.auth != null && 
+                     request.auth.uid == userId && 
+                     (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['profileHidden']) || 
+                      request.auth.uid == userId);
+    }
   }
 }
 

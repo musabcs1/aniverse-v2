@@ -72,6 +72,7 @@ export interface User {
   level: number;
   xp: number;
   badges: Badge[];
+  profileHidden?: boolean; // Flag to indicate if the user's profile is hidden from others
 }
 
 export type ForumCategory = 'General' | 'Anime' | 'Theory' | 'Memes' | 'Reviews';

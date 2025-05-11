@@ -99,6 +99,14 @@ const ProfilePage: React.FC = () => {
           
           if (userDoc.exists()) {
             const userData = { id: userDoc.id, ...userDoc.data() } as User;
+            
+            // Check if profile is hidden and the viewer is not the profile owner
+            if (userData.profileHidden && auth.currentUser?.uid !== userData.id) {
+              setError('This profile is hidden by the user');
+              setLoading(false);
+              return;
+            }
+            
             setUserData(userData);
             setAvatarURL(userData.avatar || '');
             setBannerURL(userData.banner || '');
@@ -132,6 +140,14 @@ const ProfilePage: React.FC = () => {
           
           if (userDoc.exists()) {
             const userData = { id: userDoc.id, ...userDoc.data() } as User;
+            
+            // Check if profile is hidden and the viewer is not the profile owner
+            if (userData.profileHidden && auth.currentUser?.uid !== userData.id) {
+              setError('This profile is hidden by the user');
+              setLoading(false);
+              return;
+            }
+            
             setUserData(userData);
             setAvatarURL(userData.avatar || '');
             setBannerURL(userData.banner || '');
@@ -160,6 +176,14 @@ const ProfilePage: React.FC = () => {
         if (!querySnapshot.empty) {
           const userDoc = querySnapshot.docs[0];
           const userData = { id: userDoc.id, ...userDoc.data() } as User;
+          
+          // Check if profile is hidden and the viewer is not the profile owner
+          if (userData.profileHidden && auth.currentUser?.uid !== userData.id) {
+            setError('This profile is hidden by the user');
+            setLoading(false);
+            return;
+          }
+          
           setUserData(userData);
           setAvatarURL(userData.avatar || '');
           setBannerURL(userData.banner || '');
@@ -664,9 +688,15 @@ const ProfilePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="text-center p-12 bg-surface rounded-xl shadow-lg shadow-red-500/10 max-w-lg mx-auto">
             <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <UserIcon className="h-10 w-10 text-red-500" />
+              {error.includes('hidden') ? (
+                <Eye className="h-10 w-10 text-secondary" />
+              ) : (
+                <UserIcon className="h-10 w-10 text-red-500" />
+              )}
             </div>
-            <h1 className="text-2xl font-bold text-red-500 mb-4">Profile Error</h1>
+            <h1 className={`text-2xl font-bold mb-4 ${error.includes('hidden') ? 'text-secondary' : 'text-red-500'}`}>
+              {error.includes('hidden') ? 'Profile Hidden' : 'Profile Error'}
+            </h1>
             <p className="text-gray-300">{error}</p>
             <button 
               onClick={() => navigate('/')} 
@@ -776,6 +806,12 @@ const ProfilePage: React.FC = () => {
                 <h1 className="text-3xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
                   {userData.username}
                 </h1>
+                {userData.profileHidden && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-secondary/20 rounded-full">
+                    <Eye className="h-4 w-4 text-secondary" />
+                    <span className="text-xs text-secondary font-medium">Hidden Profile</span>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   {badgesLoading ? (
                     <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
@@ -1325,6 +1361,41 @@ const ProfilePage: React.FC = () => {
                       >
                         Change Password
                       </motion.button>
+                    </div>
+                    
+                    <div className="bg-surface-dark p-6 rounded-xl">
+                      <h3 className="text-lg font-medium mb-6 text-secondary">Privacy Settings</h3>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-white">Hide My Profile</h4>
+                          <p className="text-sm text-gray-400 mt-1">When enabled, your profile will not be visible to other users</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer"
+                            checked={userData.profileHidden || false}
+                            onChange={async () => {
+                              try {
+                                const newHiddenValue = !userData.profileHidden;
+                                const userDocRef = doc(db, 'users', auth.currentUser?.uid || '');
+                                await updateDoc(userDocRef, { profileHidden: newHiddenValue });
+                                setUserData((prev) => ({ ...prev!, profileHidden: newHiddenValue }));
+                                showToast(
+                                  newHiddenValue 
+                                    ? 'Your profile is now hidden from other users' 
+                                    : 'Your profile is now visible to other users', 
+                                  'success'
+                                );
+                              } catch (error) {
+                                console.error('Error updating profile visibility:', error);
+                                showToast('Failed to update profile visibility', 'error');
+                              }
+                            }}
+                          />
+                          <div className="w-11 h-6 bg-surface-light rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                        </label>
+                      </div>
                     </div>
                     
                     <div className="pt-6 border-t border-gray-800 flex justify-end">
