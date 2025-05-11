@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import ForumPage from './pages/ForumPage';
+import ForumThreadDetailPage from './pages/ForumThreadDetailPage';
 import NewsPage from './pages/NewsPage';
 import AnimeDirectoryPage from './pages/AnimeDirectoryPage';
 import AnimeDetailPage from './pages/AnimeDetailPage';
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/anime/:animeId" element={<AnimeDetailPage />} />
                 <Route path="/anime/:animeId/season/:seasonName" element={<AnimeSeasonPage />} />
                 <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
+                <Route path="/forum/:threadId" element={<ProtectedRoute><ForumThreadDetailPage /></ProtectedRoute>} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/profile/:username" element={<ProfilePage />} />

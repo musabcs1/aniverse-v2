@@ -37,8 +37,8 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
   const [upvotes, setUpvotes] = useState(Array.isArray(thread.upvotes) ? thread.upvotes : []);
   const [downvotes, setDownvotes] = useState(Array.isArray(thread.downvotes) ? thread.downvotes : []);
 
-  const handleProfileClick = (authorId: string) => {
-    navigate(`/user/${authorId}`);
+  const handleProfileClick = (authorId: string, authorName: string) => {
+    navigate(`/profile/${authorName}`);
   };
 
   const handleAddComment = async () => {
@@ -166,7 +166,7 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
             src={thread.authorAvatar} 
             alt={thread.authorName} 
             className="w-10 h-10 rounded-full cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-            onClick={() => handleProfileClick(thread.authorId)}
+            onClick={() => handleProfileClick(thread.authorId, thread.authorName)}
             title={`View ${thread.authorName}'s profile`}
           />
           <div>
@@ -176,7 +176,7 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
             <div className="flex items-center mt-1 text-xs text-gray-400">
               <span 
                 className="hover:text-primary cursor-pointer transition-colors"
-                onClick={() => handleProfileClick(thread.authorId)}
+                onClick={() => handleProfileClick(thread.authorId, thread.authorName)}
               >
                 by {thread.authorName}
               </span>
@@ -245,7 +245,7 @@ const ForumThreadCard: React.FC<ForumThreadCardProps> = ({ thread }) => {
             <li key={index} className="text-sm text-gray-300 mt-2">
               <strong 
                 className="cursor-pointer hover:text-primary transition-colors"
-                onClick={() => handleProfileClick(c.authorId)}
+                onClick={() => handleProfileClick(c.authorId, c.authorName)}
               >
                 {c.authorName}:
               </strong> {c.content}
