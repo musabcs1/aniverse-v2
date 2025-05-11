@@ -4,7 +4,9 @@ import { Menu, X, Search, LogOut, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import LanguageSelector from '../LanguageSelector';
+import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import NotificationBell from '../ui/NotificationBell';
 
 interface HeaderProps {
@@ -16,6 +18,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,10 +48,16 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
     }
   };
 
+  const isDark = theme === 'dark';
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-background/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
+        isScrolled 
+          ? isDark 
+            ? 'bg-background/95 backdrop-blur-md shadow-lg' 
+            : 'bg-light-background/95 backdrop-blur-md shadow-lg' 
+          : 'bg-transparent'
       }`}
     >
       <div className="container mx-auto px-4 py-4">
@@ -69,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                 <input 
                   type="text" 
                   placeholder={t('common.search') + "..."} 
-                  className="bg-surface/60 py-2 pl-10 pr-4 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-secondary text-sm"
+                  className={`${isDark ? 'bg-surface/60' : 'bg-gray-200/80'} py-2 pl-10 pr-4 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-secondary text-sm`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -80,12 +89,13 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             {currentUser && (
               <>
                 <NotificationBell />
-                <Link to="/messages" className="relative p-2 rounded-full hover:bg-surface-dark transition-all">
-                  <MessageSquare className="h-6 w-6 text-white" />
+                <Link to="/messages" className={`relative p-2 rounded-full ${isDark ? 'hover:bg-surface-dark' : 'hover:bg-gray-200'} transition-all`}>
+                  <MessageSquare className={`h-6 w-6 ${isDark ? 'text-white' : 'text-gray-700'}`} />
                 </Link>
               </>
             )}
 
+            <ThemeToggle />
             <LanguageSelector />
           </div>
 
@@ -103,17 +113,17 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
                       className="h-full w-full object-cover"
                     />
                   </div>
-                  <span className="text-white">{currentUser.username}</span>
+                  <span className={isDark ? "text-white" : "text-gray-800"}>{currentUser.username}</span>
                 </button>
 
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg py-2">
-                    <Link to="/profile" className="block px-4 py-2 text-white hover:bg-surface-light">
+                  <div className={`absolute right-0 mt-2 w-48 ${isDark ? 'bg-surface' : 'bg-white'} rounded-lg shadow-lg py-2`}>
+                    <Link to="/profile" className={`block px-4 py-2 ${isDark ? 'text-white hover:bg-surface-light' : 'text-gray-700 hover:bg-gray-100'}`}>
                       {t('user.profile')}
                     </Link>
                     <button 
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-surface-light flex items-center"
+                      className={`w-full text-left px-4 py-2 ${isDark ? 'text-white hover:bg-surface-light' : 'text-gray-700 hover:bg-gray-100'} flex items-center`}
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       {t('header.logout')}
@@ -137,8 +147,8 @@ const Header: React.FC<HeaderProps> = ({ toggleMobileMenu, mobileMenuOpen }) => 
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? 
-              <X className="h-6 w-6 text-white" /> : 
-              <Menu className="h-6 w-6 text-white" />
+              <X className={`h-6 w-6 ${isDark ? 'text-white' : 'text-gray-800'}`} /> : 
+              <Menu className={`h-6 w-6 ${isDark ? 'text-white' : 'text-gray-800'}`} />
             }
           </button>
         </div>

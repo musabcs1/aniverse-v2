@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.dark {
+  background-color: #080215;
+  color: white;
+}
+
+html:not(.dark) {
+  background-color: #F8F9FA;
+  color: #212529;
+} 

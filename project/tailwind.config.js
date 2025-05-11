@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -29,6 +30,16 @@ export default {
           light: '#1B0D3E',
           dark: '#0C051A',
         },
+        // Light theme colors as flat structure
+        'light-background': '#F8F9FA',
+        'light-background-light': '#FFFFFF',
+        'light-background-dark': '#E9ECEF',
+        'light-surface': '#FFFFFF',
+        'light-surface-light': '#F8F9FA',
+        'light-surface-dark': '#E9ECEF',
+        'light-text': '#212529',
+        'light-text-light': '#495057',
+        'light-text-dark': '#000000',
       },
       fontFamily: {
         poppins: ['Poppins', 'sans-serif'],

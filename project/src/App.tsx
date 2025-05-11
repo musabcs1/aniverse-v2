@@ -20,6 +20,7 @@ import NewMessagePage from './pages/NewMessagePage';
 import Layout from './components/layout/Layout';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/ui/ToastContainer';
 
@@ -37,36 +38,38 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ToastProvider>
-          <NotificationProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/anime" element={<AnimeDirectoryPage />} />
-                  <Route path="/anime/:animeId" element={<AnimeDetailPage />} />
-                  <Route path="/anime/:animeId/season/:seasonName" element={<AnimeSeasonPage />} />
-                  <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
-                  <Route path="/forum/:threadId" element={<ProtectedRoute><ForumThreadDetailPage /></ProtectedRoute>} />
-                  <Route path="/news" element={<NewsPage />} />
-                  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-                  <Route path="/profile/:username" element={<ProfilePage />} />
-                  <Route path="/user/:userId" element={<ProfilePage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/admin-login" element={<AdminLoginPage />} />
-                  <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>} />
-                  <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-                  <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-                  <Route path="/messages/new" element={<ProtectedRoute><NewMessagePage /></ProtectedRoute>} />
-                  <Route path="/messages/:conversationId" element={<ProtectedRoute><MessageDetailPage /></ProtectedRoute>} />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/banned" element={<BannedPage />} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </Layout>
-            </BrowserRouter>
-          </NotificationProvider>
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <NotificationProvider>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/anime" element={<AnimeDirectoryPage />} />
+                    <Route path="/anime/:animeId" element={<AnimeDetailPage />} />
+                    <Route path="/anime/:animeId/season/:seasonName" element={<AnimeSeasonPage />} />
+                    <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
+                    <Route path="/forum/:threadId" element={<ProtectedRoute><ForumThreadDetailPage /></ProtectedRoute>} />
+                    <Route path="/news" element={<NewsPage />} />
+                    <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                    <Route path="/profile/:username" element={<ProfilePage />} />
+                    <Route path="/user/:userId" element={<ProfilePage />} />
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/admin-login" element={<AdminLoginPage />} />
+                    <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>} />
+                    <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                    <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+                    <Route path="/messages/new" element={<ProtectedRoute><NewMessagePage /></ProtectedRoute>} />
+                    <Route path="/messages/:conversationId" element={<ProtectedRoute><MessageDetailPage /></ProtectedRoute>} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/banned" element={<BannedPage />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                  </Routes>
+                </Layout>
+              </BrowserRouter>
+            </NotificationProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

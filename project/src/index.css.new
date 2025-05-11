@@ -8,26 +8,11 @@
   }
   
   html:not(.dark) body {
-    background-color: #F8F9FA;
-    color: #212529;
+    @apply bg-light-background text-gray-900;
   }
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-orbitron font-bold;
-  }
-}
-
-@layer utilities {
-  .bg-light-background {
-    background-color: #F8F9FA;
-  }
-  
-  .bg-light-surface {
-    background-color: #FFFFFF;
-  }
-  
-  .text-light-text {
-    color: #212529;
   }
 }
 
