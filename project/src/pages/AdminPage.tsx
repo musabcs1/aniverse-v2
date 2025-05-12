@@ -6,6 +6,7 @@ import { Trash, Shield, Check, Users, MessageSquare, Award, Search, ChevronUp, C
 import { ForumThread, UserRole, Anime, AnimeEpisodes } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
 import { DEFAULT_BADGES } from '../services/badges';
+import { useTranslation } from 'react-i18next';
 
 interface User {
   id: string;
@@ -95,6 +96,15 @@ const AdminPage: React.FC = () => {
   const [episodeTitle, setEpisodeTitle] = useState<string>('');
   const [episodeLanguage, setEpisodeLanguage] = useState<string>('en');
   const [savingEpisode, setSavingEpisode] = useState(false);
+
+  // New state variables for bulk episode addition
+  const [bulkAddMode, setBulkAddMode] = useState(false);
+  const [startEpisode, setStartEpisode] = useState<string>('');
+  const [endEpisode, setEndEpisode] = useState<string>('');
+  const [bulkTitlePrefix, setBulkTitlePrefix] = useState<string>('Episode');
+  const [bulkEmbedCodes, setBulkEmbedCodes] = useState<string>('');
+
+  const { t } = useTranslation();
 
   const handleSeasonChange = (index: number, field: 'name' | 'episodes', value: string | number) => {
     const updatedSeasons = [...(newAnime.seasons || [])];
@@ -987,6 +997,186 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // Save multiple episodes at once
+  const saveBulkEpisodes = async () => {
+    if (!selectedAnime || !episodesData || !currentSeason || !startEpisode || !endEpisode || !bulkEmbedCodes || !episodeLanguage) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Validate that start and end episodes are numbers
+    const start = parseInt(startEpisode);
+    const end = parseInt(endEpisode);
+    
+    if (isNaN(start) || isNaN(end)) {
+      alert('Episode numbers must be valid numbers');
+      return;
+    }
+    
+    if (start > end) {
+      alert('Start episode must be less than or equal to end episode');
+      return;
+    }
+    
+    // Split the embed codes by new lines
+    const embedCodesArray = bulkEmbedCodes.trim().split('\n');
+    const numberOfEpisodes = end - start + 1;
+    
+    if (embedCodesArray.length < numberOfEpisodes) {
+      alert(t('admin.provideCodes', { count: numberOfEpisodes, start, end }));
+      return;
+    }
+
+    try {
+      setSavingEpisode(true);
+      console.log('Starting bulk episode save operation...');
+      
+      // Force token refresh to ensure admin permissions are up to date
+      if (auth.currentUser) {
+        console.log('Refreshing auth token before saving episode data');
+        await auth.currentUser.getIdToken(true);
+      } else {
+        console.error('No current user found when trying to save episode data');
+        throw new Error('You must be logged in to save episode data');
+      }
+      
+      // Test permissions to an admin-only test document first
+      try {
+        console.log('Testing admin permissions with a write operation...');
+        const testDocRef = doc(db, 'admin_test', 'test_doc');
+        await setDoc(testDocRef, { 
+          lastTest: new Date().toISOString(),
+          user: auth.currentUser.email,
+          timestamp: serverTimestamp()
+        });
+        console.log('Admin permission test passed successfully');
+      } catch (error) {
+        console.error('Admin permission test failed:', error);
+        throw new Error('You do not have admin permissions to save episode data. Please try logging out and logging back in as an admin.');
+      }
+      
+      // First, check if the anime document exists
+      console.log('Checking anime document existence:', selectedAnime.id);
+      const animeRef = doc(db, 'anime', selectedAnime.id);
+      const animeDoc = await getDoc(animeRef);
+      
+      if (!animeDoc.exists()) {
+        console.error('Anime document does not exist:', selectedAnime.id);
+        throw new Error('Anime document does not exist');
+      }
+      
+      console.log('Anime document exists, proceeding with bulk episode update');
+
+      // Create a deep copy of the existing data
+      const updatedData = JSON.parse(JSON.stringify(episodesData)) as AnimeEpisodes;
+      
+      // Initialize the season object if it doesn't exist
+      if (!updatedData.seasons[currentSeason]) {
+        updatedData.seasons[currentSeason] = {};
+      }
+      
+      // Add all episodes in the range with their respective embed codes
+      for (let i = start; i <= end; i++) {
+        const episodeNum = i.toString();
+        const embedCodeIndex = i - start;
+        
+        // Initialize the episode object if it doesn't exist
+        const isNewEpisode = !updatedData.seasons[currentSeason][episodeNum];
+        if (isNewEpisode) {
+          updatedData.seasons[currentSeason][episodeNum] = {
+            embedCodes: {},
+            title: `${bulkTitlePrefix} ${episodeNum}`
+          };
+        }
+        
+        // Ensure embedCodes object exists
+        if (!updatedData.seasons[currentSeason][episodeNum].embedCodes) {
+          updatedData.seasons[currentSeason][episodeNum].embedCodes = {};
+        }
+        
+        // Update the episode data with the specific language embed code
+        updatedData.seasons[currentSeason][episodeNum].embedCodes[episodeLanguage] = embedCodesArray[embedCodeIndex];
+      }
+      
+      // Count total episodes across all seasons in the episodes data
+      let totalEpisodes = 0;
+      const seasonEpisodeCounts: { [seasonName: string]: number } = {};
+      
+      Object.entries(updatedData.seasons).forEach(([seasonName, episodes]) => {
+        const episodeCount = Object.keys(episodes).length;
+        totalEpisodes += episodeCount;
+        seasonEpisodeCounts[seasonName] = episodeCount;
+      });
+      
+      // Create updated seasons array with correct episode counts
+      const updatedSeasons = selectedAnime.seasons?.map(season => ({
+        ...season,
+        episodes: seasonEpisodeCounts[season.name] || season.episodes
+      })) || [];
+
+      // Use a batch to update both documents atomically
+      console.log('Creating batch write for anime and episode data...');
+      const batch = writeBatch(db);
+      
+      // Reference to the episodes document
+      const episodesRef = doc(db, 'anime_episodes', selectedAnime.id);
+      
+      // Add both operations to the batch
+      batch.set(episodesRef, updatedData);
+      batch.update(animeRef, {
+        episodes: totalEpisodes,
+        hasEpisodesData: true,
+        seasons: updatedSeasons
+      });
+      
+      // Commit the batch
+      console.log('Committing batch write...');
+      await batch.commit();
+      console.log('Batch write successful');
+      
+      // Update local states
+      setEpisodesData(updatedData);
+      setSelectedAnime({
+        ...selectedAnime,
+        episodes: totalEpisodes,
+        hasEpisodesData: true,
+        seasons: updatedSeasons
+      });
+      
+      // Update animes list to reflect the changes
+      setAnimes(prevAnimes => 
+        prevAnimes.map(anime => 
+          anime.id === selectedAnime.id 
+            ? { ...anime, episodes: totalEpisodes, hasEpisodesData: true, seasons: updatedSeasons }
+            : anime
+        )
+      );
+      
+      alert(`${end - start + 1} episodes added successfully`);
+      
+      // Clear the form for a new entry
+      setStartEpisode('');
+      setEndEpisode('');
+      setBulkEmbedCodes('');
+      setBulkTitlePrefix('Episode');
+    } catch (error) {
+      console.error('Error saving bulk episodes:', error);
+      if (error instanceof Error) {
+        if (error.message.includes('Missing or insufficient permissions')) {
+          alert('You do not have permission to save episode data. Please make sure you are logged in as an admin.');
+        } else if (error.message.includes('Anime document does not exist')) {
+          alert('The anime document does not exist. Please try adding the anime first.');
+        } else {
+          alert(`Failed to save episode data: ${error.message}`);
+        }
+      } else {
+        alert('Failed to save episode data. Please try again.');
+      }
+    } finally {
+      setSavingEpisode(false);
+    }
+  };
+
   if (isCheckingAdmin) {
     return (
       <div className="pt-24 pb-16">
@@ -1303,6 +1493,17 @@ const AdminPage: React.FC = () => {
 
                       <div className="bg-surface-dark p-4 rounded-lg mb-6">
                         <h4 className="text-lg font-medium mb-4">Add/Edit Episode</h4>
+                        
+                        <div className="mb-4 flex items-center justify-between">
+                          <h5 className="font-medium">{bulkAddMode ? t('admin.addMultipleEpisodes') : t('admin.addSingleEpisode')}</h5>
+                          <button
+                            onClick={() => setBulkAddMode(!bulkAddMode)}
+                            className="btn-secondary py-1 px-3 text-sm"
+                          >
+                            {bulkAddMode ? t('admin.switchToSingleMode') : t('admin.switchToBulkMode')}
+                          </button>
+                        </div>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-400 mb-1">Season</label>
@@ -1319,27 +1520,71 @@ const AdminPage: React.FC = () => {
                               ))}
                             </select>
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-1">Episode Number</label>
+                          
+                          {!bulkAddMode ? (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-1">Episode Number</label>
+                              <input
+                                type="text"
+                                className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                                placeholder="e.g. 1"
+                                value={currentEpisode}
+                                onChange={(e) => setCurrentEpisode(e.target.value)}
+                              />
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">{t('admin.startEpisode')}</label>
+                                <input
+                                  type="number"
+                                  className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                                  placeholder="e.g. 1"
+                                  value={startEpisode}
+                                  onChange={(e) => setStartEpisode(e.target.value)}
+                                  min="1"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">{t('admin.endEpisode')}</label>
+                                <input
+                                  type="number"
+                                  className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                                  placeholder="e.g. 12"
+                                  value={endEpisode}
+                                  onChange={(e) => setEndEpisode(e.target.value)}
+                                  min={startEpisode || "1"}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {!bulkAddMode ? (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Episode Title (Optional)</label>
                             <input
                               type="text"
                               className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-                              placeholder="e.g. 1"
-                              value={currentEpisode}
-                              onChange={(e) => setCurrentEpisode(e.target.value)}
+                              placeholder="e.g. The Beginning"
+                              value={episodeTitle}
+                              onChange={(e) => setEpisodeTitle(e.target.value)}
                             />
                           </div>
-                        </div>
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Episode Title (Optional)</label>
-                          <input
-                            type="text"
-                            className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-                            placeholder="e.g. The Beginning"
-                            value={episodeTitle}
-                            onChange={(e) => setEpisodeTitle(e.target.value)}
-                          />
-                        </div>
+                        ) : (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-400 mb-1">{t('admin.episodeTitlePrefix')} ({t('admin.optional')})</label>
+                            <input
+                              type="text"
+                              className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                              placeholder="e.g. Episode"
+                              value={bulkTitlePrefix}
+                              onChange={(e) => setBulkTitlePrefix(e.target.value)}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">{t('admin.episodesWillBeNamed').replace('{prefix}', bulkTitlePrefix)}</p>
+                          </div>
+                        )}
+
                         <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-400 mb-1">Language</label>
                           <select
@@ -1351,23 +1596,45 @@ const AdminPage: React.FC = () => {
                             <option value="tr">Turkish</option>
                           </select>
                         </div>
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Embed Code</label>
-                          <textarea
-                            className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-32 font-mono text-sm"
-                            placeholder="Paste iframe or embed code here"
-                            value={embedCode}
-                            onChange={(e) => setEmbedCode(e.target.value)}
-                          />
-                        </div>
+                        {!bulkAddMode ? (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-400 mb-1">{t('admin.embedCode')}</label>
+                            <textarea
+                              className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-32 font-mono text-sm"
+                              placeholder="Paste iframe or embed code here"
+                              value={embedCode}
+                              onChange={(e) => setEmbedCode(e.target.value)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-400 mb-1">{t('admin.embedCodes')}</label>
+                            <textarea
+                              className="w-full bg-surface p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary h-48 font-mono text-sm"
+                              placeholder={`${t('admin.pasteEmbedCodesOneLine')}\n${t('admin.firstCodeFor')} ${startEpisode}\n${t('admin.secondCodeFor')} ${parseInt(startEpisode || '0') + 1}\n${t('admin.andSoOn')}`}
+                              value={bulkEmbedCodes}
+                              onChange={(e) => setBulkEmbedCodes(e.target.value)}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">{t('admin.eachLineForEpisode')} {startEpisode}</p>
+                          </div>
+                        )}
                         <div className="flex justify-end">
                           <button
-                            onClick={saveEpisodeData}
-                            disabled={savingEpisode || !currentSeason || !currentEpisode || !embedCode}
+                            onClick={bulkAddMode ? saveBulkEpisodes : saveEpisodeData}
+                            disabled={
+                              savingEpisode || 
+                              !currentSeason || 
+                              (bulkAddMode ? (!startEpisode || !endEpisode || !bulkEmbedCodes) : (!currentEpisode || !embedCode))
+                            }
                             className="btn-primary py-2 px-4 flex items-center gap-2"
                           >
                             <Check className="h-4 w-4" />
-                            {savingEpisode ? 'Saving...' : 'Save Episode'}
+                            {savingEpisode 
+                              ? t('admin.saving')
+                              : bulkAddMode 
+                                ? t('admin.saveAllEpisodes') 
+                                : t('admin.saveEpisode')
+                            }
                           </button>
                         </div>
                         
