@@ -33,7 +33,18 @@ const getBadgeStyles = (role: string, size: BadgeSize = 'md', isHovered: boolean
 const Badge: React.FC<BadgeProps> = ({ badge, size = 'md', children }) => {
   const [isHovered, setIsHovered] = useState(false);
   
-  if (!badge?.name) return null;
+  // Validate badge object to prevent rendering issues
+  if (!badge || typeof badge !== 'object' || !badge.name) {
+    console.warn('Invalid badge object provided to Badge component:', badge);
+    return null;
+  }
+
+  // Ensure badge has a valid name that's a UserRole
+  const validRoles = ['admin', 'writer', 'user', 'reviewer'];
+  if (!validRoles.includes(badge.name)) {
+    console.warn(`Invalid badge name: ${badge.name}. Must be one of: ${validRoles.join(', ')}`);
+    return null;
+  }
 
   // Special case for admin badge to accommodate fire effect
   const isAdmin = badge.name === 'admin';

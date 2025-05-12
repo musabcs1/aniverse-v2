@@ -25,7 +25,21 @@ export const useUserBadges = () => {
         if (userDocSnapshot.exists()) {
           const userData = userDocSnapshot.data();
           if (userData.badges && Array.isArray(userData.badges)) {
-            setBadges(userData.badges);
+            // Validate badges before setting them
+            const validBadges = userData.badges.filter(badge => {
+              const isValid = badge && 
+                typeof badge === 'object' && 
+                badge.name && 
+                ['admin', 'writer', 'user', 'reviewer'].includes(badge.name);
+              
+              if (!isValid) {
+                console.warn('Invalid badge found in user data:', badge);
+              }
+              
+              return isValid;
+            });
+            
+            setBadges(validBadges);
           } else {
             setBadges([]);
           }

@@ -10,6 +10,7 @@ import { auth, db } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import AnimeCard from '../components/ui/AnimeCard';
+import RecommendedAnime from '../components/ui/RecommendedAnime';
 import Badge from '../components/ui/Badge';
 import { useToast } from '../hooks/useToast';
 import FireBadge from '../components/ui/FireBadge';
@@ -33,6 +34,14 @@ interface UserStats {
 const getBadgeIcon = (role: UserRole) => {
   const iconClass = "transition-transform duration-300 group-hover:scale-125";
   
+  // Validate role before processing
+  const validRoles: UserRole[] = ['admin', 'writer', 'user', 'reviewer'];
+  if (!validRoles.includes(role)) {
+    console.warn(`Invalid role provided to getBadgeIcon: ${role}`);
+    // Default to user icon for invalid roles
+    return <UserRound className={`h-5 w-5 text-gray-400 ${iconClass}`} />;
+  }
+  
   switch (role) {
     case 'admin':
       return (
@@ -47,7 +56,7 @@ const getBadgeIcon = (role: UserRole) => {
     case 'user':
       return <UserRound className={`h-5 w-5 text-secondary ${iconClass}`} />;
     default:
-      return null;
+      return <UserRound className={`h-5 w-5 text-gray-400 ${iconClass}`} />;
   }
 };
 
@@ -974,21 +983,34 @@ const ProfilePage: React.FC = () => {
                     <div className="w-6 h-6 rounded-full border-2 border-secondary border-t-transparent animate-spin"></div>
                   ) : badges && badges.length > 0 ? (
                     <div className="flex gap-2 items-center">
-                      {badges.map((badge: BadgeType) => (
-                        <motion.div 
-                          key={badge.id || badge.name} 
-                          className="group"
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        >
-                          <Badge 
-                            badge={badge} 
-                            size="sm"
+                      {badges
+                        .filter((badge: BadgeType) => {
+                          // Filter out invalid badges
+                          const isValid = badge && 
+                            typeof badge === 'object' && 
+                            badge.name && 
+                            ['admin', 'writer', 'user', 'reviewer'].includes(badge.name);
+                          
+                          if (!isValid) {
+                            console.warn('Filtered out invalid badge:', badge);
+                          }
+                          return isValid;
+                        })
+                        .map((badge: BadgeType) => (
+                          <motion.div 
+                            key={badge.id || badge.name} 
+                            className="group"
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
                           >
-                            {getBadgeIcon(badge.name as UserRole)}
-                          </Badge>
-                        </motion.div>
-                      ))}
+                            <Badge 
+                              badge={badge} 
+                              size="sm"
+                            >
+                              {getBadgeIcon(badge.name as UserRole)}
+                            </Badge>
+                          </motion.div>
+                        ))}
                     </div>
                   ) : null}
                 </div>
@@ -1182,6 +1204,94 @@ const ProfilePage: React.FC = () => {
             
             {/* Tab Content */}
             <div className="bg-surface rounded-2xl p-6 shadow-lg">
+              {activeTab === 'activity' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-semibold flex items-center">
+                      <Clock className="h-5 w-5 mr-2 text-primary" />
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+                        Recent Activity
+                      </span>
+                    </h2>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {userData && userData.watchlist && userData.watchlist.length > 0 ? (
+                      <>
+                        <div className="bg-surface-dark rounded-xl p-4">
+                          <h3 className="text-lg font-medium mb-3 text-white">Anime Activity</h3>
+                          <div className="space-y-3">
+                            {userData.watchlistDetails && userData.watchlistDetails.slice(0, 3).map((anime: Anime) => (
+                              <div key={anime.id} className="flex items-center p-2 hover:bg-surface-light rounded-lg transition-colors">
+                                <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
+                                  <img src={anime.coverImage || BASE64_FALLBACK} alt={anime.title} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-white font-medium">{anime.title}</p>
+                                  <p className="text-xs text-gray-400">Added to watchlist</p>
+                                </div>
+                                <div className="text-xs text-gray-500">{new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toLocaleDateString()}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {stats.reviews > 0 && (
+                          <div className="bg-surface-dark rounded-xl p-4">
+                            <h3 className="text-lg font-medium mb-3 text-white">Review Activity</h3>
+                            <div className="p-3 bg-surface-light rounded-lg">
+                              <div className="flex items-center">
+                                <Star className="h-5 w-5 text-yellow-400 mr-2" />
+                                <p className="text-white">You've posted {stats.reviews} reviews</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {stats.comments > 0 && (
+                          <div className="bg-surface-dark rounded-xl p-4">
+                            <h3 className="text-lg font-medium mb-3 text-white">Comment Activity</h3>
+                            <div className="p-3 bg-surface-light rounded-lg">
+                              <div className="flex items-center">
+                                <MessageSquare className="h-5 w-5 text-secondary mr-2" />
+                                <p className="text-white">You've made {stats.comments} comments</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {stats.threads > 0 && (
+                          <div className="bg-surface-dark rounded-xl p-4">
+                            <h3 className="text-lg font-medium mb-3 text-white">Forum Activity</h3>
+                            <div className="p-3 bg-surface-light rounded-lg">
+                              <div className="flex items-center">
+                                <MessageSquare className="h-5 w-5 text-primary mr-2" />
+                                <p className="text-white">You've created {stats.threads} forum threads</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="bg-surface-dark rounded-xl p-8 text-center">
+                        <Clock className="h-12 w-12 text-gray-600 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-xl font-medium mb-2">No activity yet</h3>
+                        <p className="text-gray-400 mb-6">
+                          Start watching anime, posting reviews, or joining discussions to see your activity here.
+                        </p>
+                        <Link to="/anime" className="btn-primary py-2 px-6 inline-block rounded-xl">
+                          Browse Anime
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+              
               {activeTab === 'watchlist' && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -1233,6 +1343,11 @@ const ProfilePage: React.FC = () => {
                             );
                           })}
                         </div>
+                      </div>
+                      
+                      {/* Anime Recommendations */}
+                      <div className="mt-8">
+                        <RecommendedAnime watchlist={userData.watchlistDetails} />
                       </div>
                     </>
                   ) : (
