@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   User as UserIcon, Settings, Heart, BookOpen, MessageSquare, 
   Clock, Award, ChevronRight, Edit, Shield, UserRound,
-  Calendar, Star, Eye, BarChart3, Map, Bookmark, Zap
+  Calendar, Star, Eye, BarChart3, Map, Bookmark, Zap, CheckCircle, List
 } from 'lucide-react';
 import { ListFilter } from '../components/ui/Icons';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, setDoc, writeBatch, arrayUnion, arrayRemove, Timestamp } from 'firebase/firestore';
@@ -18,8 +18,11 @@ import { useAuth } from '../context/AuthContext';
 import CustomListManager from '../components/ui/CustomListManager';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { User, Anime, UserRole, CustomList, Badge as BadgeType } from '../types';
+import { User, Anime, UserRole, CustomList, Badge as BadgeType, Achievement } from '../types';
 import { useUserBadges } from '../hooks/useUserBadges';
+import AchievementCard from '../components/ui/AchievementCard';
+import { getUserAchievements, checkAndUpdateAchievements } from '../services/achievements';
+import UserRecommendations from '../components/ui/UserRecommendations';
 
 interface UserStats {
   watching: number;
@@ -90,6 +93,8 @@ const ProfilePage: React.FC = () => {
   const { showToast } = useToast();
   const { currentUser } = useAuth();
   const { t } = useTranslation();
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [loadingAchievements, setLoadingAchievements] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -680,6 +685,25 @@ const ProfilePage: React.FC = () => {
       showToast('You are viewing a hidden profile as an admin', 'info');
     }
   }, [viewingHiddenProfile, isAdmin, showToast]);
+
+  useEffect(() => {
+    if (userData) {
+      const fetchAchievements = async () => {
+        setLoadingAchievements(true);
+        try {
+          // Check if we need to update achievements
+          const updatedAchievements = await checkAndUpdateAchievements(userData);
+          setAchievements(updatedAchievements);
+        } catch (error) {
+          console.error('Error fetching achievements:', error);
+        } finally {
+          setLoadingAchievements(false);
+        }
+      };
+      
+      fetchAchievements();
+    }
+  }, [userData]);
 
   const handleAvatarUpdate = async () => {
     if (!avatarURL.trim()) {

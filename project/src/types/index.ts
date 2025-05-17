@@ -57,6 +57,21 @@ export interface Badge {
   permissions: string[];
 }
 
+// Achievement interface for user achievements
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  requirement: {
+    type: 'anime_count' | 'review_count' | 'comment_count' | 'login_streak' | 'custom';
+    count?: number;
+    condition?: string;
+  };
+  unlockedAt?: Date;
+  progress?: number;
+}
+
 // Custom anime list interface
 export interface CustomList {
   id: string;
@@ -85,6 +100,7 @@ export interface User {
   level: number;
   xp: number;
   badges: Badge[];
+  achievements?: Achievement[]; // User achievements
   profileHidden?: boolean; // Flag to indicate if the user's profile is hidden from others
   customLists?: CustomList[]; // User's custom anime lists
 }
@@ -129,6 +145,23 @@ export interface NewsArticle {
   category: 'News' | 'Release' | 'Industry' | 'Review';
   publishDate: string;
   tags: string[];
+}
+
+// Review interface for anime reviews
+export interface Review {
+  id: string;
+  animeId: string;
+  userId: string;
+  username: string;
+  userAvatar?: string;
+  title: string;
+  content: string;
+  rating: number;
+  likes: string[];
+  createdAt: Date;
+  updatedAt?: Date;
+  spoiler: boolean;
+  reported?: boolean;
 }
 
 export interface Notification {

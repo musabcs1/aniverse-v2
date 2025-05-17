@@ -67,7 +67,8 @@ declare module 'lucide-react' {
   export const ChevronUp: React.FC<IconProps>;
   export const ChevronDown: React.FC<IconProps>;
   export const Eye: React.FC<IconProps>;
-
+  export const FileTextIcon: React.FC<IconProps>;
+  export const Send: React.FC<IconProps>;
   export const ChevronRight: React.FC<IconProps>;
   export declare const Menu: LucideIcon;
   export declare const Search: LucideIcon;

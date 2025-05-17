@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Anime } from '../types';
+import { Anime, Review } from '../types';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
-import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard, Check } from 'lucide-react';
+import { Play, BookmarkPlus, Share2, StarIcon, CalendarIcon, ClockIcon, Clapperboard, Check, MessageSquare } from 'lucide-react';
 import { ListPlus } from '../components/ui/Icons';
 import { auth } from '../firebaseConfig';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CustomListManager from '../components/ui/CustomListManager';
+import ReviewCard from '../components/ui/ReviewCard';
+import ReviewForm from '../components/ui/ReviewForm';
+import { getAnimeReviews } from '../services/reviews';
+import { useAuth } from '../context/AuthContext';
 
 const AnimeDetailPage: React.FC = () => {
   const { animeId } = useParams<{ animeId: string }>();
@@ -17,6 +21,11 @@ const AnimeDetailPage: React.FC = () => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [showCustomListModal, setShowCustomListModal] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewToEdit, setReviewToEdit] = useState<Review | null>(null);
+  const { currentUser } = useAuth();
 
   const { data: anime, isLoading, error } = useQuery<Anime>({
     queryKey: ['anime', animeId],
@@ -51,6 +60,25 @@ const AnimeDetailPage: React.FC = () => {
 
     checkUserStatus();
   }, [anime]);
+
+  useEffect(() => {
+    if (!animeId) return;
+    
+    const fetchReviews = async () => {
+      setLoadingReviews(true);
+      try {
+        const animeReviews = await getAnimeReviews(animeId);
+        setReviews(animeReviews);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        toast.error('Failed to load reviews');
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+    
+    fetchReviews();
+  }, [animeId]);
 
   const handleToggleWatchlist = async () => {
     if (!auth.currentUser || !anime) return;
@@ -130,6 +158,32 @@ const AnimeDetailPage: React.FC = () => {
   const handleSeasonClick = (season: { name: string; episodes: number }) => {
     const urlFriendlySeasonName = season.name.toLowerCase().replace(' ', '-');
     navigate(`/anime/${animeId}/season/${urlFriendlySeasonName}`);
+  };
+
+  const handleReviewSuccess = async () => {
+    setShowReviewForm(false);
+    setReviewToEdit(null);
+    
+    if (animeId) {
+      setLoadingReviews(true);
+      try {
+        const animeReviews = await getAnimeReviews(animeId);
+        setReviews(animeReviews);
+      } catch (error) {
+        console.error('Error refreshing reviews:', error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    }
+  };
+
+  const handleEditReview = (review: Review) => {
+    setReviewToEdit(review);
+    setShowReviewForm(true);
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    setReviews(reviews.filter(review => review.id !== reviewId));
   };
 
   if (isLoading) {
@@ -281,6 +335,61 @@ const AnimeDetailPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Reviews Section */}
+              <div className="mt-12 mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">İncelemeler</h2>
+                  {currentUser && !showReviewForm && !reviews.some(review => review.userId === currentUser.id) && (
+                    <button
+                      onClick={() => setShowReviewForm(true)}
+                      className="flex items-center space-x-2 bg-primary px-4 py-2 rounded-md hover:bg-primary/80"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>İnceleme Yaz</span>
+                    </button>
+                  )}
+                </div>
+                
+                {showReviewForm && animeId && (
+                  <div className="mb-8">
+                    <ReviewForm
+                      animeId={animeId}
+                      existingReview={reviewToEdit || undefined}
+                      onSuccess={handleReviewSuccess}
+                      onCancel={() => {
+                        setShowReviewForm(false);
+                        setReviewToEdit(null);
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {loadingReviews ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-6">
+                    {reviews.map(review => (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        onEdit={handleEditReview}
+                        onDelete={handleDeleteReview}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-surface-dark border border-gray-700/30 rounded-lg">
+                    <MessageSquare className="h-12 w-12 mx-auto text-gray-600 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-400">Henüz inceleme yok</h3>
+                    <p className="text-gray-500 mt-2">
+                      Bu anime için ilk incelemeyi siz yazın!
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
